@@ -7,6 +7,8 @@ LD	  = gcc
 CFLAGS	  = -ggdb3 -Wall
 LDFLAGS	  =
 
+ROOT := $(abspath $(dir $(lastword $(MAKEFILE_LIST))))
+
 all: emacs-libvterm.so
 
 # make shared library out of the object file
@@ -16,3 +18,5 @@ all: emacs-libvterm.so
 # compile source file to object file
 %.o: %.c
 	$(CC) $(CFLAGS) -I$(EMACS-SRC)/src -I/ -fPIC -c $<
+run: emacs-libvterm.so
+	emacs -L $(ROOT) --eval "(require 'emacs-libvterm)" # --eval '(insert "(vterm-new)")'
