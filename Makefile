@@ -13,7 +13,7 @@ all: emacs-libvterm.so
 
 # make shared library out of the object file
 %.so: %.o
-	$(LD) -shared $(LDFLAGS) -lvterm -o $@ $<
+	$(LD) -shared $(LDFLAGS) -lvterm -lutil -o $@ $<
 
 # compile source file to object file
 %.o: %.c
