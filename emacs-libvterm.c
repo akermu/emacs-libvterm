@@ -1,14 +1,10 @@
 #include <emacs-module.h>
+#include <string.h>
+#include <vterm.h>
+#include <vterm_keycodes.h>
 
 /* Declare mandatory GPL symbol.  */
 int plugin_is_GPL_compatible;
-
-/* New emacs lisp function. All function exposed to Emacs must have this prototype. */
-static emacs_value
-Fmymod_test (emacs_env *env, int nargs, emacs_value args[], void *data)
-{
-  return env->make_integer (env, 42);
-}
 
 /* Bind NAME to FUN.  */
 static void
@@ -41,6 +37,39 @@ provide (emacs_env *env, const char *feature)
   env->funcall (env, Qprovide, 1, args);
 }
 
+static void
+insert(emacs_env *env, const char *string)
+{
+  emacs_value Qinsert = env->intern(env, "insert");
+  emacs_value Qstring = env->make_string(env, string, strlen(string));
+  emacs_value args[] = { Qstring };
+
+  env->funcall(env, Qinsert, 1, args);
+}
+
+/* New emacs lisp function. All function exposed to Emacs must have this prototype. */
+static emacs_value
+Fvterm_new (emacs_env *env, ptrdiff_t nargs, emacs_value args[], void *data)
+{
+  int rows = 24;
+  int columns = 80;
+  char buffer[1920];
+
+  VTerm *vt = vterm_new(rows, columns);
+  vterm_set_utf8(vt, 1);
+
+  vterm_input_write(vt, "ls -l\n ", 6);
+
+  int len;
+  while ((len = vterm_output_read(vt, buffer, 1920)) > 0) {
+    insert(env, buffer);
+  }
+
+  vterm_free(vt);
+
+  return env->make_integer(env, 0);
+}
+
 int
 emacs_module_init (struct emacs_runtime *ert)
 {
@@ -50,12 +79,12 @@ emacs_module_init (struct emacs_runtime *ert)
   emacs_value fun = env->make_function (env,
               0,            /* min. number of arguments */
               0,            /* max. number of arguments */
-              Fmymod_test,  /* actual function pointer */
+              Fvterm_new,   /* actual function pointer */
               "doc",        /* docstring */
               NULL          /* user pointer of your choice (data param in Fmymod_test) */
   );
 
-  bind_function (env, "mymod-test", fun);
+  bind_function (env, "vterm_new", fun);
   provide (env, "emacs-libvterm");
 
   /* loaded successfully */
