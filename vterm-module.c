@@ -43,8 +43,13 @@ string_len (emacs_env *env, emacs_value string)
   return size;
 }
 
+static void
+vterm_finalize (void *vt) {
+  vterm_free(vt);
+}
+
 static emacs_value
-Fvterm_input_write (emacs_env *env, ptrdiff_t nargs, emacs_value args[], void *data)
+Fvterm_new (emacs_env *env, ptrdiff_t nargs, emacs_value args[], void *data)
 {
   int rows = 24;
   int columns = 80;
@@ -52,9 +57,17 @@ Fvterm_input_write (emacs_env *env, ptrdiff_t nargs, emacs_value args[], void *d
   VTerm *vt = vterm_new(rows, columns);
   vterm_set_utf8(vt, 1);
 
-  ptrdiff_t len = string_len(env, args[0]);
+  return env->make_user_ptr(env, vterm_finalize, vt);
+}
+
+static emacs_value
+Fvterm_input_write (emacs_env *env, ptrdiff_t nargs, emacs_value args[], void *data)
+{
+  VTerm *vt = env->get_user_ptr(env, args[0]);
+  emacs_value input = args[1];
+  ptrdiff_t len = string_len(env, input);
   char buffer[len];
-  int ret = env->copy_string_contents(env, args[0], buffer, &len);
+  env->copy_string_contents(env, input, buffer, &len);
 
   vterm_input_write(vt, buffer, len);
 
@@ -65,13 +78,22 @@ int
 emacs_module_init (struct emacs_runtime *ert)
 {
   emacs_env *env = ert->get_environment (ert);
-
   emacs_value fun;
+
   fun = env->make_function (env,
-                            1,
-                            1,
+                            0,
+                            0,
+                            Fvterm_new,
+                            "Allocates a new vterm.",
+                            NULL
+                            );
+  bind_function (env, "vterm-new", fun);
+
+  fun = env->make_function (env,
+                            2,
+                            2,
                             Fvterm_input_write,
-                            "Writes input to libvterm",
+                            "Writes input to libvterm.",
                             NULL
                             );
   bind_function (env, "vterm-input-write", fun);
