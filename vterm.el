@@ -21,7 +21,7 @@
                           :buffer buffer
                           :command (list (getenv "SHELL"))
                           :coding 'utf-8
-                          :connection-type 'pipe
+                          :connection-type 'pty
                           :filter #'vterm-process-filter
                           :sentinel #'vterm-process-sentinel)))
     (pop-to-buffer buffer)))
