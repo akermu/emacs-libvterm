@@ -44,6 +44,13 @@ string_len (emacs_env *env, emacs_value string)
 }
 
 static void
+message (emacs_env *env, char *message) {
+  emacs_value Fmessage = env->intern(env, "message");
+  emacs_value string = env->make_string(env, message, strlen(message));
+  env->funcall(env, Fmessage, 1, (emacs_value[]){string});
+}
+
+static int
 vterm_finalize (void *vt) {
   vterm_free(vt);
 }
