@@ -57,6 +57,10 @@ Fvterm_new (emacs_env *env, ptrdiff_t nargs, emacs_value args[], void *data)
   VTerm *vt = vterm_new(rows, columns);
   vterm_set_utf8(vt, 1);
 
+  VTermScreen *screen = vterm_obtain_screen(vt);
+
+  vterm_screen_reset(screen, 1);
+
   return env->make_user_ptr(env, vterm_finalize, vt);
 }
 
