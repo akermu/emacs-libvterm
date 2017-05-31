@@ -1,5 +1,6 @@
 #include <emacs-module.h>
 #include <vterm.h>
+#include <string.h>
 
 /* Declare mandatory GPL symbol.  */
 int plugin_is_GPL_compatible;
@@ -50,7 +51,67 @@ message (emacs_env *env, char *message) {
   env->funcall(env, Fmessage, 1, (emacs_value[]){string});
 }
 
-static int
+static void
+erase_buffer (emacs_env *env) {
+  emacs_value Ferase_buffer = env->intern(env, "erase-buffer");
+  env->funcall(env, Ferase_buffer, 0, NULL);
+}
+
+static void
+insert_line (emacs_env *env, char *line) {
+  emacs_value Finsert = env->intern(env, "insert");
+  emacs_value Sline = env->make_string(env, line, strlen(line));
+  env->funcall(env, Finsert, 1, (emacs_value[]){Sline});
+
+  emacs_value Snew_line = env->make_string(env, "\n", 1);
+  env->funcall(env, Finsert, 1, (emacs_value[]){Snew_line});
+}
+
+static void
+goto_char (emacs_env *env, int pos) {
+  emacs_value Fgoto_char = env->intern(env, "goto-char");
+  emacs_value point = env->make_integer(env, pos);
+  env->funcall(env, Fgoto_char, 1, (emacs_value[]){point});
+}
+
+static emacs_value
+vterm_refresh (VTerm *vt, emacs_env *env) {
+  int i, j;
+  int rows, cols;
+  VTermScreen *screen = vterm_obtain_screen(vt);
+  vterm_get_size(vt, &rows, &cols);
+
+  erase_buffer(env);
+
+  char line[cols + 1];
+  for (i = 0; i < rows; i++) {
+    for (j = 0; j < cols; j++) {
+      VTermPos pos = { .row = i, .col = j};
+      VTermScreenCell cell;
+      vterm_screen_get_cell(screen, pos, &cell);
+      if (cell.chars[0] == '\0')
+        line[j] = ' ';
+      else
+        line[j] = cell.chars[0];
+    }
+    line[cols] = '\0';
+    insert_line(env, line);
+  }
+
+  VTermState *state = vterm_obtain_state(vt);
+  VTermPos pos;
+  vterm_state_get_cursorpos(state, &pos);
+
+  // row * (width + 1) because of newline character
+  // col + 1 because (goto-char 1) sets point to first position
+  int point = (pos.row * 81) + pos.col + 1;
+  goto_char(env, point);
+
+  return env->make_integer(env, 0);
+}
+
+
+static void
 vterm_finalize (void *vt) {
   vterm_free(vt);
 }
@@ -59,13 +120,12 @@ static emacs_value
 Fvterm_new (emacs_env *env, ptrdiff_t nargs, emacs_value args[], void *data)
 {
   int rows = 24;
-  int columns = 80;
+  int cols = 80;
 
-  VTerm *vt = vterm_new(rows, columns);
+  VTerm *vt = vterm_new(rows, cols);
   vterm_set_utf8(vt, 1);
 
   VTermScreen *screen = vterm_obtain_screen(vt);
-
   vterm_screen_reset(screen, 1);
 
   return env->make_user_ptr(env, vterm_finalize, vt);
@@ -80,9 +140,11 @@ Fvterm_input_write (emacs_env *env, ptrdiff_t nargs, emacs_value args[], void *d
   char buffer[len];
   env->copy_string_contents(env, input, buffer, &len);
 
-  vterm_input_write(vt, buffer, len);
+  vterm_input_write(vt, buffer, len - 1);
 
-  return env->make_integer(env, len);
+  vterm_refresh(vt, env);
+
+  return env->make_integer(env, len - 1);
 }
 
 int
