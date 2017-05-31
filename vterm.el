@@ -20,7 +20,7 @@
             (make-process :name "vterm-shell"
                           :buffer buffer
                           :command (list (getenv "SHELL"))
-                          :coding 'utf-8
+                          :coding 'no-conversion
                           :connection-type 'pty
                           :filter #'vterm-process-filter
                           :sentinel #'vterm-process-sentinel)))
