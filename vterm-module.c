@@ -2,6 +2,8 @@
 #include <vterm.h>
 #include <string.h>
 
+#define MAX(x, y) (((x) > (y)) ? (x) : (y))
+
 /* Declare mandatory GPL symbol.  */
 int plugin_is_GPL_compatible;
 
@@ -110,6 +112,24 @@ vterm_refresh (VTerm *vt, emacs_env *env) {
   return env->make_integer(env, 0);
 }
 
+static void
+vterm_write_stdin(emacs_env *env, char *buffer, ptrdiff_t len) {
+  emacs_value Fvterm_write_stdin = env->intern(env, "vterm-write-stdin");
+  emacs_value string = env->make_string(env, buffer, len);
+  emacs_value Fbase64_encode_string = env->intern(env, "base64-encode-string");
+  string = env->funcall(env, Fbase64_encode_string, 1, (emacs_value[]){string});
+  env->funcall(env, Fvterm_write_stdin, 1, (emacs_value[]){string});
+}
+
+static void
+vterm_flush_output (VTerm *vt, emacs_env *env) {
+  size_t bufflen = vterm_output_get_buffer_current(vt);
+  if(bufflen) {
+    char buffer[bufflen];
+    bufflen = vterm_output_read(vt, buffer, bufflen);
+    vterm_write_stdin(env, buffer, bufflen);
+  }
+}
 
 static void
 vterm_finalize (void *vt) {
@@ -147,6 +167,25 @@ Fvterm_input_write (emacs_env *env, ptrdiff_t nargs, emacs_value args[], void *d
   return env->make_integer(env, len - 1);
 }
 
+static emacs_value
+Fvterm_send_key (emacs_env *env, ptrdiff_t nargs, emacs_value args[], void *data) {
+  VTerm *vt = env->get_user_ptr(env, args[0]);
+  emacs_value key = args[1];
+  ptrdiff_t len = string_len(env, key);
+  char buffer[len];
+  env->copy_string_contents(env, key, buffer, &len);
+
+  if (strcmp(buffer, "ENTER") == 0) {
+    vterm_keyboard_key(vt, VTERM_KEY_ENTER, VTERM_MOD_NONE);
+  } else {
+    vterm_keyboard_unichar(vt, buffer[0], VTERM_MOD_NONE);
+  }
+
+  vterm_flush_output(vt, env);
+
+  return env->make_integer(env, 0);
+}
+
 int
 emacs_module_init (struct emacs_runtime *ert)
 {
@@ -170,6 +209,16 @@ emacs_module_init (struct emacs_runtime *ert)
                             NULL
                             );
   bind_function (env, "vterm-input-write", fun);
+
+  fun = env->make_function (env,
+                            2,
+                            2,
+                            Fvterm_send_key,
+                            "Writes a key to libvterm.",
+                            NULL
+                            );
+  bind_function (env, "vterm-send-key", fun);
+
 
   provide (env, "vterm-module");
 

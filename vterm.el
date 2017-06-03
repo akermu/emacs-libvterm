@@ -6,9 +6,24 @@
 
 (defvar vterm-process nil
   "The shell process.")
+(make-variable-buffer-local 'vterm-process)
 
 (define-derived-mode vterm-mode fundamental-mode "VTerm"
-  "TODO: Documentation.")
+  "TODO: Documentation."
+  (add-hook 'post-self-insert-hook #'vterm-send-char nil t))
+
+(define-key vterm-mode-map (kbd "RET") #'vterm-send-enter)
+
+(defun vterm-send-char ()
+  (let ((char (buffer-substring-no-properties (1- (point)) (point))))
+    (vterm-send-key vterm-vterm char)))
+
+(defun vterm-send-enter ()
+  (interactive)
+  (vterm-send-key vterm-vterm "ENTER"))
+
+(defun vterm-write-stdin (str)
+  (process-send-string vterm-process (base64-decode-string str)))
 
 (defun vterm-create ()
   (interactive)
