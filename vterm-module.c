@@ -1,11 +1,21 @@
 #include <emacs-module.h>
 #include <vterm.h>
 #include <string.h>
+#include <termios.h>
+#include <sys/ioctl.h>
+#include <unistd.h>
+#include <pty.h>
+#include <fcntl.h>
 
 #define MAX(x, y) (((x) > (y)) ? (x) : (y))
 
 /* Declare mandatory GPL symbol.  */
 int plugin_is_GPL_compatible;
+
+struct Term {
+  VTerm *vt;
+  int masterfd;
+};
 
 /* Bind NAME to FUN.  */
 static void
@@ -76,8 +86,8 @@ goto_char (emacs_env *env, int pos) {
   env->funcall(env, Fgoto_char, 1, (emacs_value[]){point});
 }
 
-static emacs_value
-vterm_refresh (VTerm *vt, emacs_env *env) {
+static void
+vterm_redraw (VTerm *vt, emacs_env *env) {
   int i, j;
   int rows, cols;
   VTermScreen *screen = vterm_obtain_screen(vt);
@@ -108,80 +118,126 @@ vterm_refresh (VTerm *vt, emacs_env *env) {
   // col + 1 because (goto-char 1) sets point to first position
   int point = (pos.row * 81) + pos.col + 1;
   goto_char(env, point);
-
-  return env->make_integer(env, 0);
 }
 
 static void
-vterm_write_stdin(emacs_env *env, char *buffer, ptrdiff_t len) {
-  emacs_value Fvterm_write_stdin = env->intern(env, "vterm-write-stdin");
-  emacs_value string = env->make_string(env, buffer, len);
-  emacs_value Fbase64_encode_string = env->intern(env, "base64-encode-string");
-  string = env->funcall(env, Fbase64_encode_string, 1, (emacs_value[]){string});
-  env->funcall(env, Fvterm_write_stdin, 1, (emacs_value[]){string});
-}
-
-static void
-vterm_flush_output (VTerm *vt, emacs_env *env) {
-  size_t bufflen = vterm_output_get_buffer_current(vt);
+vterm_flush_output (struct Term *term) {
+  size_t bufflen = vterm_output_get_buffer_current(term->vt);
   if(bufflen) {
     char buffer[bufflen];
-    bufflen = vterm_output_read(vt, buffer, bufflen);
-    vterm_write_stdin(env, buffer, bufflen);
+    bufflen = vterm_output_read(term->vt, buffer, bufflen);
+
+    // TODO: Make work with NON-Blocking io. (buffer in term)
+    fcntl(term->masterfd, F_SETFL, fcntl(term->masterfd, F_GETFL) & ~O_NONBLOCK);
+    write(term->masterfd, buffer, bufflen);
+    fcntl(term->masterfd, F_SETFL, fcntl(term->masterfd, F_GETFL) | O_NONBLOCK);
   }
 }
 
 static void
-vterm_finalize (void *vt) {
-  vterm_free(vt);
+term_finalize (void *term) {
+  vterm_free(((struct Term *) term)->vt);
+  free(term);
 }
 
 static emacs_value
 Fvterm_new (emacs_env *env, ptrdiff_t nargs, emacs_value args[], void *data)
 {
+  struct Term *term = malloc(sizeof(struct Term));
   int rows = 24;
   int cols = 80;
 
-  VTerm *vt = vterm_new(rows, cols);
-  vterm_set_utf8(vt, 1);
+  struct winsize size = { rows, cols, 0, 0};
 
-  VTermScreen *screen = vterm_obtain_screen(vt);
-  vterm_screen_reset(screen, 1);
+  // Taken almost verbatim from https://bazaar.launchpad.net/~leonerd/pangoterm
+  struct termios termios = {
+    .c_iflag = ICRNL|IXON,
+    .c_oflag = OPOST|ONLCR
+    ,
+    .c_cflag = CS8|CREAD,
+    .c_lflag = ISIG|ICANON|IEXTEN|ECHO|ECHOE|ECHOK,
+    /* c_cc later */
+  };
 
-  return env->make_user_ptr(env, vterm_finalize, vt);
-}
+  cfsetspeed(&termios, 38400);
 
-static emacs_value
-Fvterm_input_write (emacs_env *env, ptrdiff_t nargs, emacs_value args[], void *data)
-{
-  VTerm *vt = env->get_user_ptr(env, args[0]);
-  emacs_value input = args[1];
-  ptrdiff_t len = string_len(env, input);
-  char buffer[len];
-  env->copy_string_contents(env, input, buffer, &len);
+  termios.c_cc[VINTR]    = 0x1f & 'C';
+  termios.c_cc[VQUIT]    = 0x1f & '\\';
+  termios.c_cc[VERASE]   = 0x7f;
+  termios.c_cc[VKILL]    = 0x1f & 'U';
+  termios.c_cc[VEOF]     = 0x1f & 'D';
+  termios.c_cc[VEOL]     = _POSIX_VDISABLE;
+  termios.c_cc[VEOL2]    = _POSIX_VDISABLE;
+  termios.c_cc[VSTART]   = 0x1f & 'Q';
+  termios.c_cc[VSTOP]    = 0x1f & 'S';
+  termios.c_cc[VSUSP]    = 0x1f & 'Z';
+  termios.c_cc[VREPRINT] = 0x1f & 'R';
+  termios.c_cc[VWERASE]  = 0x1f & 'W';
+  termios.c_cc[VLNEXT]   = 0x1f & 'V';
+  termios.c_cc[VMIN]     = 1;
+  termios.c_cc[VTIME]    = 0;
 
-  vterm_input_write(vt, buffer, len - 1);
+  pid_t pid = forkpty(&term->masterfd, NULL, &termios, &size);
 
-  vterm_refresh(vt, env);
+  fcntl(term->masterfd, F_SETFL, fcntl(term->masterfd, F_GETFL) | O_NONBLOCK);
 
-  return env->make_integer(env, len - 1);
-}
-
-static emacs_value
-Fvterm_send_key (emacs_env *env, ptrdiff_t nargs, emacs_value args[], void *data) {
-  VTerm *vt = env->get_user_ptr(env, args[0]);
-  emacs_value key = args[1];
-  ptrdiff_t len = string_len(env, key);
-  char buffer[len];
-  env->copy_string_contents(env, key, buffer, &len);
-
-  if (strcmp(buffer, "ENTER") == 0) {
-    vterm_keyboard_key(vt, VTERM_KEY_ENTER, VTERM_MOD_NONE);
-  } else {
-    vterm_keyboard_unichar(vt, buffer[0], VTERM_MOD_NONE);
+  if (pid == 0) {
+    char *shell = getenv("SHELL");
+    char *args[2] = { shell, NULL };
+    execvp(shell, args);
+    exit(1);
   }
 
-  vterm_flush_output(vt, env);
+  term->vt = vterm_new(rows, cols);
+  vterm_set_utf8(term->vt, 1);
+
+  VTermScreen *screen = vterm_obtain_screen(term->vt);
+  vterm_screen_reset(screen, 1);
+
+  return env->make_user_ptr(env, term_finalize, term);
+}
+
+static void
+process_key (struct Term *term, char* key, VTermModifier modifier) {
+  if (strcmp(key, "<return>") == 0) {
+    vterm_keyboard_key(term->vt, VTERM_KEY_ENTER, modifier);
+  } else if (strcmp (key, "SPC") == 0) {
+    vterm_keyboard_unichar(term->vt, " "[0], modifier);
+  } else if (strlen(key) == 1) {
+    vterm_keyboard_unichar(term->vt, key[0], modifier);
+  }
+
+  vterm_flush_output(term);
+}
+
+static emacs_value
+Fvterm_update(emacs_env *env, ptrdiff_t nargs, emacs_value args[], void *data) {
+  struct Term *term = env->get_user_ptr(env, args[0]);
+  // Process keys
+  if (nargs > 1) {
+    ptrdiff_t len = string_len(env, args[1]);
+    char key[len];
+    env->copy_string_contents(env, args[1], key, &len);
+    VTermModifier modifier = VTERM_MOD_NONE;
+    if (env->is_not_nil(env, args[2]))
+        modifier = modifier | VTERM_MOD_SHIFT;
+    if (env->is_not_nil(env, args[3]))
+        modifier = modifier | VTERM_MOD_ALT;
+    if (env->is_not_nil(env, args[4]))
+        modifier = modifier | VTERM_MOD_CTRL;
+
+    process_key(term, key, modifier);
+  }
+
+  // Read input from masterfd
+  char bytes[4096];
+  int len;
+  if ((len = read(term->masterfd, bytes, 4096)) > 0) {
+    vterm_input_write(term->vt, bytes, len);
+  };
+
+  vterm_redraw(term->vt, env);
+// TODO: Update screen
 
   return env->make_integer(env, 0);
 }
@@ -202,22 +258,13 @@ emacs_module_init (struct emacs_runtime *ert)
   bind_function (env, "vterm-new", fun);
 
   fun = env->make_function (env,
-                            2,
-                            2,
-                            Fvterm_input_write,
-                            "Writes input to libvterm.",
+                            1,
+                            5,
+                            Fvterm_update,
+                            "Process io and updates the screen.",
                             NULL
                             );
-  bind_function (env, "vterm-input-write", fun);
-
-  fun = env->make_function (env,
-                            2,
-                            2,
-                            Fvterm_send_key,
-                            "Writes a key to libvterm.",
-                            NULL
-                            );
-  bind_function (env, "vterm-send-key", fun);
+  bind_function (env, "vterm-update", fun);
 
 
   provide (env, "vterm-module");

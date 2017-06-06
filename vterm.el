@@ -1,51 +1,57 @@
 (require 'vterm-module)
 
-(defvar vterm-vterm nil
-  "Pointer to vterm struct.")
-(make-variable-buffer-local 'vterm-vterm)
+(defvar vterm-term nil
+  "Pointer to struct Term.")
+(make-variable-buffer-local 'term)
 
-(defvar vterm-process nil
-  "The shell process.")
-(make-variable-buffer-local 'vterm-process)
+;; TODO Remove this horrible keybinding hack
+
+(defvar vterm-keymap-exceptions '("C-x" "M-o" "C-u")
+  "Exceptions for vterm-keymap.
+
+If you use a kbd with a prefix-key that prefix-key cannot be send to the terminal.")
+
+(defvar vterm-keymap (let ((keymap (make-sparse-keymap)))
+                       (dolist (exception vterm-keymap-exceptions)
+                         (define-key keymap (kbd exception) (key-binding exception)))
+                       (define-key keymap [t] #'vterm-self-insert)
+                       keymap)
+  "Keymap for vterm.")
 
 (define-derived-mode vterm-mode fundamental-mode "VTerm"
   "TODO: Documentation."
-  (add-hook 'post-self-insert-hook #'vterm-send-char nil t))
+  (set-transient-map vterm-keymap #'vterm-true))
 
-(define-key vterm-mode-map (kbd "RET") #'vterm-send-enter)
+(defun vterm-true ()
+  t)
 
-(defun vterm-send-char ()
-  (let ((char (buffer-substring-no-properties (1- (point)) (point))))
-    (vterm-send-key vterm-vterm char)))
-
-(defun vterm-send-enter ()
+(defun vterm-self-insert ()
   (interactive)
-  (vterm-send-key vterm-vterm "ENTER"))
-
-(defun vterm-write-stdin (str)
-  (process-send-string vterm-process (base64-decode-string str)))
+  (let* ((modifiers (event-modifiers last-input-event))
+         (shift (memq 'shift modifiers))
+         (meta (memq 'meta modifiers))
+         (ctrl (memq 'control modifiers)))
+    (message "%s" modifiers)
+    (when-let ((key (key-description (vector (event-basic-type last-input-event))))
+               (inhibit-redisplay t)
+               (inhibit-read-only t))
+      (vterm-update vterm-term key shift meta ctrl))))
 
 (defun vterm-create ()
   (interactive)
   (let ((buffer (generate-new-buffer "vterm")))
+    (setq buffer-read-only t)
     (with-current-buffer buffer
       (vterm-mode)
-      (setq vterm-vterm (vterm-new))
-      (setq vterm-process
-            (make-process :name "vterm-shell"
-                          :buffer buffer
-                          :command (list (getenv "SHELL"))
-                          :coding 'no-conversion
-                          :connection-type 'pty
-                          :filter #'vterm-process-filter
-                          :sentinel #'vterm-process-sentinel)))
+      (setq vterm-term (vterm-new))
+      (run-with-timer .1 .1 #'vterm-run-timer buffer))
     (pop-to-buffer buffer)))
 
-(defun vterm-process-filter (process output)
-  (with-current-buffer (process-buffer process)
-    (vterm-input-write vterm-vterm output)))
-
-(defun vterm-process-sentinel (process event)
-  )
+(defun vterm-run-timer (buffer)
+  (interactive)
+  (let ((inhibit-redisplay t)
+        (inhibit-read-only t))
+    (with-current-buffer buffer
+      (vterm-update vterm-term))))
 
 (provide 'vterm)
