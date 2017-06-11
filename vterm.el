@@ -5,7 +5,7 @@
   "Pointer to struct Term.")
 (make-variable-buffer-local 'term)
 
-(defvar vterm-keymap-exceptions '("C-x" "M-o" "C-u")
+(defvar vterm-keymap-exceptions '("C-x" "M-o" "C-u" "C-g")
   "Exceptions for vterm-keymap.
 
 If you use a keybinding with a prefix-key that prefix-key cannot
@@ -15,7 +15,7 @@ be send to the terminal.")
   "TODO: Documentation.")
 
 (dolist (exception vterm-keymap-exceptions)
-  (define-key vterm-mode-map (kbd exception) (key-binding exception)))
+  (define-key vterm-mode-map (kbd exception) (key-binding (kbd exception))))
 (define-key vterm-mode-map [t] #'vterm-self-insert)
 
 (defun vterm-self-insert ()
