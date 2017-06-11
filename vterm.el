@@ -1,4 +1,5 @@
 (require 'vterm-module)
+(require 'subr-x)
 
 (defvar vterm-term nil
   "Pointer to struct Term.")
