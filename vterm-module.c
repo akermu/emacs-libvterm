@@ -201,6 +201,10 @@ static void
 process_key (struct Term *term, char* key, VTermModifier modifier) {
   if (strcmp(key, "<return>") == 0) {
     vterm_keyboard_key(term->vt, VTERM_KEY_ENTER, modifier);
+  } else if (strcmp(key, "<backspace>") == 0) {
+    vterm_keyboard_key(term->vt, VTERM_KEY_BACKSPACE, modifier);
+  } else if (strcmp(key, "<tab>") == 0) {
+    vterm_keyboard_key(term->vt, VTERM_KEY_TAB, modifier);
   } else if (strcmp (key, "SPC") == 0) {
     vterm_keyboard_unichar(term->vt, " "[0], modifier);
   } else if (strlen(key) == 1) {
