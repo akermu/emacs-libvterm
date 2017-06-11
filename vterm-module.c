@@ -144,8 +144,8 @@ static emacs_value
 Fvterm_new (emacs_env *env, ptrdiff_t nargs, emacs_value args[], void *data)
 {
   struct Term *term = malloc(sizeof(struct Term));
-  int rows = 24;
-  int cols = 80;
+  int rows = env->extract_integer(env, args[0]);
+  int cols = env->extract_integer(env, args[1]);
 
   struct winsize size = { rows, cols, 0, 0};
 
@@ -249,8 +249,8 @@ emacs_module_init (struct emacs_runtime *ert)
   emacs_value fun;
 
   fun = env->make_function (env,
-                            0,
-                            0,
+                            2,
+                            2,
                             Fvterm_new,
                             "Allocates a new vterm.",
                             NULL
