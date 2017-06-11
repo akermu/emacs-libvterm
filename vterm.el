@@ -9,7 +9,8 @@
 (defvar vterm-keymap-exceptions '("C-x" "M-o" "C-u")
   "Exceptions for vterm-keymap.
 
-If you use a kbd with a prefix-key that prefix-key cannot be send to the terminal.")
+If you use a keybinding with a prefix-key that prefix-key cannot
+be send to the terminal.")
 
 (defvar vterm-keymap (let ((keymap (make-sparse-keymap)))
                        (dolist (exception vterm-keymap-exceptions)
