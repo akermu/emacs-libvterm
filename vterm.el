@@ -5,27 +5,18 @@
   "Pointer to struct Term.")
 (make-variable-buffer-local 'term)
 
-;; TODO Remove this horrible keybinding hack
-
 (defvar vterm-keymap-exceptions '("C-x" "M-o" "C-u")
   "Exceptions for vterm-keymap.
 
 If you use a keybinding with a prefix-key that prefix-key cannot
 be send to the terminal.")
 
-(defvar vterm-keymap (let ((keymap (make-sparse-keymap)))
-                       (dolist (exception vterm-keymap-exceptions)
-                         (define-key keymap (kbd exception) (key-binding exception)))
-                       (define-key keymap [t] #'vterm-self-insert)
-                       keymap)
-  "Keymap for vterm.")
-
 (define-derived-mode vterm-mode fundamental-mode "VTerm"
-  "TODO: Documentation."
-  (set-transient-map vterm-keymap #'vterm-true))
+  "TODO: Documentation.")
 
-(defun vterm-true ()
-  t)
+(dolist (exception vterm-keymap-exceptions)
+  (define-key vterm-mode-map (kbd exception) (key-binding exception)))
+(define-key vterm-mode-map [t] #'vterm-self-insert)
 
 (defun vterm-self-insert ()
   (interactive)
@@ -33,10 +24,11 @@ be send to the terminal.")
          (shift (memq 'shift modifiers))
          (meta (memq 'meta modifiers))
          (ctrl (memq 'control modifiers)))
-    (message "%s" modifiers)
     (when-let ((key (key-description (vector (event-basic-type last-input-event))))
                (inhibit-redisplay t)
                (inhibit-read-only t))
+      (when (equal modifiers '(shift))
+        (setq key (upcase key)))
       (vterm-update vterm-term key shift meta ctrl))))
 
 (defun vterm-create ()
