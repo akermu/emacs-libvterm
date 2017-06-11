@@ -20,4 +20,4 @@ all: vterm-module.so
 	$(CC) $(CFLAGS) -I$(EMACS-SRC)/src -I/ -fPIC -c $<
 
 run: vterm-module.so
-	emacs -L $(ROOT) --eval "(require 'vterm)"
+	emacs -Q -L $(ROOT) --eval "(require 'vterm)"
