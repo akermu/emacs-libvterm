@@ -39,6 +39,8 @@ be send to the terminal.")
       (vterm-mode)
       (setq vterm-term (vterm-new (window-height) (window-width))
             buffer-read-only t)
+      (setq-local scroll-conservatively 101)
+      (setq-local scroll-margin 0)
       (run-with-timer .1 .1 #'vterm-run-timer buffer))))
 
 (defun vterm-run-timer (buffer)
