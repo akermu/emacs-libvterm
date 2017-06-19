@@ -1,11 +1,12 @@
 (require 'vterm-module)
 (require 'subr-x)
+(require 'cl-lib)
 
 (defvar vterm-term nil
   "Pointer to struct Term.")
 (make-variable-buffer-local 'term)
 
-(defvar vterm-keymap-exceptions '("C-x" "M-o" "C-u" "C-g")
+(defvar vterm-keymap-exceptions '("C-x" "C-u" "C-g" "C-h" "M-o")
   "Exceptions for vterm-keymap.
 
 If you use a keybinding with a prefix-key that prefix-key cannot
@@ -14,9 +15,15 @@ be send to the terminal.")
 (define-derived-mode vterm-mode fundamental-mode "VTerm"
   "TODO: Documentation.")
 
-(dolist (exception vterm-keymap-exceptions)
-  (define-key vterm-mode-map (kbd exception) (key-binding (kbd exception))))
 (define-key vterm-mode-map [t] #'vterm-self-insert)
+;; TODO: Workaround for meta prefix chars
+(dolist (char (cl-loop for char from ?a to ?z
+                       collect char))
+  (let ((key (concat "M-" (char-to-string char))))
+    (unless (cl-member key vterm-keymap-exceptions)
+      (define-key vterm-mode-map (kbd key) #'vterm-self-insert))))
+(dolist (exception vterm-keymap-exceptions)
+  (define-key vterm-mode-map (kbd exception) nil))
 
 (defun vterm-self-insert ()
   (interactive)
