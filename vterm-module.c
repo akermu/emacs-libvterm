@@ -49,7 +49,7 @@ provide (emacs_env *env, const char *feature)
 }
 
 static int
-string_len (emacs_env *env, emacs_value string)
+string_bytes (emacs_env *env, emacs_value string)
 {
   ptrdiff_t size = 0;
   env->copy_string_contents (env, string, NULL, &size);
@@ -219,7 +219,7 @@ Fvterm_update(emacs_env *env, ptrdiff_t nargs, emacs_value args[], void *data) {
   struct Term *term = env->get_user_ptr(env, args[0]);
   // Process keys
   if (nargs > 1) {
-    ptrdiff_t len = string_len(env, args[1]);
+    ptrdiff_t len = string_bytes(env, args[1]);
     char key[len];
     env->copy_string_contents(env, args[1], key, &len);
     VTermModifier modifier = VTERM_MOD_NONE;
