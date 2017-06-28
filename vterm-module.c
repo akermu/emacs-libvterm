@@ -6,6 +6,7 @@
 #include <unistd.h>
 #include <pty.h>
 #include <fcntl.h>
+#include <stdio.h>
 
 #define MAX(x, y) (((x) > (y)) ? (x) : (y))
 
@@ -48,6 +49,22 @@ provide (emacs_env *env, const char *feature)
   env->funcall (env, Qprovide, 1, args);
 }
 
+
+static void
+message (emacs_env *env, char *message) {
+  emacs_value Fmessage = env->intern(env, "message");
+  emacs_value string = env->make_string(env, message, strlen(message));
+  env->funcall(env, Fmessage, 1, (emacs_value[]){string});
+}
+
+static void
+message_value (emacs_env *env, emacs_value value) {
+  emacs_value Fmessage = env->intern(env, "message");
+  char *message = "Value: %S";
+  emacs_value string = env->make_string(env, message, strlen(message));
+  env->funcall(env, Fmessage, 2, (emacs_value[]){string, value});
+}
+
 static int
 string_bytes (emacs_env *env, emacs_value string)
 {
@@ -56,12 +73,60 @@ string_bytes (emacs_env *env, emacs_value string)
   return size;
 }
 
-static void
-message (emacs_env *env, char *message) {
-  emacs_value Fmessage = env->intern(env, "message");
-  emacs_value string = env->make_string(env, message, strlen(message));
-  env->funcall(env, Fmessage, 1, (emacs_value[]){string});
+static emacs_value
+string_length (emacs_env *env, emacs_value string)
+{
+  emacs_value Flength = env->intern(env, "length");
+  return env->funcall(env, Flength, 1, (emacs_value[]){string});
 }
+
+static emacs_value
+list (emacs_env *env, emacs_value *elements, ptrdiff_t len) {
+  emacs_value Flist = env->intern(env, "list");
+  return env->funcall(env, Flist, len, elements);
+}
+
+static void
+put_text_property (emacs_env *env, emacs_value property, emacs_value value, emacs_value string) {
+  emacs_value Fput_text_property = env->intern (env, "put-text-property");
+  emacs_value start = env->make_integer (env, 0);
+  emacs_value end = string_length(env, string);
+
+  env->funcall (env, Fput_text_property, 5, (emacs_value[]){start, end, property, value, string});
+}
+
+/*
+ * Color must be a string #RGB
+ */
+static void
+color_text (emacs_env *env, emacs_value string, emacs_value color) {
+  emacs_value foreground = env->intern (env, ":foreground");
+  emacs_value t = env->intern (env, "t");
+  emacs_value face = env->intern (env, "font-lock-face");
+  emacs_value value;
+  value = list (env, (emacs_value[]){foreground, color}, 2);
+  value = list (env, (emacs_value[]){t, value}, 2);
+  value = list (env, (emacs_value[]){value}, 1);
+
+  put_text_property (env, face, value, string);
+}
+
+static void
+byte_to_hex (uint8_t byte, char *hex) {
+  snprintf(hex, 3, "%.2X", byte);
+}
+
+static emacs_value
+color_to_rgb_string (emacs_env *env, VTermColor color) {
+  char buffer[8];
+  buffer[0] = '#';
+  buffer[7] = '\0';
+  byte_to_hex(color.red, buffer + 1);
+  byte_to_hex(color.green, buffer + 3);
+  byte_to_hex(color.blue, buffer + 5);
+
+  return env->make_string (env, buffer, 7);
+};
 
 static void
 erase_buffer (emacs_env *env) {
