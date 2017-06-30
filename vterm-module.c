@@ -99,12 +99,13 @@ put_text_property (emacs_env *env, emacs_value property, emacs_value value, emac
  * Color must be a string #RGB
  */
 static void
-color_text (emacs_env *env, emacs_value string, emacs_value color) {
+color_text (emacs_env *env, emacs_value string, emacs_value fg, emacs_value bg) {
   emacs_value foreground = env->intern (env, ":foreground");
+  emacs_value background = env->intern (env, ":background");
   emacs_value t = env->intern (env, "t");
   emacs_value face = env->intern (env, "font-lock-face");
   emacs_value value;
-  value = list (env, (emacs_value[]){foreground, color}, 2);
+  value = list (env, (emacs_value[]){foreground, fg, background, bg}, 4);
   value = list (env, (emacs_value[]){t, value}, 2);
   value = list (env, (emacs_value[]){value}, 1);
 
@@ -135,13 +136,9 @@ erase_buffer (emacs_env *env) {
 }
 
 static void
-insert_line (emacs_env *env, char *line) {
+insert (emacs_env *env, emacs_value string) {
   emacs_value Finsert = env->intern(env, "insert");
-  emacs_value Sline = env->make_string(env, line, strlen(line));
-  env->funcall(env, Finsert, 1, (emacs_value[]){Sline});
-
-  emacs_value Snew_line = env->make_string(env, "\n", 1);
-  env->funcall(env, Finsert, 1, (emacs_value[]){Snew_line});
+  env->funcall(env, Finsert, 1, (emacs_value[]){string});
 }
 
 static void
@@ -160,19 +157,26 @@ vterm_redraw (VTerm *vt, emacs_env *env) {
 
   erase_buffer(env);
 
-  char line[cols + 1];
   for (i = 0; i < rows; i++) {
     for (j = 0; j < cols; j++) {
       VTermPos pos = { .row = i, .col = j};
       VTermScreenCell cell;
       vterm_screen_get_cell(screen, pos, &cell);
+
+      char c;
       if (cell.chars[0] == '\0')
-        line[j] = ' ';
+        c = ' ';
       else
-        line[j] = cell.chars[0];
+        c = cell.chars[0];
+
+      emacs_value string = env->make_string (env, &c, 1);
+      emacs_value fg = color_to_rgb_string(env, cell.fg);
+      emacs_value bg = color_to_rgb_string(env, cell.bg);
+      color_text(env, string, fg, bg);
+      insert (env, string);
     }
-    line[cols] = '\0';
-    insert_line(env, line);
+
+    insert(env, env->make_string (env, "\n", 1));
   }
 
   VTermState *state = vterm_obtain_state(vt);
