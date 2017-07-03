@@ -1,4 +1,4 @@
-#include <emacs-module.h>
+#include "vterm-module.h"
 #include <fcntl.h>
 #include <pty.h>
 #include <stdio.h>
@@ -9,14 +9,6 @@
 #include <vterm.h>
 
 #define MAX(x, y) (((x) > (y)) ? (x) : (y))
-
-/* Declare mandatory GPL symbol.  */
-int plugin_is_GPL_compatible;
-
-struct Term {
-  VTerm *vt;
-  int masterfd;
-};
 
 /* Bind NAME to FUN.  */
 static void bind_function(emacs_env *env, const char *name, emacs_value Sfun) {
