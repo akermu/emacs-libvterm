@@ -15,9 +15,9 @@ static void message_value(emacs_env *env, emacs_value value);
 static int string_bytes(emacs_env *env, emacs_value string);
 static emacs_value string_length(emacs_env *env, emacs_value string);
 static emacs_value list(emacs_env *env, emacs_value *elements, ptrdiff_t len);
-static void put_text_property(emacs_env *env, emacs_value property,
-                              emacs_value value, emacs_value string);
-static void color_text(emacs_env *env, emacs_value string, emacs_value fg,
+static emacs_value propertize(emacs_env *env, emacs_value string,
+                              emacs_value prop, emacs_value properties);
+static emacs_value color_text(emacs_env *env, emacs_value string, emacs_value fg,
                        emacs_value bg);
 static void byte_to_hex(uint8_t byte, char *hex);
 static emacs_value color_to_rgb_string(emacs_env *env, VTermColor color);

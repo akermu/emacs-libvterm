@@ -66,31 +66,24 @@ static emacs_value list(emacs_env *env, emacs_value *elements, ptrdiff_t len) {
   return env->funcall(env, Flist, len, elements);
 }
 
-static void put_text_property(emacs_env *env, emacs_value property,
-                              emacs_value value, emacs_value string) {
-  emacs_value Fput_text_property = env->intern(env, "put-text-property");
-  emacs_value start = env->make_integer(env, 0);
-  emacs_value end = string_length(env, string);
+static emacs_value propertize(emacs_env *env, emacs_value string,
+                              emacs_value prop, emacs_value properties) {
+  emacs_value Fpropertize = env->intern(env, "propertize");
 
-  env->funcall(env, Fput_text_property, 5,
-               (emacs_value[]){start, end, property, value, string});
+  return env->funcall(env, Fpropertize, 3, (emacs_value[]){string, prop, properties});
 }
 
 /*
  * Color must be a string #RGB
  */
-static void color_text(emacs_env *env, emacs_value string, emacs_value fg,
+static emacs_value color_text(emacs_env *env, emacs_value string, emacs_value fg,
                        emacs_value bg) {
   emacs_value foreground = env->intern(env, ":foreground");
   emacs_value background = env->intern(env, ":background");
-  emacs_value t = env->intern(env, "t");
   emacs_value face = env->intern(env, "font-lock-face");
-  emacs_value value;
-  value = list(env, (emacs_value[]){foreground, fg, background, bg}, 4);
-  value = list(env, (emacs_value[]){t, value}, 2);
-  value = list(env, (emacs_value[]){value}, 1);
+  emacs_value properties = list(env, (emacs_value[]){foreground, fg, background, bg}, 4);
 
-  put_text_property(env, face, value, string);
+  return propertize(env, string, face, properties);
 }
 
 static void byte_to_hex(uint8_t byte, char *hex) {
@@ -147,8 +140,8 @@ static void vterm_redraw(VTerm *vt, emacs_env *env) {
       emacs_value string = env->make_string(env, &c, 1);
       emacs_value fg = color_to_rgb_string(env, cell.fg);
       emacs_value bg = color_to_rgb_string(env, cell.bg);
-      color_text(env, string, fg, bg);
-      insert(env, string);
+      emacs_value colored_text = color_text(env, string, fg, bg);
+      insert(env, colored_text);
     }
 
     insert(env, env->make_string(env, "\n", 1));
