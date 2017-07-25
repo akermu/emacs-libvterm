@@ -13,7 +13,12 @@ If you use a keybinding with a prefix-key that prefix-key cannot
 be send to the terminal.")
 
 (define-derived-mode vterm-mode fundamental-mode "VTerm"
-  "TODO: Documentation.")
+  "TODO: Documentation."
+  (buffer-disable-undo)
+  (setq vterm-term (vterm-new (window-height) (window-width))
+        buffer-read-only t)
+  (setq-local scroll-conservatively 101)
+  (setq-local scroll-margin 0))
 
 ;; Keybindings
 (define-key vterm-mode-map [t] #'vterm-self-insert)
@@ -45,10 +50,6 @@ be send to the terminal.")
     (pop-to-buffer buffer)
     (with-current-buffer buffer
       (vterm-mode)
-      (setq vterm-term (vterm-new (window-height) (window-width))
-            buffer-read-only t)
-      (setq-local scroll-conservatively 101)
-      (setq-local scroll-margin 0)
       (run-with-timer 0 .1 #'vterm-run-timer buffer))))
 
 (defun vterm-run-timer (buffer)
