@@ -193,6 +193,15 @@ static emacs_value Fvterm_new(emacs_env *env, ptrdiff_t nargs,
       /* c_cc later */
   };
 
+  termios.c_iflag |= IUTF8;
+  termios.c_oflag |= NL0;
+  termios.c_oflag |= CR0;
+  termios.c_oflag |= BS0;
+  termios.c_oflag |= VT0;
+  termios.c_oflag |= FF0;
+  termios.c_lflag |= ECHOCTL;
+  termios.c_lflag |= ECHOKE;
+
   cfsetspeed(&termios, 38400);
 
   termios.c_cc[VINTR] = 0x1f & 'C';
@@ -216,6 +225,7 @@ static emacs_value Fvterm_new(emacs_env *env, ptrdiff_t nargs,
   fcntl(term->masterfd, F_SETFL, fcntl(term->masterfd, F_GETFL) | O_NONBLOCK);
 
   if (pid == 0) {
+    setenv("TERM", "xterm", 1);
     char *shell = getenv("SHELL");
     char *args[2] = {shell, NULL};
     execvp(shell, args);
