@@ -49,7 +49,7 @@ be send to the terminal.")
             buffer-read-only t)
       (setq-local scroll-conservatively 101)
       (setq-local scroll-margin 0)
-      (run-with-timer .1 .1 #'vterm-run-timer buffer))))
+      (run-with-timer 0 .1 #'vterm-run-timer buffer))))
 
 (defun vterm-run-timer (buffer)
   (interactive)
