@@ -271,10 +271,8 @@ static emacs_value Fvterm_update(emacs_env *env, ptrdiff_t nargs,
   int len;
   if ((len = read(term->masterfd, bytes, 4096)) > 0) {
     vterm_input_write(term->vt, bytes, len);
+    vterm_redraw(term->vt, env);
   };
-
-  vterm_redraw(term->vt, env);
-  // TODO: Update screen
 
   return env->make_integer(env, 0);
 }
