@@ -70,18 +70,20 @@ static emacs_value propertize(emacs_env *env, emacs_value string,
                               emacs_value prop, emacs_value properties) {
   emacs_value Fpropertize = env->intern(env, "propertize");
 
-  return env->funcall(env, Fpropertize, 3, (emacs_value[]){string, prop, properties});
+  return env->funcall(env, Fpropertize, 3,
+                      (emacs_value[]){string, prop, properties});
 }
 
 /*
  * Color must be a string #RGB
  */
-static emacs_value color_text(emacs_env *env, emacs_value string, emacs_value fg,
-                       emacs_value bg) {
+static emacs_value color_text(emacs_env *env, emacs_value string,
+                              emacs_value fg, emacs_value bg) {
   emacs_value foreground = env->intern(env, ":foreground");
   emacs_value background = env->intern(env, ":background");
   emacs_value face = env->intern(env, "font-lock-face");
-  emacs_value properties = list(env, (emacs_value[]){foreground, fg, background, bg}, 4);
+  emacs_value properties =
+      list(env, (emacs_value[]){foreground, fg, background, bg}, 4);
 
   return propertize(env, string, face, properties);
 }
