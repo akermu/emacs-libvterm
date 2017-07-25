@@ -77,15 +77,38 @@ static emacs_value propertize(emacs_env *env, emacs_value string,
 /*
  * Color must be a string #RGB
  */
-static emacs_value color_text(emacs_env *env, emacs_value string,
-                              emacs_value fg, emacs_value bg) {
-  emacs_value foreground = env->intern(env, ":foreground");
-  emacs_value background = env->intern(env, ":background");
-  emacs_value face = env->intern(env, "font-lock-face");
-  emacs_value properties =
-      list(env, (emacs_value[]){foreground, fg, background, bg}, 4);
+static emacs_value render_cell(emacs_env *env, VTermScreenCell cell) {
+  char c = cell.chars[0] == '\0' ? ' ' : cell.chars[0];
+  emacs_value character = env->make_string(env, &c, 1);
 
-  return propertize(env, string, face, properties);
+  emacs_value t = env->intern(env, "t");
+  emacs_value nil = env->intern(env, "nil");
+
+  emacs_value foreground = color_to_rgb_string(env, cell.fg);
+  emacs_value background = color_to_rgb_string(env, cell.bg);
+  emacs_value bold = cell.attrs.bold ? t : nil;
+  emacs_value underline = cell.attrs.underline ? t : nil;
+  emacs_value italic = cell.attrs.italic ? t : nil;
+  emacs_value reverse = cell.attrs.reverse ? t : nil;
+  emacs_value strike = cell.attrs.strike ? t : nil;
+
+  // TODO: Blink, font, dwl, dhl is missing
+  emacs_value Qforeground = env->intern(env, ":foreground");
+  emacs_value Qbackground = env->intern(env, ":background");
+  emacs_value Qbold = env->intern(env, ":bold");
+  emacs_value Qunderline = env->intern(env, ":underline");
+  emacs_value Qitalic = env->intern(env, ":italic");
+  emacs_value Qreverse = env->intern(env, ":inverse-video");
+  emacs_value Qstrike = env->intern(env, ":strike-through");
+
+  emacs_value Qface = env->intern(env, "font-lock-face");
+  emacs_value properties = list(
+      env, (emacs_value[]){Qforeground, foreground, Qbackground, background,
+                           Qbold, bold, Qunderline, underline, Qitalic, italic,
+                           Qreverse, reverse, Qstrike, strike},
+      14);
+
+  return propertize(env, character, Qface, properties);
 }
 
 static void byte_to_hex(uint8_t byte, char *hex) {
@@ -133,17 +156,8 @@ static void vterm_redraw(VTerm *vt, emacs_env *env) {
       VTermScreenCell cell;
       vterm_screen_get_cell(screen, pos, &cell);
 
-      char c;
-      if (cell.chars[0] == '\0')
-        c = ' ';
-      else
-        c = cell.chars[0];
-
-      emacs_value string = env->make_string(env, &c, 1);
-      emacs_value fg = color_to_rgb_string(env, cell.fg);
-      emacs_value bg = color_to_rgb_string(env, cell.bg);
-      emacs_value colored_text = color_text(env, string, fg, bg);
-      insert(env, colored_text);
+      emacs_value character = render_cell(env, cell);
+      insert(env, character);
     }
 
     insert(env, env->make_string(env, "\n", 1));
