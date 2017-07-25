@@ -239,7 +239,7 @@ static void process_key(struct Term *term, char *key, VTermModifier modifier) {
   } else if (strcmp(key, "<tab>") == 0) {
     vterm_keyboard_key(term->vt, VTERM_KEY_TAB, modifier);
   } else if (strcmp(key, "SPC") == 0) {
-    vterm_keyboard_unichar(term->vt, " "[0], modifier);
+    vterm_keyboard_unichar(term->vt, ' ', modifier);
   } else if (strlen(key) == 1) {
     vterm_keyboard_unichar(term->vt, key[0], modifier);
   }
