@@ -15,13 +15,14 @@ be send to the terminal.")
 (define-derived-mode vterm-mode fundamental-mode "VTerm"
   "TODO: Documentation.")
 
+;; Keybindings
 (define-key vterm-mode-map [t] #'vterm-self-insert)
-;; TODO: Workaround for meta prefix chars
-(dolist (char (cl-loop for char from ?a to ?z
-                       collect char))
-  (let ((key (concat "M-" (char-to-string char))))
-    (unless (cl-member key vterm-keymap-exceptions)
-      (define-key vterm-mode-map (kbd key) #'vterm-self-insert))))
+(dolist (prefix '("M-" "C-"))
+  (dolist (char (cl-loop for char from ?a to ?z
+                         collect char))
+    (let ((key (concat prefix (char-to-string char))))
+      (unless (cl-member key vterm-keymap-exceptions)
+        (define-key vterm-mode-map (kbd key) #'vterm-self-insert)))))
 (dolist (exception vterm-keymap-exceptions)
   (define-key vterm-mode-map (kbd exception) nil))
 
