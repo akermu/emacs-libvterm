@@ -1,6 +1,7 @@
 #include "vterm-module.h"
 #include <fcntl.h>
 #include <pty.h>
+#include <signal.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <string.h>
@@ -348,6 +349,15 @@ static emacs_value Fvterm_update(emacs_env *env, ptrdiff_t nargs,
   return env->make_integer(env, 0);
 }
 
+static emacs_value Fvterm_kill(emacs_env *env, ptrdiff_t nargs,
+                               emacs_value args[], void *data) {
+  struct Term *term = env->get_user_ptr(env, args[0]);
+  kill(term->pid, SIGKILL);
+  int status;
+  waitpid(term->pid, &status, 0);
+  return env->intern(env, "nil");
+}
+
 int emacs_module_init(struct emacs_runtime *ert) {
   emacs_env *env = ert->get_environment(ert);
   emacs_value fun;
@@ -357,8 +367,12 @@ int emacs_module_init(struct emacs_runtime *ert) {
   bind_function(env, "vterm-new", fun);
 
   fun = env->make_function(env, 1, 5, Fvterm_update,
-                           "Process io and updates the screen.", NULL);
+                           "Process io and update the screen.", NULL);
   bind_function(env, "vterm-update", fun);
+
+  fun = env->make_function(env, 1, 1, Fvterm_kill,
+                           "Kill the the shell process.", NULL);
+  bind_function(env, "vterm-kill", fun);
 
   provide(env, "vterm-module");
 

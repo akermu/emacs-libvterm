@@ -34,4 +34,6 @@ static emacs_value Fvterm_new(emacs_env *env, ptrdiff_t nargs,
 static void process_key(struct Term *term, char *key, VTermModifier modifier);
 static emacs_value Fvterm_update(emacs_env *env, ptrdiff_t nargs,
                                  emacs_value args[], void *data);
+static emacs_value Fvterm_kill(emacs_env *env, ptrdiff_t nargs,
+                               emacs_value args[], void *data);
 int emacs_module_init(struct emacs_runtime *ert);

@@ -68,6 +68,7 @@ be send to the terminal.")
 
 (defun vterm-kill-buffer-hook ()
   (when (eq major-mode 'vterm-mode)
-    (cancel-timer vterm-timer)))
+    (cancel-timer vterm-timer)
+    (vterm-kill vterm-term)))
 
 (provide 'vterm)
