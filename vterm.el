@@ -4,7 +4,11 @@
 
 (defvar vterm-term nil
   "Pointer to struct Term.")
-(make-variable-buffer-local 'term)
+(make-variable-buffer-local 'vterm-term)
+
+(defvar vterm-timer nil
+  "Timer to update the term.")
+(make-variable-buffer-local 'vterm-timer)
 
 (defvar vterm-keymap-exceptions '("C-x" "C-u" "C-g" "C-h" "M-o")
   "Exceptions for vterm-keymap.
@@ -18,7 +22,8 @@ be send to the terminal.")
   (setq vterm-term (vterm-new (window-height) (window-width))
         buffer-read-only t)
   (setq-local scroll-conservatively 101)
-  (setq-local scroll-margin 0))
+  (setq-local scroll-margin 0)
+  (add-hook 'kill-buffer-hook #'vterm-kill-buffer-hook t t))
 
 ;; Keybindings
 (define-key vterm-mode-map [t] #'vterm-self-insert)
@@ -50,7 +55,7 @@ be send to the terminal.")
     (pop-to-buffer buffer)
     (with-current-buffer buffer
       (vterm-mode)
-      (run-with-timer 0 .1 #'vterm-run-timer buffer))))
+      (setq vterm-timer (run-with-timer 0 .1 #'vterm-run-timer buffer)))))
 
 (defun vterm-run-timer (buffer)
   (interactive)
@@ -58,5 +63,9 @@ be send to the terminal.")
         (inhibit-read-only t))
     (with-current-buffer buffer
       (vterm-update vterm-term))))
+
+(defun vterm-kill-buffer-hook ()
+  (when (eq major-mode 'vterm-mode)
+    (cancel-timer vterm-timer)))
 
 (provide 'vterm)
