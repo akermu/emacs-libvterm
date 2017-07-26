@@ -5,6 +5,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <sys/ioctl.h>
+#include <sys/wait.h>
 #include <termios.h>
 #include <unistd.h>
 #include <vterm.h>
@@ -273,11 +274,11 @@ static emacs_value Fvterm_new(emacs_env *env, ptrdiff_t nargs,
   termios.c_cc[VMIN] = 1;
   termios.c_cc[VTIME] = 0;
 
-  pid_t pid = forkpty(&term->masterfd, NULL, &termios, &size);
+  term->pid = forkpty(&term->masterfd, NULL, &termios, &size);
 
   fcntl(term->masterfd, F_SETFL, fcntl(term->masterfd, F_GETFL) | O_NONBLOCK);
 
-  if (pid == 0) {
+  if (term->pid == 0) {
     setenv("TERM", "xterm", 1);
     char *shell = getenv("SHELL");
     char *args[2] = {shell, NULL};
@@ -313,6 +314,13 @@ static void process_key(struct Term *term, char *key, VTermModifier modifier) {
 static emacs_value Fvterm_update(emacs_env *env, ptrdiff_t nargs,
                                  emacs_value args[], void *data) {
   struct Term *term = env->get_user_ptr(env, args[0]);
+
+  // Check if exited
+  int status;
+  if (waitpid(term->pid, &status, WNOHANG) > 0) {
+    return env->intern(env, "nil");
+  }
+
   // Process keys
   if (nargs > 1) {
     ptrdiff_t len = string_bytes(env, args[1]);

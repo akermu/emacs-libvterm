@@ -62,7 +62,9 @@ be send to the terminal.")
   (let ((inhibit-redisplay t)
         (inhibit-read-only t))
     (with-current-buffer buffer
-      (vterm-update vterm-term))))
+      (unless (vterm-update vterm-term)
+        (cancel-timer vterm-timer)
+        (insert "\nProcess exited!\n\n")))))
 
 (defun vterm-kill-buffer-hook ()
   (when (eq major-mode 'vterm-mode)

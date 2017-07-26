@@ -6,6 +6,7 @@ int plugin_is_GPL_compatible;
 struct Term {
   VTerm *vt;
   int masterfd;
+  pid_t pid;
 };
 
 static void bind_function(emacs_env *env, const char *name, emacs_value Sfun);
