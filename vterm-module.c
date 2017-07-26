@@ -1,6 +1,7 @@
 #include "vterm-module.h"
 #include <fcntl.h>
 #include <pty.h>
+#include <stdbool.h>
 #include <stdio.h>
 #include <string.h>
 #include <sys/ioctl.h>
@@ -66,31 +67,33 @@ static emacs_value list(emacs_env *env, emacs_value *elements, ptrdiff_t len) {
   return env->funcall(env, Flist, len, elements);
 }
 
-static emacs_value propertize(emacs_env *env, emacs_value string,
-                              emacs_value prop, emacs_value properties) {
-  emacs_value Fpropertize = env->intern(env, "propertize");
+static void put_text_property(emacs_env *env, emacs_value string,
+                              emacs_value property, emacs_value value) {
+  emacs_value Fput_text_property = env->intern(env, "put-text-property");
+  emacs_value start = env->make_integer(env, 0);
+  emacs_value end = string_length(env, string);
 
-  return env->funcall(env, Fpropertize, 3,
-                      (emacs_value[]){string, prop, properties});
+  env->funcall(env, Fput_text_property, 5,
+               (emacs_value[]){start, end, property, value, string});
 }
 
 /*
  * Color must be a string #RGB
  */
-static emacs_value render_cell(emacs_env *env, VTermScreenCell cell) {
-  char c = cell.chars[0] == '\0' ? ' ' : cell.chars[0];
-  emacs_value character = env->make_string(env, &c, 1);
+static emacs_value render_text(emacs_env *env, char *buffer, int len,
+                               VTermScreenCell *cell) {
+  emacs_value text = env->make_string(env, buffer, len);
 
   emacs_value t = env->intern(env, "t");
   emacs_value nil = env->intern(env, "nil");
 
-  emacs_value foreground = color_to_rgb_string(env, cell.fg);
-  emacs_value background = color_to_rgb_string(env, cell.bg);
-  emacs_value bold = cell.attrs.bold ? t : nil;
-  emacs_value underline = cell.attrs.underline ? t : nil;
-  emacs_value italic = cell.attrs.italic ? t : nil;
-  emacs_value reverse = cell.attrs.reverse ? t : nil;
-  emacs_value strike = cell.attrs.strike ? t : nil;
+  emacs_value foreground = color_to_rgb_string(env, cell->fg);
+  emacs_value background = color_to_rgb_string(env, cell->bg);
+  emacs_value bold = cell->attrs.bold ? t : nil;
+  emacs_value underline = cell->attrs.underline ? t : nil;
+  emacs_value italic = cell->attrs.italic ? t : nil;
+  emacs_value reverse = cell->attrs.reverse ? t : nil;
+  emacs_value strike = cell->attrs.strike ? t : nil;
 
   // TODO: Blink, font, dwl, dhl is missing
   emacs_value Qforeground = env->intern(env, ":foreground");
@@ -108,7 +111,9 @@ static emacs_value render_cell(emacs_env *env, VTermScreenCell cell) {
                            Qreverse, reverse, Qstrike, strike},
       14);
 
-  return propertize(env, character, Qface, properties);
+  put_text_property(env, text, Qface, properties);
+
+  return text;
 }
 
 static void byte_to_hex(uint8_t byte, char *hex) {
@@ -142,6 +147,22 @@ static void goto_char(emacs_env *env, int pos) {
   env->funcall(env, Fgoto_char, 1, (emacs_value[]){point});
 }
 
+static bool compare_cells(VTermScreenCell *a, VTermScreenCell *b) {
+  bool equal = true;
+  equal = equal && (a->fg.red == b->fg.red);
+  equal = equal && (a->fg.green == b->fg.green);
+  equal = equal && (a->fg.blue == b->fg.blue);
+  equal = equal && (a->bg.red == b->bg.red);
+  equal = equal && (a->bg.green == b->bg.green);
+  equal = equal && (a->bg.blue == b->bg.blue);
+  equal = equal && (a->attrs.bold == b->attrs.bold);
+  equal = equal && (a->attrs.underline == b->attrs.underline);
+  equal = equal && (a->attrs.italic == b->attrs.italic);
+  equal = equal && (a->attrs.reverse == b->attrs.reverse);
+  equal = equal && (a->attrs.strike == b->attrs.strike);
+  return equal;
+}
+
 static void vterm_redraw(VTerm *vt, emacs_env *env) {
   int i, j;
   int rows, cols;
@@ -150,18 +171,34 @@ static void vterm_redraw(VTerm *vt, emacs_env *env) {
 
   erase_buffer(env);
 
+  char buffer[rows * cols];
+  int length = 0;
+  VTermScreenCell cell;
+  VTermScreenCell lastCell;
+  VTermPos first = {.row = 0, .col = 0};
+  vterm_screen_get_cell(screen, first, &lastCell);
+
   for (i = 0; i < rows; i++) {
     for (j = 0; j < cols; j++) {
       VTermPos pos = {.row = i, .col = j};
-      VTermScreenCell cell;
       vterm_screen_get_cell(screen, pos, &cell);
 
-      emacs_value character = render_cell(env, cell);
-      insert(env, character);
+      if (!compare_cells(&cell, &lastCell)) {
+        emacs_value text = render_text(env, buffer, length, &lastCell);
+        insert(env, text);
+        length = 0;
+      }
+
+      lastCell = cell;
+      buffer[length] = cell.chars[0] == '\0' ? ' ' : cell.chars[0];
+      length++;
     }
 
-    insert(env, env->make_string(env, "\n", 1));
+    buffer[length] = '\n';
+    length++;
   }
+  emacs_value text = render_text(env, buffer, length, &lastCell);
+  insert(env, text);
 
   VTermState *state = vterm_obtain_state(vt);
   VTermPos pos;
