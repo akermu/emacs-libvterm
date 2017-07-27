@@ -88,28 +88,30 @@ static emacs_value render_text(emacs_env *env, char *buffer, int len,
 
   emacs_value t = env->intern(env, "t");
   emacs_value nil = env->intern(env, "nil");
+  emacs_value Qbold = env->intern(env, "bold");
+  emacs_value Qitalic = env->intern(env, "italic");
 
   emacs_value foreground = color_to_rgb_string(env, cell->fg);
   emacs_value background = color_to_rgb_string(env, cell->bg);
-  emacs_value bold = cell->attrs.bold ? t : nil;
+  emacs_value bold = cell->attrs.bold ? Qbold : nil;
   emacs_value underline = cell->attrs.underline ? t : nil;
-  emacs_value italic = cell->attrs.italic ? t : nil;
+  emacs_value italic = cell->attrs.italic ? Qitalic : nil;
   emacs_value reverse = cell->attrs.reverse ? t : nil;
   emacs_value strike = cell->attrs.strike ? t : nil;
 
   // TODO: Blink, font, dwl, dhl is missing
   emacs_value Qforeground = env->intern(env, ":foreground");
   emacs_value Qbackground = env->intern(env, ":background");
-  emacs_value Qbold = env->intern(env, ":bold");
+  emacs_value Qweight = env->intern(env, ":weight");
   emacs_value Qunderline = env->intern(env, ":underline");
-  emacs_value Qitalic = env->intern(env, ":italic");
+  emacs_value Qslant = env->intern(env, ":slant");
   emacs_value Qreverse = env->intern(env, ":inverse-video");
   emacs_value Qstrike = env->intern(env, ":strike-through");
 
   emacs_value Qface = env->intern(env, "font-lock-face");
   emacs_value properties = list(
       env, (emacs_value[]){Qforeground, foreground, Qbackground, background,
-                           Qbold, bold, Qunderline, underline, Qitalic, italic,
+                           Qweight, bold, Qunderline, underline, Qslant, italic,
                            Qreverse, reverse, Qstrike, strike},
       14);
 
