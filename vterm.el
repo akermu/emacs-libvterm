@@ -23,7 +23,8 @@ be send to the terminal.")
         buffer-read-only t)
   (setq-local scroll-conservatively 101)
   (setq-local scroll-margin 0)
-  (add-hook 'kill-buffer-hook #'vterm-kill-buffer-hook t t))
+  (add-hook 'kill-buffer-hook #'vterm-kill-buffer-hook t t)
+  (add-hook 'window-size-change-functions #'vterm-window-size-change t t))
 
 ;; Keybindings
 (define-key vterm-mode-map [t] #'vterm-self-insert)
@@ -70,5 +71,12 @@ be send to the terminal.")
   (when (eq major-mode 'vterm-mode)
     (cancel-timer vterm-timer)
     (vterm-kill vterm-term)))
+
+(defun vterm-window-size-change (frame)
+  (dolist (window (window-list frame 1))
+    (let ((buffer (window-buffer window)))
+      (with-current-buffer buffer
+        (when (eq major-mode 'vterm-mode)
+          (vterm-set-size vterm-term (window-height) (window-width)))))))
 
 (provide 'vterm)

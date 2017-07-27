@@ -173,7 +173,7 @@ static void vterm_redraw(VTerm *vt, emacs_env *env) {
 
   erase_buffer(env);
 
-  char buffer[rows * cols];
+  char buffer[(rows + 1) * cols];
   int length = 0;
   VTermScreenCell cell;
   VTermScreenCell lastCell;
@@ -208,7 +208,7 @@ static void vterm_redraw(VTerm *vt, emacs_env *env) {
 
   // row * (width + 1) because of newline character
   // col + 1 because (goto-char 1) sets point to first position
-  int point = (pos.row * 81) + pos.col + 1;
+  int point = (pos.row * (cols + 1)) + pos.col + 1;
   goto_char(env, point);
 }
 
@@ -358,6 +358,24 @@ static emacs_value Fvterm_kill(emacs_env *env, ptrdiff_t nargs,
   return env->intern(env, "nil");
 }
 
+static emacs_value Fvterm_set_size(emacs_env *env, ptrdiff_t nargs,
+                                   emacs_value args[], void *data) {
+  struct Term *term = env->get_user_ptr(env, args[0]);
+  int rows = env->extract_integer(env, args[1]);
+  int cols = env->extract_integer(env, args[2]);
+
+  int old_rows, old_cols;
+  vterm_get_size(term->vt, &old_rows, &old_cols);
+
+  if (cols != old_cols || rows != old_rows) {
+    struct winsize size = {rows, cols, 0, 0};
+    ioctl(term->masterfd, TIOCSWINSZ, &size);
+    vterm_set_size(term->vt, rows, cols);
+  }
+
+  return env->intern(env, "nil");
+}
+
 int emacs_module_init(struct emacs_runtime *ert) {
   emacs_env *env = ert->get_environment(ert);
   emacs_value fun;
@@ -373,6 +391,10 @@ int emacs_module_init(struct emacs_runtime *ert) {
   fun = env->make_function(env, 1, 1, Fvterm_kill,
                            "Kill the the shell process.", NULL);
   bind_function(env, "vterm-kill", fun);
+
+  fun = env->make_function(env, 3, 3, Fvterm_set_size,
+                           "Sets the size of the terminal.", NULL);
+  bind_function(env, "vterm-set-size", fun);
 
   provide(env, "vterm-module");
 

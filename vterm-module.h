@@ -36,4 +36,6 @@ static emacs_value Fvterm_update(emacs_env *env, ptrdiff_t nargs,
                                  emacs_value args[], void *data);
 static emacs_value Fvterm_kill(emacs_env *env, ptrdiff_t nargs,
                                emacs_value args[], void *data);
+static emacs_value Fvterm_set_size(emacs_env *env, ptrdiff_t nargs,
+                                   emacs_value args[], void *data);
 int emacs_module_init(struct emacs_runtime *ert);
