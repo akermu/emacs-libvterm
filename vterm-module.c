@@ -2,7 +2,6 @@
 #include <fcntl.h>
 #include <pty.h>
 #include <signal.h>
-#include <stdbool.h>
 #include <stdio.h>
 #include <string.h>
 #include <sys/ioctl.h>
@@ -12,6 +11,74 @@
 #include <vterm.h>
 
 #define MAX(x, y) (((x) > (y)) ? (x) : (y))
+
+static size_t codepoint_to_utf8(const uint32_t codepoint, unsigned char buffer[4]) {
+  if (codepoint <= 0x7F) {
+    buffer[0] = codepoint;
+    return 1;
+  }
+  if (codepoint >= 0x80 && codepoint <= 0x07FF) {
+    buffer[0] = 0xC0 | (codepoint >> 6);
+    buffer[1] = 0x80 | (codepoint & 0x3F);
+    return 2;
+  }
+  if (codepoint >= 0x0800 && codepoint <= 0xFFFF) {
+    buffer[0] = 0xE0 | (codepoint >> 12);
+    buffer[1] = 0x80 | ((codepoint >> 6) & 0x3F);
+    buffer[2] = 0x80 | (codepoint & 0x3F);
+    return 3;
+  }
+
+  if (codepoint >= 0x10000 && codepoint <= 0x10FFFF) {
+    buffer[0] = 0xF0 | (codepoint >> 18);
+    buffer[1] = 0x80 | ((codepoint >> 12) & 0x3F);
+    buffer[2] = 0x80 | ((codepoint >> 6) & 0x3F);
+    buffer[3] = 0x80 | (codepoint & 0x3F);
+    return 4;
+  }
+  return 0;
+}
+
+static bool utf8_to_codepoint(const unsigned char buffer[4], const size_t len,
+                              uint32_t *codepoint) {
+  *codepoint = 0;
+  if (len == 1 && buffer[0] <= 0x7F) {
+    *codepoint = buffer[0];
+    return true;
+  }
+  if (len == 2 && (buffer[0] >= 0xC0 && buffer[0] <= 0xDF) &&
+      (buffer[1] >= 0x80 && buffer[1] <= 0xBF)) {
+    *codepoint = buffer[0] & 0x1F;
+    *codepoint = *codepoint << 6;
+    *codepoint = *codepoint | (buffer[1] & 0x3F);
+    return true;
+  }
+  if (len == 3 && (buffer[0] >= 0xE0 && buffer[0] <= 0xEF) &&
+      (buffer[1] >= 0x80 && buffer[1] <= 0xBF) &&
+      (buffer[2] >= 0x80 && buffer[2] <= 0xBF)) {
+    *codepoint = buffer[0] & 0xF;
+    *codepoint = *codepoint << 6;
+    *codepoint = *codepoint | (buffer[1] & 0x3F);
+    *codepoint = *codepoint << 6;
+    *codepoint = *codepoint | (buffer[2] & 0x3F);
+    return true;
+  }
+  if (len == 4 && (buffer[0] >= 0xF0 && buffer[0] <= 0xF7) &&
+      (buffer[1] >= 0x80 && buffer[1] <= 0xBF) &&
+      (buffer[2] >= 0x80 && buffer[2] <= 0xBF) &&
+      (buffer[3] >= 0x80 && buffer[3] <= 0xBF)) {
+    *codepoint = buffer[0] & 7;
+    *codepoint = *codepoint << 6;
+    *codepoint = *codepoint | (buffer[1] & 0x3F);
+    *codepoint = *codepoint << 6;
+    *codepoint = *codepoint | (buffer[2] & 0x3F);
+    *codepoint = *codepoint << 6;
+    *codepoint = *codepoint | (buffer[3] & 0x3F);
+    return true;
+  }
+
+  return false;
+}
 
 /* Bind NAME to FUN.  */
 static void bind_function(emacs_env *env, const char *name, emacs_value Sfun) {
@@ -175,7 +242,7 @@ static void vterm_redraw(VTerm *vt, emacs_env *env) {
 
   erase_buffer(env);
 
-  char buffer[(rows + 1) * cols];
+  char buffer[((rows + 1) * cols) * 4];
   int length = 0;
   VTermScreenCell cell;
   VTermScreenCell lastCell;
@@ -194,8 +261,19 @@ static void vterm_redraw(VTerm *vt, emacs_env *env) {
       }
 
       lastCell = cell;
-      buffer[length] = cell.chars[0] == '\0' ? ' ' : cell.chars[0];
-      length++;
+      union Character c;
+      c.character = cell.chars[0];
+      if (c.byte[0] == '\0') {
+        buffer[length] = ' ';
+        length++;
+      } else {
+        unsigned char bytes[4];
+        size_t count = codepoint_to_utf8(c.character, bytes);
+        for (int k = 0; k < count; k++) {
+          buffer[length] = bytes[k];
+          length++;
+        }
+      }
     }
 
     buffer[length] = '\n';
@@ -298,17 +376,20 @@ static emacs_value Fvterm_new(emacs_env *env, ptrdiff_t nargs,
   return env->make_user_ptr(env, term_finalize, term);
 }
 
-static void process_key(struct Term *term, char *key, VTermModifier modifier) {
-  if (strcmp(key, "<return>") == 0) {
+static void process_key(struct Term *term, unsigned char *key, size_t len, VTermModifier modifier) {
+  if (len == 8 && memcmp(key, "<return>", len) == 0) {
     vterm_keyboard_key(term->vt, VTERM_KEY_ENTER, modifier);
-  } else if (strcmp(key, "<backspace>") == 0) {
+  } else if (len == 11 && memcmp(key, "<backspace>", len) == 0) {
     vterm_keyboard_key(term->vt, VTERM_KEY_BACKSPACE, modifier);
-  } else if (strcmp(key, "<tab>") == 0) {
+  } else if (len == 5 && memcmp(key, "<tab>", len) == 0) {
     vterm_keyboard_key(term->vt, VTERM_KEY_TAB, modifier);
-  } else if (strcmp(key, "SPC") == 0) {
+  } else if (len == 3 && memcmp(key, "SPC", len) == 0) {
     vterm_keyboard_unichar(term->vt, ' ', modifier);
-  } else if (strlen(key) == 1) {
-    vterm_keyboard_unichar(term->vt, key[0], modifier);
+  } else if (len <= 4) {
+    uint32_t codepoint;
+    if (utf8_to_codepoint(key, len, &codepoint)) {
+      vterm_keyboard_unichar(term->vt, codepoint, modifier);
+    }
   }
 
   vterm_flush_output(term);
@@ -327,7 +408,7 @@ static emacs_value Fvterm_update(emacs_env *env, ptrdiff_t nargs,
   // Process keys
   if (nargs > 1) {
     ptrdiff_t len = string_bytes(env, args[1]);
-    char key[len];
+    unsigned char key[len];
     env->copy_string_contents(env, args[1], key, &len);
     VTermModifier modifier = VTERM_MOD_NONE;
     if (env->is_not_nil(env, args[2]))
@@ -337,7 +418,8 @@ static emacs_value Fvterm_update(emacs_env *env, ptrdiff_t nargs,
     if (env->is_not_nil(env, args[4]))
       modifier = modifier | VTERM_MOD_CTRL;
 
-    process_key(term, key, modifier);
+    // Ignore the final zero byte
+    process_key(term, key, len - 1, modifier);
   }
 
   // Read input from masterfd

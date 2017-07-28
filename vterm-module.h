@@ -1,4 +1,6 @@
 #include <emacs-module.h>
+#include <inttypes.h>
+#include <stdbool.h>
 #include <vterm.h>
 
 int plugin_is_GPL_compatible;
@@ -9,6 +11,14 @@ struct Term {
   pid_t pid;
 };
 
+union Character {
+  uint32_t character;
+  char byte[4];
+};
+
+static size_t codepoint_to_utf8(const uint32_t codepoint, unsigned char buffer[4]);
+static bool utf8_to_codepoint(const unsigned char buffer[4], const size_t len,
+                              uint32_t *codepoint);
 static void bind_function(emacs_env *env, const char *name, emacs_value Sfun);
 static void provide(emacs_env *env, const char *feature);
 static void message(emacs_env *env, char *message);
@@ -31,7 +41,7 @@ static void vterm_flush_output(struct Term *term);
 static void term_finalize(void *term);
 static emacs_value Fvterm_new(emacs_env *env, ptrdiff_t nargs,
                               emacs_value args[], void *data);
-static void process_key(struct Term *term, char *key, VTermModifier modifier);
+static void process_key(struct Term *term, unsigned char *key, size_t len, VTermModifier modifier);
 static emacs_value Fvterm_update(emacs_env *env, ptrdiff_t nargs,
                                  emacs_value args[], void *data);
 static emacs_value Fvterm_kill(emacs_env *env, ptrdiff_t nargs,
