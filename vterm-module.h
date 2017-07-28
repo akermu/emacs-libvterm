@@ -11,11 +11,6 @@ struct Term {
   pid_t pid;
 };
 
-union Character {
-  uint32_t character;
-  char byte[4];
-};
-
 static size_t codepoint_to_utf8(const uint32_t codepoint, unsigned char buffer[4]);
 static bool utf8_to_codepoint(const unsigned char buffer[4], const size_t len,
                               uint32_t *codepoint);

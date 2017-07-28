@@ -249,6 +249,7 @@ static void vterm_redraw(VTerm *vt, emacs_env *env) {
   VTermPos first = {.row = 0, .col = 0};
   vterm_screen_get_cell(screen, first, &lastCell);
 
+  int width = 0;
   for (i = 0; i < rows; i++) {
     for (j = 0; j < cols; j++) {
       VTermPos pos = {.row = i, .col = j};
@@ -261,18 +262,22 @@ static void vterm_redraw(VTerm *vt, emacs_env *env) {
       }
 
       lastCell = cell;
-      union Character c;
-      c.character = cell.chars[0];
-      if (c.byte[0] == '\0') {
+      if (cell.chars[0] == 0) {
         buffer[length] = ' ';
         length++;
       } else {
         unsigned char bytes[4];
-        size_t count = codepoint_to_utf8(c.character, bytes);
+        size_t count = codepoint_to_utf8(cell.chars[0], bytes);
         for (int k = 0; k < count; k++) {
           buffer[length] = bytes[k];
           length++;
         }
+      }
+
+      if (cell.width > 1) {
+        int w = cell.width - 1;
+        width += w;
+        j = j + w;
       }
     }
 
@@ -288,7 +293,7 @@ static void vterm_redraw(VTerm *vt, emacs_env *env) {
 
   // row * (width + 1) because of newline character
   // col + 1 because (goto-char 1) sets point to first position
-  int point = (pos.row * (cols + 1)) + pos.col + 1;
+  int point = (pos.row * (cols + 1)) + pos.col + 1 - width;
   goto_char(env, point);
 }
 
