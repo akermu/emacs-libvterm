@@ -33,3 +33,4 @@ M-x vterm-create
 # Limitations
 
     - No support for scrolling
+    - Wakes up your PC every 100ms
