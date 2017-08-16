@@ -1,6 +1,10 @@
 #include "vterm-module.h"
 #include <fcntl.h>
-#include <pty.h>
+#ifdef __APPLE__
+#  include <util.h>
+#else
+#  include <pty.h>
+#endif
 #include <signal.h>
 #include <stdio.h>
 #include <string.h>
