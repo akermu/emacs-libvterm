@@ -5,10 +5,12 @@
 #else
 #  include <pty.h>
 #endif
+#include <pthread.h>
 #include <signal.h>
 #include <stdio.h>
 #include <string.h>
 #include <sys/ioctl.h>
+#include <sys/select.h>
 #include <sys/wait.h>
 #include <termios.h>
 #include <unistd.h>
@@ -16,7 +18,8 @@
 
 #define MAX(x, y) (((x) > (y)) ? (x) : (y))
 
-static size_t codepoint_to_utf8(const uint32_t codepoint, unsigned char buffer[4]) {
+static size_t codepoint_to_utf8(const uint32_t codepoint,
+                                unsigned char buffer[4]) {
   if (codepoint <= 0x7F) {
     buffer[0] = codepoint;
     return 1;
@@ -323,6 +326,7 @@ static void term_finalize(void *term) {
 static emacs_value Fvterm_new(emacs_env *env, ptrdiff_t nargs,
                               emacs_value args[], void *data) {
   struct Term *term = malloc(sizeof(struct Term));
+
   int rows = env->extract_integer(env, args[0]);
   int cols = env->extract_integer(env, args[1]);
 
@@ -365,7 +369,6 @@ static emacs_value Fvterm_new(emacs_env *env, ptrdiff_t nargs,
   termios.c_cc[VTIME] = 0;
 
   term->pid = forkpty(&term->masterfd, NULL, &termios, &size);
-
   fcntl(term->masterfd, F_SETFL, fcntl(term->masterfd, F_GETFL) | O_NONBLOCK);
 
   if (term->pid == 0) {
@@ -382,10 +385,30 @@ static emacs_value Fvterm_new(emacs_env *env, ptrdiff_t nargs,
   VTermScreen *screen = vterm_obtain_screen(term->vt);
   vterm_screen_reset(screen, 1);
 
+  pthread_t thread;
+  pthread_create(&thread, NULL, &event_loop, term);
+
   return env->make_user_ptr(env, term_finalize, term);
 }
 
-static void process_key(struct Term *term, unsigned char *key, size_t len, VTermModifier modifier) {
+static void *event_loop(void *arg) {
+  struct Term *term = arg;
+  fd_set rfds;
+
+  while (1) {
+    FD_ZERO(&rfds);
+    FD_SET(term->masterfd, &rfds);
+    if (select(term->masterfd + 1, &rfds, NULL, NULL, NULL) == 1) {
+      kill(getpid(), SIGUSR1);
+      usleep(20);
+    }
+  }
+
+  return NULL;
+}
+
+static void process_key(struct Term *term, unsigned char *key, size_t len,
+                        VTermModifier modifier) {
   if (len == 8 && memcmp(key, "<return>", len) == 0) {
     vterm_keyboard_key(term->vt, VTERM_KEY_ENTER, modifier);
   } else if (len == 11 && memcmp(key, "<backspace>", len) == 0) {
@@ -437,7 +460,7 @@ static emacs_value Fvterm_update(emacs_env *env, ptrdiff_t nargs,
   if ((len = read(term->masterfd, bytes, 4096)) > 0) {
     vterm_input_write(term->vt, bytes, len);
     vterm_redraw(term->vt, env);
-  };
+  }
 
   return env->make_integer(env, 0);
 }
