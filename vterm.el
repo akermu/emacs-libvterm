@@ -65,9 +65,8 @@ be send to the terminal.")
   (interactive)
   (let ((buffer (generate-new-buffer "vterm")))
     (pop-to-buffer buffer)
-    (with-current-buffer buffer
-      (vterm-mode)
-      (setq vterm-timer (run-with-timer 0 .1 #'vterm-run-timer buffer)))))
+    (vterm-mode)
+    (setq vterm-timer (run-with-timer 0 .1 #'vterm-run-timer buffer))))
 
 (defun vterm-run-timer (buffer)
   "Update the vterm BUFFER."
