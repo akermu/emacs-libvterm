@@ -32,5 +32,5 @@ M-x vterm-create
 
 # Limitations
 
-    - No support for scrolling
-    - Wakes up your PC every 100ms
+- No support for scrolling (But you can use tmux/screen to emulate scrolling) 
+- Hijacks SIGUSR1
