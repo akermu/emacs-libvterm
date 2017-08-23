@@ -15,9 +15,8 @@
   "Pointer to struct Term.")
 (make-variable-buffer-local 'vterm-term)
 
-(defvar vterm-timer nil
-  "Timer to update the term.")
-(make-variable-buffer-local 'vterm-timer)
+(defvar vterm-buffers nil
+  "List of active vterm-buffers.")
 
 (defvar vterm-keymap-exceptions '("C-x" "C-u" "C-g" "C-h" "M-x" "M-o")
   "Exceptions for vterm-keymap.
@@ -64,24 +63,27 @@ be send to the terminal.")
   "Create a new vterm."
   (interactive)
   (let ((buffer (generate-new-buffer "vterm")))
+    (add-to-list 'vterm-buffers buffer)
     (pop-to-buffer buffer)
-    (vterm-mode)
-    (setq vterm-timer (run-with-timer 0 .1 #'vterm-run-timer buffer))))
+    (vterm-mode)))
 
-(defun vterm-run-timer (buffer)
+(defun vterm-event ()
   "Update the vterm BUFFER."
   (interactive)
   (let ((inhibit-redisplay t)
         (inhibit-read-only t))
-    (with-current-buffer buffer
-      (unless (vterm-update vterm-term)
-        (cancel-timer vterm-timer)
-        (insert "\nProcess exited!\n\n")))))
+    (mapc (lambda (buffer)
+            (with-current-buffer buffer
+              (unless (vterm-update vterm-term)
+                (insert "\nProcess exited!\n\n"))))
+          vterm-buffers)))
+
+(define-key special-event-map [sigusr1] #'vterm-event)
 
 (defun vterm-kill-buffer-hook ()
-  "Cancel the timer and the vterm."
+  "Kill the corresponding process of vterm."
   (when (eq major-mode 'vterm-mode)
-    (cancel-timer vterm-timer)
+    (setq vterm-buffers (remove (current-buffer) vterm-buffers))
     (vterm-kill vterm-term)))
 
 (defun vterm-window-size-change (frame)

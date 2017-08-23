@@ -1,5 +1,6 @@
 #include <emacs-module.h>
 #include <inttypes.h>
+#include <semaphore.h>
 #include <stdbool.h>
 #include <vterm.h>
 
@@ -11,7 +12,8 @@ struct Term {
   pid_t pid;
 };
 
-static size_t codepoint_to_utf8(const uint32_t codepoint, unsigned char buffer[4]);
+static size_t codepoint_to_utf8(const uint32_t codepoint,
+                                unsigned char buffer[4]);
 static bool utf8_to_codepoint(const unsigned char buffer[4], const size_t len,
                               uint32_t *codepoint);
 static void bind_function(emacs_env *env, const char *name, emacs_value Sfun);
@@ -36,7 +38,9 @@ static void vterm_flush_output(struct Term *term);
 static void term_finalize(void *term);
 static emacs_value Fvterm_new(emacs_env *env, ptrdiff_t nargs,
                               emacs_value args[], void *data);
-static void process_key(struct Term *term, unsigned char *key, size_t len, VTermModifier modifier);
+static void *event_loop(void *arg);
+static void process_key(struct Term *term, unsigned char *key, size_t len,
+                        VTermModifier modifier);
 static emacs_value Fvterm_update(emacs_env *env, ptrdiff_t nargs,
                                  emacs_value args[], void *data);
 static emacs_value Fvterm_kill(emacs_env *env, ptrdiff_t nargs,
