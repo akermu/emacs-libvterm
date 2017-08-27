@@ -36,6 +36,11 @@ be send to the terminal.")
 
 ;; Keybindings
 (define-key vterm-mode-map [t] #'vterm-self-insert)
+(define-key vterm-mode-map [mouse-1] nil)
+(define-key vterm-mode-map [mouse-2] nil)
+(define-key vterm-mode-map [mouse-3] nil)
+(define-key vterm-mode-map [mouse-4] nil)
+(define-key vterm-mode-map [mouse-5] nil)
 (dolist (prefix '("M-" "C-"))
   (dolist (char (cl-loop for char from ?a to ?z
                          collect char))
@@ -51,13 +56,15 @@ be send to the terminal.")
   (let* ((modifiers (event-modifiers last-input-event))
          (shift (memq 'shift modifiers))
          (meta (memq 'meta modifiers))
-         (ctrl (memq 'control modifiers)))
+         (ctrl (memq 'control modifiers))
+         (window (posn-window (event-end last-input-event))))
     (when-let ((key (key-description (vector (event-basic-type last-input-event))))
                (inhibit-redisplay t)
                (inhibit-read-only t))
       (when (equal modifiers '(shift))
         (setq key (upcase key)))
-      (vterm-update vterm-term key shift meta ctrl))))
+      (with-selected-window window
+        (vterm-update vterm-term key shift meta ctrl)))))
 
 (defun vterm-create ()
   "Create a new vterm."
