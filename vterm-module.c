@@ -162,14 +162,15 @@ static emacs_value render_text(emacs_env *env, char *buffer, int len,
 
   emacs_value t = env->intern(env, "t");
   emacs_value nil = env->intern(env, "nil");
+  emacs_value normal = env->intern(env, "normal");
   emacs_value Qbold = env->intern(env, "bold");
   emacs_value Qitalic = env->intern(env, "italic");
 
   emacs_value foreground = color_to_rgb_string(env, cell->fg);
   emacs_value background = color_to_rgb_string(env, cell->bg);
-  emacs_value bold = cell->attrs.bold ? Qbold : nil;
+  emacs_value bold = cell->attrs.bold ? Qbold : normal;
   emacs_value underline = cell->attrs.underline ? t : nil;
-  emacs_value italic = cell->attrs.italic ? Qitalic : nil;
+  emacs_value italic = cell->attrs.italic ? Qitalic : normal;
   emacs_value reverse = cell->attrs.reverse ? t : nil;
   emacs_value strike = cell->attrs.strike ? t : nil;
 
