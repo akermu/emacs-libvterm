@@ -27,7 +27,7 @@ be send to the terminal.")
 (define-derived-mode vterm-mode fundamental-mode "VTerm"
   "Mayor mode for vterm buffer."
   (buffer-disable-undo)
-  (setq vterm-term (vterm-new (window-height) (window-width))
+  (setq vterm-term (vterm-new (window-body-height) (window-body-width))
         buffer-read-only t)
   (setq-local scroll-conservatively 101)
   (setq-local scroll-margin 0)
@@ -99,7 +99,7 @@ be send to the terminal.")
     (let ((buffer (window-buffer window)))
       (with-current-buffer buffer
         (when (eq major-mode 'vterm-mode)
-          (vterm-set-size vterm-term (window-height) (window-width)))))))
+          (vterm-set-size vterm-term (window-body-height) (window-body-width)))))))
 
 (provide 'vterm)
 ;;; vterm.el ends here
