@@ -299,8 +299,11 @@ static void vterm_flush_output(struct Term *term) {
   }
 }
 
-static void term_finalize(void *term) {
-  vterm_free(((struct Term *)term)->vt);
+static void term_finalize(void *object) {
+  struct Term *term = (struct Term*)object;
+  pthread_cancel(term->thread);
+  pthread_join(term->thread, NULL);
+  vterm_free(term->vt);
   free(term);
 }
 
@@ -366,8 +369,7 @@ static emacs_value Fvterm_new(emacs_env *env, ptrdiff_t nargs,
   VTermScreen *screen = vterm_obtain_screen(term->vt);
   vterm_screen_reset(screen, 1);
 
-  pthread_t thread;
-  pthread_create(&thread, NULL, &event_loop, term);
+  pthread_create(&term->thread, NULL, &event_loop, term);
 
   return env->make_user_ptr(env, term_finalize, term);
 }

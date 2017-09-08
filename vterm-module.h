@@ -10,6 +10,7 @@ struct Term {
   VTerm *vt;
   int masterfd;
   pid_t pid;
+  pthread_t thread;
 };
 
 // Emacs symbols
@@ -57,7 +58,7 @@ static void goto_char(emacs_env *env, int pos);
 
 static void vterm_redraw(VTerm *vt, emacs_env *env);
 static void vterm_flush_output(struct Term *term);
-static void term_finalize(void *term);
+static void term_finalize(void *object);
 static emacs_value Fvterm_new(emacs_env *env, ptrdiff_t nargs,
                               emacs_value args[], void *data);
 static void *event_loop(void *arg);
