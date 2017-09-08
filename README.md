@@ -15,7 +15,7 @@ git clone https://github.com/akermu/emacs-libvterm.git
 ```
 
 ```
-make
+make EMACS-SRC=/path/to/emacs-src
 ```
 
 And add this to your `init.el`

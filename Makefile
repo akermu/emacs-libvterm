@@ -1,6 +1,6 @@
 # path to the emacs source dir
 # (you can provide it here or on the command line)
-EMACS-SRC = /home/lukas/.local/aur/emacs/emacs-25.2
+EMACS-SRC =
 LIBVTERM  = /usr/include
 CC	  = gcc
 LD	  = gcc
