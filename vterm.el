@@ -82,7 +82,7 @@ be send to the terminal.")
     (mapc (lambda (buffer)
             (with-current-buffer buffer
               (unless (vterm-update vterm-term)
-                (insert "\nProcess exited!\n\n"))))
+                (kill-buffer-and-window))))
           vterm-buffers)))
 
 (define-key special-event-map [sigusr1] #'vterm-event)
