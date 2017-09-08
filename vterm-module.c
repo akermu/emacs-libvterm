@@ -383,7 +383,7 @@ static void *event_loop(void *arg) {
     FD_SET(term->masterfd, &rfds);
     if (select(term->masterfd + 1, &rfds, NULL, NULL, NULL) == 1) {
       kill(getpid(), SIGUSR1);
-      usleep(20);
+      usleep(20000);
     }
   }
 
