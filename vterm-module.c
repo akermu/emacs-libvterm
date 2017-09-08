@@ -134,12 +134,10 @@ static int string_bytes(emacs_env *env, emacs_value string) {
 }
 
 static emacs_value string_length(emacs_env *env, emacs_value string) {
-  emacs_value Flength = env->intern(env, "length");
   return env->funcall(env, Flength, 1, (emacs_value[]){string});
 }
 
 static emacs_value list(emacs_env *env, emacs_value *elements, ptrdiff_t len) {
-  emacs_value Flist = env->intern(env, "list");
   return env->funcall(env, Flist, len, elements);
 }
 
@@ -160,30 +158,15 @@ static emacs_value render_text(emacs_env *env, char *buffer, int len,
                                VTermScreenCell *cell) {
   emacs_value text = env->make_string(env, buffer, len);
 
-  emacs_value t = env->intern(env, "t");
-  emacs_value nil = env->intern(env, "nil");
-  emacs_value normal = env->intern(env, "normal");
-  emacs_value Qbold = env->intern(env, "bold");
-  emacs_value Qitalic = env->intern(env, "italic");
-
   emacs_value foreground = color_to_rgb_string(env, cell->fg);
   emacs_value background = color_to_rgb_string(env, cell->bg);
-  emacs_value bold = cell->attrs.bold ? Qbold : normal;
-  emacs_value underline = cell->attrs.underline ? t : nil;
-  emacs_value italic = cell->attrs.italic ? Qitalic : normal;
-  emacs_value reverse = cell->attrs.reverse ? t : nil;
-  emacs_value strike = cell->attrs.strike ? t : nil;
+  emacs_value bold = cell->attrs.bold ? Qbold : Qnormal;
+  emacs_value underline = cell->attrs.underline ? Qt : Qnil;
+  emacs_value italic = cell->attrs.italic ? Qitalic : Qnormal;
+  emacs_value reverse = cell->attrs.reverse ? Qt : Qnil;
+  emacs_value strike = cell->attrs.strike ? Qt : Qnil;
 
   // TODO: Blink, font, dwl, dhl is missing
-  emacs_value Qforeground = env->intern(env, ":foreground");
-  emacs_value Qbackground = env->intern(env, ":background");
-  emacs_value Qweight = env->intern(env, ":weight");
-  emacs_value Qunderline = env->intern(env, ":underline");
-  emacs_value Qslant = env->intern(env, ":slant");
-  emacs_value Qreverse = env->intern(env, ":inverse-video");
-  emacs_value Qstrike = env->intern(env, ":strike-through");
-
-  emacs_value Qface = env->intern(env, "font-lock-face");
   emacs_value properties = list(
       env, (emacs_value[]){Qforeground, foreground, Qbackground, background,
                            Qweight, bold, Qunderline, underline, Qslant, italic,
@@ -211,17 +194,14 @@ static emacs_value color_to_rgb_string(emacs_env *env, VTermColor color) {
 };
 
 static void erase_buffer(emacs_env *env) {
-  emacs_value Ferase_buffer = env->intern(env, "erase-buffer");
   env->funcall(env, Ferase_buffer, 0, NULL);
 }
 
 static void insert(emacs_env *env, emacs_value string) {
-  emacs_value Finsert = env->intern(env, "insert");
   env->funcall(env, Finsert, 1, (emacs_value[]){string});
 }
 
 static void goto_char(emacs_env *env, int pos) {
-  emacs_value Fgoto_char = env->intern(env, "goto-char");
   emacs_value point = env->make_integer(env, pos);
   env->funcall(env, Fgoto_char, 1, (emacs_value[]){point});
 }
@@ -435,7 +415,7 @@ static emacs_value Fvterm_update(emacs_env *env, ptrdiff_t nargs,
   // Check if exited
   int status;
   if (waitpid(term->pid, &status, WNOHANG) > 0) {
-    return env->intern(env, "nil");
+    return Qnil;
   }
 
   // Process keys
@@ -472,7 +452,7 @@ static emacs_value Fvterm_kill(emacs_env *env, ptrdiff_t nargs,
   kill(term->pid, SIGKILL);
   int status;
   waitpid(term->pid, &status, 0);
-  return env->intern(env, "nil");
+  return Qnil;
 }
 
 static emacs_value Fvterm_set_size(emacs_env *env, ptrdiff_t nargs,
@@ -490,13 +470,37 @@ static emacs_value Fvterm_set_size(emacs_env *env, ptrdiff_t nargs,
     vterm_set_size(term->vt, rows, cols);
   }
 
-  return env->intern(env, "nil");
+  return Qnil;
 }
 
 int emacs_module_init(struct emacs_runtime *ert) {
   emacs_env *env = ert->get_environment(ert);
-  emacs_value fun;
 
+  // Symbols;
+  Qt = env->intern(env, "t");
+  Qnil = env->intern(env, "nil");
+  Qnormal = env->intern(env, "normal");
+  Qbold = env->intern(env, "bold");
+  Qitalic = env->intern(env, "italic");
+  Qforeground = env->intern(env, ":foreground");
+  Qbackground = env->intern(env, ":background");
+  Qweight = env->intern(env, ":weight");
+  Qunderline = env->intern(env, ":underline");
+  Qslant = env->intern(env, ":slant");
+  Qreverse = env->intern(env, ":inverse-video");
+  Qstrike = env->intern(env, ":strike-through");
+  Qface = env->intern(env, "font-lock-face");
+
+  // Functions
+  Flength = env->intern(env, "length");
+  Flist = env->intern(env, "list");
+  Ferase_buffer = env->intern(env, "erase-buffer");
+  Finsert = env->intern(env, "insert");
+  Fgoto_char = env->intern(env, "goto-char");
+
+
+  // Exported functions
+  emacs_value fun;
   fun =
       env->make_function(env, 2, 2, Fvterm_new, "Allocates a new vterm.", NULL);
   bind_function(env, "vterm-new", fun);

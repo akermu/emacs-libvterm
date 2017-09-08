@@ -12,6 +12,28 @@ struct Term {
   pid_t pid;
 };
 
+// Emacs symbols
+static emacs_value Qt;
+static emacs_value Qnil;
+static emacs_value Qnormal;
+static emacs_value Qbold;
+static emacs_value Qitalic;
+static emacs_value Qforeground;
+static emacs_value Qbackground;
+static emacs_value Qweight;
+static emacs_value Qunderline;
+static emacs_value Qslant;
+static emacs_value Qreverse;
+static emacs_value Qstrike;
+static emacs_value Qface;
+
+// Emacs functions
+static emacs_value Flength;
+static emacs_value Flist;
+static emacs_value Ferase_buffer;
+static emacs_value Finsert;
+static emacs_value Fgoto_char;
+
 static size_t codepoint_to_utf8(const uint32_t codepoint,
                                 unsigned char buffer[4]);
 static bool utf8_to_codepoint(const unsigned char buffer[4], const size_t len,
