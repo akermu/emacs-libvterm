@@ -17,7 +17,7 @@ all: vterm-module.so
 
 # compile source file to object file
 %.o: %.c
-	$(CC) $(CFLAGS) -I$(EMACS-SRC)/src -I/ -fPIC -c $<
+	$(CC) $(CFLAGS) -I$(EMACS-SRC)/src -fPIC -c $<
 
 run: vterm-module.so
 	emacs -Q -L $(ROOT) --eval "(require 'vterm)"
