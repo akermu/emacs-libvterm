@@ -143,7 +143,6 @@ static emacs_value list(emacs_env *env, emacs_value *elements, ptrdiff_t len) {
 
 static void put_text_property(emacs_env *env, emacs_value string,
                               emacs_value property, emacs_value value) {
-  emacs_value Fput_text_property = env->intern(env, "put-text-property");
   emacs_value start = env->make_integer(env, 0);
   emacs_value end = string_length(env, string);
 
@@ -499,7 +498,7 @@ int emacs_module_init(struct emacs_runtime *ert) {
   Ferase_buffer = env->intern(env, "erase-buffer");
   Finsert = env->intern(env, "insert");
   Fgoto_char = env->intern(env, "goto-char");
-
+  Fput_text_property = env->intern(env, "put-text-property");
 
   // Exported functions
   emacs_value fun;

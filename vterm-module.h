@@ -34,6 +34,7 @@ static emacs_value Flist;
 static emacs_value Ferase_buffer;
 static emacs_value Finsert;
 static emacs_value Fgoto_char;
+static emacs_value Fput_text_property;
 
 static size_t codepoint_to_utf8(const uint32_t codepoint,
                                 unsigned char buffer[4]);
