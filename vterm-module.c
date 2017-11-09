@@ -439,7 +439,7 @@ static emacs_value Fvterm_update(emacs_env *env, ptrdiff_t nargs,
   // Read input from masterfd
   char bytes[4096];
   int len;
-  if ((len = read(term->masterfd, bytes, 4096)) > 0) {
+  while ((len = read(term->masterfd, bytes, 4096)) > 0) {
     vterm_input_write(term->vt, bytes, len);
     vterm_redraw(term->vt, env);
   }
