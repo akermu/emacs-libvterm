@@ -205,6 +205,15 @@ static void goto_char(emacs_env *env, int pos) {
   env->funcall(env, Fgoto_char, 1, (emacs_value[]){point});
 }
 
+static void vterm_put_caret(VTerm *vt, emacs_env *env, int row, int col, int offset) {
+  int rows, cols;
+  vterm_get_size(vt, &rows, &cols);
+  // row * (cols + 1) because of newline character
+  // col + 1 because (goto-char 1) sets point to first position
+  int point = (row * (cols + 1)) + col + 1 + offset;
+  goto_char(env, point);
+}
+
 static bool compare_cells(VTermScreenCell *a, VTermScreenCell *b) {
   bool equal = true;
   equal = equal && (a->fg.red == b->fg.red);
@@ -236,7 +245,7 @@ static void vterm_redraw(VTerm *vt, emacs_env *env) {
   VTermPos first = {.row = 0, .col = 0};
   vterm_screen_get_cell(screen, first, &lastCell);
 
-  int width = 0;
+  int offset = 0;
   for (i = 0; i < rows; i++) {
     for (j = 0; j < cols; j++) {
       VTermPos pos = {.row = i, .col = j};
@@ -263,7 +272,7 @@ static void vterm_redraw(VTerm *vt, emacs_env *env) {
 
       if (cell.width > 1) {
         int w = cell.width - 1;
-        width += w;
+        offset += w;
         j = j + w;
       }
     }
@@ -277,11 +286,7 @@ static void vterm_redraw(VTerm *vt, emacs_env *env) {
   VTermState *state = vterm_obtain_state(vt);
   VTermPos pos;
   vterm_state_get_cursorpos(state, &pos);
-
-  // row * (width + 1) because of newline character
-  // col + 1 because (goto-char 1) sets point to first position
-  int point = (pos.row * (cols + 1)) + pos.col + 1 - width;
-  goto_char(env, point);
+  vterm_put_caret(vt, env, pos.row, pos.col, -offset);
 }
 
 static void vterm_flush_output(struct Term *term) {
