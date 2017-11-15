@@ -42,8 +42,6 @@ static bool utf8_to_codepoint(const unsigned char buffer[4], const size_t len,
                               uint32_t *codepoint);
 static void bind_function(emacs_env *env, const char *name, emacs_value Sfun);
 static void provide(emacs_env *env, const char *feature);
-static void message(emacs_env *env, char *message);
-static void message_value(emacs_env *env, emacs_value value);
 static int string_bytes(emacs_env *env, emacs_value string);
 static emacs_value string_length(emacs_env *env, emacs_value string);
 static emacs_value list(emacs_env *env, emacs_value *elements, ptrdiff_t len);

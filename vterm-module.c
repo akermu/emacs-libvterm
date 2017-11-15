@@ -115,19 +115,6 @@ static void provide(emacs_env *env, const char *feature) {
   env->funcall(env, Qprovide, 1, args);
 }
 
-static void message(emacs_env *env, char *message) {
-  emacs_value Fmessage = env->intern(env, "message");
-  emacs_value string = env->make_string(env, message, strlen(message));
-  env->funcall(env, Fmessage, 1, (emacs_value[]){string});
-}
-
-static void message_value(emacs_env *env, emacs_value value) {
-  emacs_value Fmessage = env->intern(env, "message");
-  char *message = "Value: %S";
-  emacs_value string = env->make_string(env, message, strlen(message));
-  env->funcall(env, Fmessage, 2, (emacs_value[]){string, value});
-}
-
 static int string_bytes(emacs_env *env, emacs_value string) {
   ptrdiff_t size = 0;
   env->copy_string_contents(env, string, NULL, &size);
