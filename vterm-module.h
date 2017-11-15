@@ -13,44 +13,6 @@ struct Term {
   pthread_t thread;
 };
 
-// Emacs symbols
-static emacs_value Qt;
-static emacs_value Qnil;
-static emacs_value Qnormal;
-static emacs_value Qbold;
-static emacs_value Qitalic;
-static emacs_value Qforeground;
-static emacs_value Qbackground;
-static emacs_value Qweight;
-static emacs_value Qunderline;
-static emacs_value Qslant;
-static emacs_value Qreverse;
-static emacs_value Qstrike;
-static emacs_value Qface;
-
-// Emacs functions
-static emacs_value Flength;
-static emacs_value Flist;
-static emacs_value Ferase_buffer;
-static emacs_value Finsert;
-static emacs_value Fgoto_char;
-static emacs_value Fput_text_property;
-
-static void bind_function(emacs_env *env, const char *name, emacs_value Sfun);
-static void provide(emacs_env *env, const char *feature);
-static int string_bytes(emacs_env *env, emacs_value string);
-static emacs_value string_length(emacs_env *env, emacs_value string);
-static emacs_value list(emacs_env *env, emacs_value *elements, ptrdiff_t len);
-static void put_text_property(emacs_env *env, emacs_value string,
-                              emacs_value property, emacs_value value);
-static emacs_value render_text(emacs_env *env, char *string, int len,
-                               VTermScreenCell *cell);
-static void byte_to_hex(uint8_t byte, char *hex);
-static emacs_value color_to_rgb_string(emacs_env *env, VTermColor color);
-static void erase_buffer(emacs_env *env);
-static void insert(emacs_env *env, emacs_value string);
-static void goto_char(emacs_env *env, int pos);
-
 static void vterm_put_caret(VTerm *vt, emacs_env *env, int row, int col,
                             int offset);
 static void vterm_redraw(VTerm *vt, emacs_env *env);
