@@ -11,6 +11,7 @@
 #include <string.h>
 #include <sys/ioctl.h>
 #include <sys/select.h>
+#include <sys/time.h>
 #include <sys/wait.h>
 #include <termios.h>
 #include <unistd.h>
@@ -444,9 +445,18 @@ static emacs_value Fvterm_update(emacs_env *env, ptrdiff_t nargs,
   // Read input from masterfd
   char bytes[4096];
   int len;
+  struct timeval start, end;
+  gettimeofday(&start, NULL);
+
   while ((len = read(term->masterfd, bytes, 4096)) > 0) {
     vterm_input_write(term->vt, bytes, len);
     vterm_redraw(term->vt, env);
+
+    // Break after 40 milliseconds
+    gettimeofday(&end, NULL);
+    if (end.tv_usec - start.tv_usec > 40000) {
+      break;
+    }
   }
 
   return env->make_integer(env, 0);
