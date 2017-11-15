@@ -15,13 +15,17 @@ git clone https://github.com/akermu/emacs-libvterm.git
 ```
 
 ```
-make EMACS-SRC=/path/to/emacs-src
+mkdir -p build
+cd build
+cmake ..
+make
 ```
 
 And add this to your `init.el`
 
 ```
 (add-to-list 'load-path "path/to/emacs-libvterm")
+(add-to-list 'load-path "path/to/emacs-libvterm/build")
 ```
 
 # Usage
