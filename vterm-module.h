@@ -55,7 +55,8 @@ static void erase_buffer(emacs_env *env);
 static void insert(emacs_env *env, emacs_value string);
 static void goto_char(emacs_env *env, int pos);
 
-static void vterm_put_caret(VTerm *vt, emacs_env *env, int row, int col, int offset);
+static void vterm_put_caret(VTerm *vt, emacs_env *env, int row, int col,
+                            int offset);
 static void vterm_redraw(VTerm *vt, emacs_env *env);
 static void vterm_flush_output(struct Term *term);
 static void term_finalize(void *object);

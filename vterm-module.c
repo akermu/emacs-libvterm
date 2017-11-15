@@ -1,9 +1,9 @@
 #include "vterm-module.h"
 #include <fcntl.h>
 #ifdef __APPLE__
-#  include <util.h>
+#include <util.h>
 #else
-#  include <pty.h>
+#include <pty.h>
 #endif
 #include <pthread.h>
 #include <signal.h>
@@ -154,11 +154,12 @@ static emacs_value render_text(emacs_env *env, char *buffer, int len,
   emacs_value strike = cell->attrs.strike ? Qt : Qnil;
 
   // TODO: Blink, font, dwl, dhl is missing
-  emacs_value properties = list(
-      env, (emacs_value[]){Qforeground, foreground, Qbackground, background,
+  emacs_value properties =
+      list(env,
+           (emacs_value[]){Qforeground, foreground, Qbackground, background,
                            Qweight, bold, Qunderline, underline, Qslant, italic,
                            Qreverse, reverse, Qstrike, strike},
-      14);
+           14);
 
   put_text_property(env, text, Qface, properties);
 
@@ -193,7 +194,8 @@ static void goto_char(emacs_env *env, int pos) {
   env->funcall(env, Fgoto_char, 1, (emacs_value[]){point});
 }
 
-static void vterm_put_caret(VTerm *vt, emacs_env *env, int row, int col, int offset) {
+static void vterm_put_caret(VTerm *vt, emacs_env *env, int row, int col,
+                            int offset) {
   int rows, cols;
   vterm_get_size(vt, &rows, &cols);
   // row * (cols + 1) because of newline character
@@ -292,7 +294,7 @@ static void vterm_flush_output(struct Term *term) {
 }
 
 static void term_finalize(void *object) {
-  struct Term *term = (struct Term*)object;
+  struct Term *term = (struct Term *)object;
   pthread_cancel(term->thread);
   pthread_join(term->thread, NULL);
   vterm_free(term->vt);
@@ -416,7 +418,7 @@ static emacs_value Fvterm_update(emacs_env *env, ptrdiff_t nargs,
   if (nargs > 1) {
     ptrdiff_t len = string_bytes(env, args[1]);
     unsigned char key[len];
-    env->copy_string_contents(env, args[1], (char*)key, &len);
+    env->copy_string_contents(env, args[1], (char *)key, &len);
     VTermModifier modifier = VTERM_MOD_NONE;
     if (env->is_not_nil(env, args[2]))
       modifier = modifier | VTERM_MOD_SHIFT;
