@@ -416,7 +416,7 @@ static emacs_value Fvterm_update(emacs_env *env, ptrdiff_t nargs,
   if (nargs > 1) {
     ptrdiff_t len = string_bytes(env, args[1]);
     unsigned char key[len];
-    env->copy_string_contents(env, args[1], key, &len);
+    env->copy_string_contents(env, args[1], (char*)key, &len);
     VTermModifier modifier = VTERM_MOD_NONE;
     if (env->is_not_nil(env, args[2]))
       modifier = modifier | VTERM_MOD_SHIFT;
