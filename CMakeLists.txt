@@ -4,7 +4,7 @@ include(ExternalProject)
 
 project(emacs-libvterm C)
 
-add_library(vterm-module SHARED vterm-module.c)
+add_library(vterm-module SHARED vterm-module.c utf8.c)
 set_property(TARGET vterm-module PROPERTY POSITION_INDEPENDENT_CODE ON)
 set_target_properties(vterm-module PROPERTIES PREFIX "")
 
