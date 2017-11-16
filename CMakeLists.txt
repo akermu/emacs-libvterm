@@ -24,12 +24,26 @@ if (NOT ${RESULT} EQUAL 0)
   set(EMACS_VERSION 25.3)
 endif()
 
-ExternalProject_Add(emacs
-  URL               "https://ftpmirror.gnu.org/gnu/emacs/emacs-${EMACS_VERSION}.tar.gz"
-  CONFIGURE_COMMAND ""
-  BUILD_COMMAND     ""
-  INSTALL_COMMAND   ""
-  )
+if (${EMACS_VERSION} VERSION_LESS 25)
+  message(FATAL_ERROR "Modules are only supported since emacs version 25.")
+endif()
+
+if (${EMACS_VERSION} VERSION_LESS 26)
+  ExternalProject_Add(emacs
+    URL               "https://ftpmirror.gnu.org/gnu/emacs/emacs-${EMACS_VERSION}.tar.gz"
+    CONFIGURE_COMMAND ""
+    BUILD_COMMAND     ""
+    INSTALL_COMMAND   ""
+    )
+else()
+  ExternalProject_Add(emacs
+    GIT_REPOSITORY    "git://git.sv.gnu.org/emacs.git"
+    CONFIGURE_COMMAND "./autogen.sh" COMMAND "./configure"
+    BUILD_COMMAND     ""
+    BUILD_IN_SOURCE   "YES"
+    INSTALL_COMMAND   ""
+    )
+endif()
 add_dependencies(vterm-module emacs)
 
 ExternalProject_Get_Property(emacs SOURCE_DIR)
