@@ -18,18 +18,6 @@
 #include <unistd.h>
 #include <vterm.h>
 
-#define MAX(x, y) (((x) > (y)) ? (x) : (y))
-
-static void vterm_put_caret(VTerm *vt, emacs_env *env, int row, int col,
-                            int offset) {
-  int rows, cols;
-  vterm_get_size(vt, &rows, &cols);
-  // row * (cols + 1) because of newline character
-  // col + 1 because (goto-char 1) sets point to first position
-  int point = (row * (cols + 1)) + col + 1 + offset;
-  goto_char(env, point);
-}
-
 static bool compare_cells(VTermScreenCell *a, VTermScreenCell *b) {
   bool equal = true;
   equal = equal && (a->fg.red == b->fg.red);
@@ -46,11 +34,11 @@ static bool compare_cells(VTermScreenCell *a, VTermScreenCell *b) {
   return equal;
 }
 
-static void vterm_redraw(VTerm *vt, emacs_env *env) {
+static void term_redraw(struct Term *term, emacs_env *env) {
   int i, j;
   int rows, cols;
-  VTermScreen *screen = vterm_obtain_screen(vt);
-  vterm_get_size(vt, &rows, &cols);
+  VTermScreen *screen = vterm_obtain_screen(term->vt);
+  vterm_get_size(term->vt, &rows, &cols);
 
   erase_buffer(env);
 
@@ -99,13 +87,13 @@ static void vterm_redraw(VTerm *vt, emacs_env *env) {
   emacs_value text = render_text(env, buffer, length, &lastCell);
   insert(env, text);
 
-  VTermState *state = vterm_obtain_state(vt);
+  VTermState *state = vterm_obtain_state(term->vt);
   VTermPos pos;
   vterm_state_get_cursorpos(state, &pos);
-  vterm_put_caret(vt, env, pos.row, pos.col, -offset);
+  term_put_caret(term, env, pos.row, pos.col, -offset);
 }
 
-static void vterm_flush_output(struct Term *term) {
+static void term_flush_output(struct Term *term) {
   size_t bufflen = vterm_output_get_buffer_current(term->vt);
   if (bufflen) {
     char buffer[bufflen];
@@ -117,6 +105,36 @@ static void vterm_flush_output(struct Term *term) {
     write(term->masterfd, buffer, bufflen);
     fcntl(term->masterfd, F_SETFL, fcntl(term->masterfd, F_GETFL) | O_NONBLOCK);
   }
+}
+
+static void term_process_key(struct Term *term, unsigned char *key, size_t len,
+                             VTermModifier modifier) {
+  if (len == 8 && memcmp(key, "<return>", len) == 0) {
+    vterm_keyboard_key(term->vt, VTERM_KEY_ENTER, modifier);
+  } else if (len == 11 && memcmp(key, "<backspace>", len) == 0) {
+    vterm_keyboard_key(term->vt, VTERM_KEY_BACKSPACE, modifier);
+  } else if (len == 5 && memcmp(key, "<tab>", len) == 0) {
+    vterm_keyboard_key(term->vt, VTERM_KEY_TAB, modifier);
+  } else if (len == 3 && memcmp(key, "SPC", len) == 0) {
+    vterm_keyboard_unichar(term->vt, ' ', modifier);
+  } else if (len <= 4) {
+    uint32_t codepoint;
+    if (utf8_to_codepoint(key, len, &codepoint)) {
+      vterm_keyboard_unichar(term->vt, codepoint, modifier);
+    }
+  }
+
+  term_flush_output(term);
+}
+
+static void term_put_caret(struct Term *term, emacs_env *env, int row, int col,
+                           int offset) {
+  int rows, cols;
+  vterm_get_size(term->vt, &rows, &cols);
+  // row * (cols + 1) because of newline character
+  // col + 1 because (goto-char 1) sets point to first position
+  int point = (row * (cols + 1)) + col + 1 + offset;
+  goto_char(env, point);
 }
 
 static void term_finalize(void *object) {
@@ -194,42 +212,6 @@ static emacs_value Fvterm_new(emacs_env *env, ptrdiff_t nargs,
   return env->make_user_ptr(env, term_finalize, term);
 }
 
-static void *event_loop(void *arg) {
-  struct Term *term = arg;
-  fd_set rfds;
-
-  while (1) {
-    FD_ZERO(&rfds);
-    FD_SET(term->masterfd, &rfds);
-    if (select(term->masterfd + 1, &rfds, NULL, NULL, NULL) == 1) {
-      kill(getpid(), SIGUSR1);
-      usleep(20000);
-    }
-  }
-
-  return NULL;
-}
-
-static void process_key(struct Term *term, unsigned char *key, size_t len,
-                        VTermModifier modifier) {
-  if (len == 8 && memcmp(key, "<return>", len) == 0) {
-    vterm_keyboard_key(term->vt, VTERM_KEY_ENTER, modifier);
-  } else if (len == 11 && memcmp(key, "<backspace>", len) == 0) {
-    vterm_keyboard_key(term->vt, VTERM_KEY_BACKSPACE, modifier);
-  } else if (len == 5 && memcmp(key, "<tab>", len) == 0) {
-    vterm_keyboard_key(term->vt, VTERM_KEY_TAB, modifier);
-  } else if (len == 3 && memcmp(key, "SPC", len) == 0) {
-    vterm_keyboard_unichar(term->vt, ' ', modifier);
-  } else if (len <= 4) {
-    uint32_t codepoint;
-    if (utf8_to_codepoint(key, len, &codepoint)) {
-      vterm_keyboard_unichar(term->vt, codepoint, modifier);
-    }
-  }
-
-  vterm_flush_output(term);
-}
-
 static emacs_value Fvterm_update(emacs_env *env, ptrdiff_t nargs,
                                  emacs_value args[], void *data) {
   struct Term *term = env->get_user_ptr(env, args[0]);
@@ -254,7 +236,7 @@ static emacs_value Fvterm_update(emacs_env *env, ptrdiff_t nargs,
       modifier = modifier | VTERM_MOD_CTRL;
 
     // Ignore the final zero byte
-    process_key(term, key, len - 1, modifier);
+    term_process_key(term, key, len - 1, modifier);
   }
 
   // Read input from masterfd
@@ -265,7 +247,7 @@ static emacs_value Fvterm_update(emacs_env *env, ptrdiff_t nargs,
 
   while ((len = read(term->masterfd, bytes, 4096)) > 0) {
     vterm_input_write(term->vt, bytes, len);
-    vterm_redraw(term->vt, env);
+    term_redraw(term, env);
 
     // Break after 40 milliseconds
     gettimeofday(&end, NULL);
@@ -302,6 +284,22 @@ static emacs_value Fvterm_set_size(emacs_env *env, ptrdiff_t nargs,
   }
 
   return Qnil;
+}
+
+static void *event_loop(void *arg) {
+  struct Term *term = arg;
+  fd_set rfds;
+
+  while (1) {
+    FD_ZERO(&rfds);
+    FD_SET(term->masterfd, &rfds);
+    if (select(term->masterfd + 1, &rfds, NULL, NULL, NULL) == 1) {
+      kill(getpid(), SIGUSR1);
+      usleep(20000);
+    }
+  }
+
+  return NULL;
 }
 
 int emacs_module_init(struct emacs_runtime *ert) {
