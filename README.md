@@ -25,7 +25,6 @@ And add this to your `init.el`
 
 ```
 (add-to-list 'load-path "path/to/emacs-libvterm")
-(add-to-list 'load-path "path/to/emacs-libvterm/build")
 ```
 
 # Usage
