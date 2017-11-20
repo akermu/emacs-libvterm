@@ -15,6 +15,8 @@ struct Term {
 static bool compare_cells(VTermScreenCell *a, VTermScreenCell *b);
 static bool is_key(unsigned char *key, size_t len, char *key_description);
 
+static int set_term_prop_cb(VTermProp prop, VTermValue *val, void *user_data);
+
 static void term_redraw(struct Term *term, emacs_env *env);
 static void term_flush_output(struct Term *term);
 static void term_process_key(struct Term *term, unsigned char *key, size_t len,

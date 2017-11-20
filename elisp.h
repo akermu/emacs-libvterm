@@ -15,6 +15,7 @@ emacs_value Qslant;
 emacs_value Qreverse;
 emacs_value Qstrike;
 emacs_value Qface;
+emacs_value Qcursor_type;
 
 // Emacs functions
 emacs_value Flength;
@@ -23,6 +24,7 @@ emacs_value Ferase_buffer;
 emacs_value Finsert;
 emacs_value Fgoto_char;
 emacs_value Fput_text_property;
+emacs_value Fset;
 
 // Utils
 void bind_function(emacs_env *env, const char *name, emacs_value Sfun);
@@ -39,3 +41,4 @@ emacs_value color_to_rgb_string(emacs_env *env, VTermColor color);
 void erase_buffer(emacs_env *env);
 void insert(emacs_env *env, emacs_value string);
 void goto_char(emacs_env *env, int pos);
+void toggle_cursor(emacs_env *env, bool visible);

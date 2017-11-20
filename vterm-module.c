@@ -39,6 +39,19 @@ static bool is_key(unsigned char *key, size_t len, char *key_description) {
           memcmp(key, key_description, len) == 0);
 }
 
+static int set_term_prop_cb(VTermProp prop, VTermValue *val, void *user_data) {
+  emacs_env *env = (emacs_env *)user_data;
+  switch (prop) {
+  case VTERM_PROP_CURSORVISIBLE:
+    toggle_cursor(env, val->boolean);
+    break;
+  default:
+    return 0;
+  }
+
+  return 1;
+}
+
 static void term_redraw(struct Term *term, emacs_env *env) {
   int i, j;
   int rows, cols;
@@ -297,6 +310,12 @@ static emacs_value Fvterm_update(emacs_env *env, ptrdiff_t nargs,
   gettimeofday(&start, NULL);
 
   while ((len = read(term->masterfd, bytes, 4096)) > 0) {
+    VTermScreenCallbacks cb = {
+        .settermprop = set_term_prop_cb,
+    };
+    VTermScreen *screen = vterm_obtain_screen(term->vt);
+    vterm_screen_set_callbacks(screen, &cb, env);
+
     vterm_input_write(term->vt, bytes, len);
     term_redraw(term, env);
 
@@ -370,6 +389,7 @@ int emacs_module_init(struct emacs_runtime *ert) {
   Qreverse = env->intern(env, ":inverse-video");
   Qstrike = env->intern(env, ":strike-through");
   Qface = env->intern(env, "font-lock-face");
+  Qcursor_type = env->intern(env, "cursor-type");
 
   // Functions
   Flength = env->intern(env, "length");
@@ -378,6 +398,7 @@ int emacs_module_init(struct emacs_runtime *ert) {
   Finsert = env->intern(env, "insert");
   Fgoto_char = env->intern(env, "goto-char");
   Fput_text_property = env->intern(env, "put-text-property");
+  Fset = env->intern(env, "set");
 
   // Exported functions
   emacs_value fun;

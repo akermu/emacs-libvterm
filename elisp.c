@@ -106,3 +106,8 @@ void goto_char(emacs_env *env, int pos) {
   emacs_value point = env->make_integer(env, pos);
   env->funcall(env, Fgoto_char, 1, (emacs_value[]){point});
 }
+
+void toggle_cursor(emacs_env *env, bool visible) {
+  emacs_value Qvisible = visible ? Qt : Qnil;
+  env->funcall(env, Fset, 2, (emacs_value[]){Qcursor_type, Qvisible});
+}
