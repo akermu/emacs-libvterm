@@ -13,6 +13,7 @@ struct Term {
 };
 
 static bool compare_cells(VTermScreenCell *a, VTermScreenCell *b);
+static bool is_key(unsigned char *key, size_t len, char *key_description);
 
 static void term_redraw(struct Term *term, emacs_env *env);
 static void term_flush_output(struct Term *term);

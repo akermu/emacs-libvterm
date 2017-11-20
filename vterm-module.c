@@ -34,6 +34,11 @@ static bool compare_cells(VTermScreenCell *a, VTermScreenCell *b) {
   return equal;
 }
 
+static bool is_key(unsigned char *key, size_t len, char *key_description) {
+  return (len == strlen(key_description) &&
+          memcmp(key, key_description, len) == 0);
+}
+
 static void term_redraw(struct Term *term, emacs_env *env) {
   int i, j;
   int rows, cols;
@@ -109,13 +114,59 @@ static void term_flush_output(struct Term *term) {
 
 static void term_process_key(struct Term *term, unsigned char *key, size_t len,
                              VTermModifier modifier) {
-  if (len == 8 && memcmp(key, "<return>", len) == 0) {
+  if (is_key(key, len, "<return>")) {
     vterm_keyboard_key(term->vt, VTERM_KEY_ENTER, modifier);
-  } else if (len == 11 && memcmp(key, "<backspace>", len) == 0) {
-    vterm_keyboard_key(term->vt, VTERM_KEY_BACKSPACE, modifier);
-  } else if (len == 5 && memcmp(key, "<tab>", len) == 0) {
+  } else if (is_key(key, len, "<tab>")) {
     vterm_keyboard_key(term->vt, VTERM_KEY_TAB, modifier);
-  } else if (len == 3 && memcmp(key, "SPC", len) == 0) {
+  } else if (is_key(key, len, "<backspace>")) {
+    vterm_keyboard_key(term->vt, VTERM_KEY_BACKSPACE, modifier);
+  } else if (is_key(key, len, "<escape>")) {
+    vterm_keyboard_key(term->vt, VTERM_KEY_ESCAPE, modifier);
+  } else if (is_key(key, len, "<up>")) {
+    vterm_keyboard_key(term->vt, VTERM_KEY_UP, modifier);
+  } else if (is_key(key, len, "<down>")) {
+    vterm_keyboard_key(term->vt, VTERM_KEY_DOWN, modifier);
+  } else if (is_key(key, len, "<left>")) {
+    vterm_keyboard_key(term->vt, VTERM_KEY_LEFT, modifier);
+  } else if (is_key(key, len, "<right>")) {
+    vterm_keyboard_key(term->vt, VTERM_KEY_RIGHT, modifier);
+  } else if (is_key(key, len, "<insert>")) {
+    vterm_keyboard_key(term->vt, VTERM_KEY_INS, modifier);
+  } else if (is_key(key, len, "<delete>")) {
+    vterm_keyboard_key(term->vt, VTERM_KEY_DEL, modifier);
+  } else if (is_key(key, len, "<home>")) {
+    vterm_keyboard_key(term->vt, VTERM_KEY_HOME, modifier);
+  } else if (is_key(key, len, "<end>")) {
+    vterm_keyboard_key(term->vt, VTERM_KEY_END, modifier);
+  } else if (is_key(key, len, "<prior>")) {
+    vterm_keyboard_key(term->vt, VTERM_KEY_PAGEUP, modifier);
+  } else if (is_key(key, len, "<f0>")) {
+    vterm_keyboard_key(term->vt, VTERM_KEY_FUNCTION(0), modifier);
+  } else if (is_key(key, len, "<f1>")) {
+    vterm_keyboard_key(term->vt, VTERM_KEY_FUNCTION(1), modifier);
+  } else if (is_key(key, len, "<f2>")) {
+    vterm_keyboard_key(term->vt, VTERM_KEY_FUNCTION(2), modifier);
+  } else if (is_key(key, len, "<f3>")) {
+    vterm_keyboard_key(term->vt, VTERM_KEY_FUNCTION(3), modifier);
+  } else if (is_key(key, len, "<f4>")) {
+    vterm_keyboard_key(term->vt, VTERM_KEY_FUNCTION(4), modifier);
+  } else if (is_key(key, len, "<f5>")) {
+    vterm_keyboard_key(term->vt, VTERM_KEY_FUNCTION(5), modifier);
+  } else if (is_key(key, len, "<f6>")) {
+    vterm_keyboard_key(term->vt, VTERM_KEY_FUNCTION(6), modifier);
+  } else if (is_key(key, len, "<f7>")) {
+    vterm_keyboard_key(term->vt, VTERM_KEY_FUNCTION(7), modifier);
+  } else if (is_key(key, len, "<f8>")) {
+    vterm_keyboard_key(term->vt, VTERM_KEY_FUNCTION(8), modifier);
+  } else if (is_key(key, len, "<f9>")) {
+    vterm_keyboard_key(term->vt, VTERM_KEY_FUNCTION(9), modifier);
+  } else if (is_key(key, len, "<f10>")) {
+    vterm_keyboard_key(term->vt, VTERM_KEY_FUNCTION(10), modifier);
+  } else if (is_key(key, len, "<f11>")) {
+    vterm_keyboard_key(term->vt, VTERM_KEY_FUNCTION(11), modifier);
+  } else if (is_key(key, len, "<f12>")) {
+    vterm_keyboard_key(term->vt, VTERM_KEY_FUNCTION(12), modifier);
+  } else if (is_key(key, len, "SPC")) {
     vterm_keyboard_unichar(term->vt, ' ', modifier);
   } else if (len <= 4) {
     uint32_t codepoint;
