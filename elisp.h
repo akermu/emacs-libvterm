@@ -1,3 +1,6 @@
+#ifndef ELISP_H
+#define ELISP_H
+
 #include "vterm.h"
 #include <emacs-module.h>
 
@@ -42,3 +45,5 @@ void erase_buffer(emacs_env *env);
 void insert(emacs_env *env, emacs_value string);
 void goto_char(emacs_env *env, int pos);
 void toggle_cursor(emacs_env *env, bool visible);
+
+#endif /* ELISP_H */

@@ -1,3 +1,6 @@
+#ifndef VTERM_MODULE_H
+#define VTERM_MODULE_H
+
 #include <emacs-module.h>
 #include <inttypes.h>
 #include <stdbool.h>
@@ -36,3 +39,5 @@ static emacs_value Fvterm_set_size(emacs_env *env, ptrdiff_t nargs,
 
 static void *event_loop(void *arg);
 int emacs_module_init(struct emacs_runtime *ert);
+
+#endif /* VTERM_MODULE_H */
