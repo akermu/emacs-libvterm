@@ -15,6 +15,17 @@ struct Term {
   pthread_t thread;
 };
 
+// Faces
+emacs_value Qterm;
+emacs_value Qterm_color_black;
+emacs_value Qterm_color_red;
+emacs_value Qterm_color_green;
+emacs_value Qterm_color_yellow;
+emacs_value Qterm_color_blue;
+emacs_value Qterm_color_magenta;
+emacs_value Qterm_color_cyan;
+emacs_value Qterm_color_white;
+
 static bool compare_cells(VTermScreenCell *a, VTermScreenCell *b);
 static bool is_key(unsigned char *key, size_t len, char *key_description);
 static emacs_value render_text(emacs_env *env, char *string, int len,
@@ -23,6 +34,7 @@ static emacs_value render_text(emacs_env *env, char *string, int len,
 static int set_term_prop_cb(VTermProp prop, VTermValue *val, void *user_data);
 
 static void term_redraw(struct Term *term, emacs_env *env);
+static void term_setup_colors(struct Term *term, emacs_env *env);
 static void term_flush_output(struct Term *term);
 static void term_process_key(struct Term *term, unsigned char *key, size_t len,
                              VTermModifier modifier);

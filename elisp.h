@@ -28,6 +28,7 @@ emacs_value Finsert;
 emacs_value Fgoto_char;
 emacs_value Fput_text_property;
 emacs_value Fset;
+emacs_value Fvterm_face_color_hex;
 
 // Utils
 void bind_function(emacs_env *env, const char *name, emacs_value Sfun);
@@ -39,9 +40,13 @@ void put_text_property(emacs_env *env, emacs_value string, emacs_value property,
                        emacs_value value);
 void byte_to_hex(uint8_t byte, char *hex);
 emacs_value color_to_rgb_string(emacs_env *env, VTermColor color);
+uint8_t hex_to_byte(char *hex);
+VTermColor rgb_string_to_color(emacs_env *env, emacs_value string);
 void erase_buffer(emacs_env *env);
 void insert(emacs_env *env, emacs_value string);
 void goto_char(emacs_env *env, int pos);
 void toggle_cursor(emacs_env *env, bool visible);
+emacs_value get_hex_color_fg(emacs_env *env, emacs_value face);
+emacs_value get_hex_color_bg(emacs_env *env, emacs_value face);
 
 #endif /* ELISP_H */

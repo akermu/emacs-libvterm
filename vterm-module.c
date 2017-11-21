@@ -136,6 +136,54 @@ static void term_redraw(struct Term *term, emacs_env *env) {
   term_put_caret(term, env, pos.row, pos.col, -offset);
 }
 
+static void term_setup_colors(struct Term *term, emacs_env *env) {
+  VTermState *state = vterm_obtain_state(term->vt);
+  VTermColor fg = rgb_string_to_color(env, get_hex_color_fg(env, Qterm));
+  VTermColor bg = rgb_string_to_color(env, get_hex_color_bg(env, Qterm));
+
+  vterm_state_set_default_colors(state, &fg, &bg);
+
+  fg = rgb_string_to_color(env, get_hex_color_fg(env, Qterm_color_black));
+  vterm_state_set_palette_color(state, 0, &fg);
+  bg = rgb_string_to_color(env, get_hex_color_bg(env, Qterm_color_black));
+  vterm_state_set_palette_color(state, 8, &bg);
+
+  fg = rgb_string_to_color(env, get_hex_color_fg(env, Qterm_color_red));
+  vterm_state_set_palette_color(state, 1, &fg);
+  bg = rgb_string_to_color(env, get_hex_color_bg(env, Qterm_color_red));
+  vterm_state_set_palette_color(state, 9, &bg);
+
+  fg = rgb_string_to_color(env, get_hex_color_fg(env, Qterm_color_green));
+  vterm_state_set_palette_color(state, 2, &fg);
+  bg = rgb_string_to_color(env, get_hex_color_bg(env, Qterm_color_green));
+  vterm_state_set_palette_color(state, 10, &bg);
+
+  fg = rgb_string_to_color(env, get_hex_color_fg(env, Qterm_color_yellow));
+  vterm_state_set_palette_color(state, 3, &fg);
+  bg = rgb_string_to_color(env, get_hex_color_bg(env, Qterm_color_yellow));
+  vterm_state_set_palette_color(state, 11, &bg);
+
+  fg = rgb_string_to_color(env, get_hex_color_fg(env, Qterm_color_blue));
+  vterm_state_set_palette_color(state, 4, &fg);
+  bg = rgb_string_to_color(env, get_hex_color_bg(env, Qterm_color_blue));
+  vterm_state_set_palette_color(state, 12, &bg);
+
+  fg = rgb_string_to_color(env, get_hex_color_fg(env, Qterm_color_magenta));
+  vterm_state_set_palette_color(state, 5, &fg);
+  bg = rgb_string_to_color(env, get_hex_color_bg(env, Qterm_color_magenta));
+  vterm_state_set_palette_color(state, 13, &bg);
+
+  fg = rgb_string_to_color(env, get_hex_color_fg(env, Qterm_color_cyan));
+  vterm_state_set_palette_color(state, 6, &fg);
+  bg = rgb_string_to_color(env, get_hex_color_bg(env, Qterm_color_cyan));
+  vterm_state_set_palette_color(state, 14, &bg);
+
+  fg = rgb_string_to_color(env, get_hex_color_fg(env, Qterm_color_white));
+  vterm_state_set_palette_color(state, 7, &fg);
+  bg = rgb_string_to_color(env, get_hex_color_bg(env, Qterm_color_white));
+  vterm_state_set_palette_color(state, 15, &bg);
+}
+
 static void term_flush_output(struct Term *term) {
   size_t bufflen = vterm_output_get_buffer_current(term->vt);
   if (bufflen) {
@@ -293,6 +341,8 @@ static emacs_value Fvterm_new(emacs_env *env, ptrdiff_t nargs,
   term->vt = vterm_new(rows, cols);
   vterm_set_utf8(term->vt, 1);
 
+  term_setup_colors(term, env);
+
   VTermScreen *screen = vterm_obtain_screen(term->vt);
   vterm_screen_reset(screen, 1);
 
@@ -424,6 +474,18 @@ int emacs_module_init(struct emacs_runtime *ert) {
   Fgoto_char = env->intern(env, "goto-char");
   Fput_text_property = env->intern(env, "put-text-property");
   Fset = env->intern(env, "set");
+  Fvterm_face_color_hex = env->intern(env, "vterm-face-color-hex");
+
+  // Faces
+  Qterm = env->intern(env, "vterm");
+  Qterm_color_black = env->intern(env, "vterm-color-black");
+  Qterm_color_red = env->intern(env, "vterm-color-red");
+  Qterm_color_green = env->intern(env, "vterm-color-green");
+  Qterm_color_yellow = env->intern(env, "vterm-color-yellow");
+  Qterm_color_blue = env->intern(env, "vterm-color-blue");
+  Qterm_color_magenta = env->intern(env, "vterm-color-magenta");
+  Qterm_color_cyan = env->intern(env, "vterm-color-cyan");
+  Qterm_color_white = env->intern(env, "vterm-color-white");
 
   // Exported functions
   emacs_value fun;

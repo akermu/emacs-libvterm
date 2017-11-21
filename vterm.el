@@ -10,6 +10,7 @@
 (require 'vterm-module)
 (require 'subr-x)
 (require 'cl-lib)
+(require 'color)
 
 (defvar vterm-term nil
   "Pointer to struct Term.")
@@ -23,6 +24,52 @@
 
 If you use a keybinding with a prefix-key that prefix-key cannot
 be send to the terminal.")
+
+
+(defface vterm
+  '((t :inherit default))
+  "Default face to use in Term mode."
+  :group 'vterm)
+
+(defface vterm-color-black
+  '((t :foreground "black" :background "black"))
+  "Face used to render black color code."
+  :group 'vterm)
+
+(defface vterm-color-red
+  '((t :foreground "red3" :background "red3"))
+  "Face used to render red color code."
+  :group 'vterm)
+
+(defface vterm-color-green
+  '((t :foreground "green3" :background "green3"))
+  "Face used to render green color code."
+  :group 'vterm)
+
+(defface vterm-color-yellow
+  '((t :foreground "yellow3" :background "yellow3"))
+  "Face used to render yellow color code."
+  :group 'vterm)
+
+(defface vterm-color-blue
+  '((t :foreground "blue2" :background "blue2"))
+  "Face used to render blue color code."
+  :group 'vterm)
+
+(defface vterm-color-magenta
+  '((t :foreground "magenta3" :background "magenta3"))
+  "Face used to render magenta color code."
+  :group 'vterm)
+
+(defface vterm-color-cyan
+  '((t :foreground "cyan3" :background "cyan3"))
+  "Face used to render cyan color code."
+  :group 'vterm)
+
+(defface vterm-color-white
+  '((t :foreground "white" :background "white"))
+  "Face used to render white color code."
+  :group 'vterm)
 
 (define-derived-mode vterm-mode fundamental-mode "VTerm"
   "Mayor mode for vterm buffer."
@@ -101,6 +148,10 @@ be send to the terminal.")
       (with-current-buffer buffer
         (when (eq major-mode 'vterm-mode)
           (vterm-set-size vterm-term (window-body-height) (window-body-width)))))))
+
+(defun vterm-face-color-hex (face attr)
+  "Return the color of the FACE's ATTR as a hex string."
+  (apply #'color-rgb-to-hex (color-name-to-rgb (face-attribute face attr nil 'default))))
 
 (provide 'vterm)
 ;;; vterm.el ends here

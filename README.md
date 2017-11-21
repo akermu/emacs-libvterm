@@ -33,6 +33,23 @@ And add this to your `init.el`
 M-x vterm-create
 ```
 
+# Customization
+
+## Colors
+
+Set the `:foreground` and `:background` attributes of the following faces to a
+color you like:
+
+- vterm
+- vterm-color-black
+- vterm-color-red
+- vterm-color-green
+- vterm-color-yellow
+- vterm-color-blue
+- vterm-color-magenta
+- vterm-color-cyan
+- vterm-color-white
+
 # Limitations
 
 - No support for scrolling (But you can use tmux/screen to emulate scrolling) 

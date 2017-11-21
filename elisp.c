@@ -54,6 +54,27 @@ emacs_value color_to_rgb_string(emacs_env *env, VTermColor color) {
   return env->make_string(env, buffer, 7);
 };
 
+uint8_t hex_to_byte(char *hex) { return strtoul(hex, NULL, 16); }
+
+VTermColor rgb_string_to_color(emacs_env *env, emacs_value string) {
+  VTermColor color;
+  ptrdiff_t len = 8;
+  char buffer[len];
+  char hex[3];
+  env->copy_string_contents(env, string, buffer, &len);
+  hex[0] = buffer[1];
+  hex[1] = buffer[2];
+  color.red = hex_to_byte(hex);
+  hex[0] = buffer[3];
+  hex[1] = buffer[4];
+  color.green = hex_to_byte(hex);
+  hex[0] = buffer[5];
+  hex[1] = buffer[6];
+  color.blue = hex_to_byte(hex);
+
+  return color;
+};
+
 void erase_buffer(emacs_env *env) { env->funcall(env, Ferase_buffer, 0, NULL); }
 
 void insert(emacs_env *env, emacs_value string) {
@@ -68,4 +89,14 @@ void goto_char(emacs_env *env, int pos) {
 void toggle_cursor(emacs_env *env, bool visible) {
   emacs_value Qvisible = visible ? Qt : Qnil;
   env->funcall(env, Fset, 2, (emacs_value[]){Qcursor_type, Qvisible});
+}
+
+emacs_value get_hex_color_fg(emacs_env *env, emacs_value face) {
+  return env->funcall(env, Fvterm_face_color_hex, 2,
+                      (emacs_value[]){face, Qforeground});
+}
+
+emacs_value get_hex_color_bg(emacs_env *env, emacs_value face) {
+  return env->funcall(env, Fvterm_face_color_hex, 2,
+                      (emacs_value[]){face, Qbackground});
 }
