@@ -1,5 +1,5 @@
-#include <emacs-module.h>
 #include "vterm.h"
+#include <emacs-module.h>
 
 // Emacs symbols
 emacs_value Qt;

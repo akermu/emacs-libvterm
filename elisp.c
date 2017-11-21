@@ -1,31 +1,21 @@
 #include "elisp.h"
 #include <stdio.h>
 
-/* Bind NAME to FUN.  */
+/* Set the function cell of the symbol named NAME to SFUN using
+   the 'fset' function.  */
 void bind_function(emacs_env *env, const char *name, emacs_value Sfun) {
-  /* Set the function cell of the symbol named NAME to SFUN using
-     the 'fset' function.  */
-
-  /* Convert the strings to symbols by interning them */
   emacs_value Qfset = env->intern(env, "fset");
   emacs_value Qsym = env->intern(env, name);
 
-  /* Prepare the arguments array */
-  emacs_value args[] = {Qsym, Sfun};
-
-  /* Make the call (2 == nb of arguments) */
-  env->funcall(env, Qfset, 2, args);
+  env->funcall(env, Qfset, 2, (emacs_value[]){Qsym, Sfun});
 }
 
 /* Provide FEATURE to Emacs.  */
 void provide(emacs_env *env, const char *feature) {
-  /* call 'provide' with FEATURE converted to a symbol */
-
   emacs_value Qfeat = env->intern(env, feature);
   emacs_value Qprovide = env->intern(env, "provide");
-  emacs_value args[] = {Qfeat};
 
-  env->funcall(env, Qprovide, 1, args);
+  env->funcall(env, Qprovide, 1, (emacs_value[]){Qfeat});
 }
 
 int string_bytes(emacs_env *env, emacs_value string) {
@@ -42,8 +32,8 @@ emacs_value list(emacs_env *env, emacs_value *elements, ptrdiff_t len) {
   return env->funcall(env, Flist, len, elements);
 }
 
-void put_text_property(emacs_env *env, emacs_value string,
-                              emacs_value property, emacs_value value) {
+void put_text_property(emacs_env *env, emacs_value string, emacs_value property,
+                       emacs_value value) {
   emacs_value start = env->make_integer(env, 0);
   emacs_value end = string_length(env, string);
 
@@ -51,11 +41,8 @@ void put_text_property(emacs_env *env, emacs_value string,
                (emacs_value[]){start, end, property, value, string});
 }
 
-/*
- * Color must be a string #RGB
- */
 emacs_value render_text(emacs_env *env, char *buffer, int len,
-                               VTermScreenCell *cell) {
+                        VTermScreenCell *cell) {
   emacs_value text = env->make_string(env, buffer, len);
 
   emacs_value foreground = color_to_rgb_string(env, cell->fg);
@@ -79,9 +66,7 @@ emacs_value render_text(emacs_env *env, char *buffer, int len,
   return text;
 }
 
-void byte_to_hex(uint8_t byte, char *hex) {
-  snprintf(hex, 3, "%.2X", byte);
-}
+void byte_to_hex(uint8_t byte, char *hex) { snprintf(hex, 3, "%.2X", byte); }
 
 emacs_value color_to_rgb_string(emacs_env *env, VTermColor color) {
   char buffer[8];
@@ -94,9 +79,7 @@ emacs_value color_to_rgb_string(emacs_env *env, VTermColor color) {
   return env->make_string(env, buffer, 7);
 };
 
-void erase_buffer(emacs_env *env) {
-  env->funcall(env, Ferase_buffer, 0, NULL);
-}
+void erase_buffer(emacs_env *env) { env->funcall(env, Ferase_buffer, 0, NULL); }
 
 void insert(emacs_env *env, emacs_value string) {
   env->funcall(env, Finsert, 1, (emacs_value[]){string});
