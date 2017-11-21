@@ -287,8 +287,12 @@ static emacs_value Fvterm_new(emacs_env *env, ptrdiff_t nargs,
                               emacs_value args[], void *data) {
   struct Term *term = malloc(sizeof(struct Term));
 
-  int rows = env->extract_integer(env, args[0]);
-  int cols = env->extract_integer(env, args[1]);
+  ptrdiff_t len = string_bytes(env, args[0]);
+  char shell[len];
+  env->copy_string_contents(env, args[0], shell, &len);
+
+  int rows = env->extract_integer(env, args[1]);
+  int cols = env->extract_integer(env, args[2]);
 
   struct winsize size = {rows, cols, 0, 0};
 
@@ -333,7 +337,6 @@ static emacs_value Fvterm_new(emacs_env *env, ptrdiff_t nargs,
 
   if (term->pid == 0) {
     setenv("TERM", "xterm", 1);
-    char *shell = getenv("SHELL");
     char *args[2] = {shell, NULL};
     execvp(shell, args);
     exit(1);
@@ -491,7 +494,7 @@ int emacs_module_init(struct emacs_runtime *ert) {
   // Exported functions
   emacs_value fun;
   fun =
-      env->make_function(env, 2, 2, Fvterm_new, "Allocates a new vterm.", NULL);
+      env->make_function(env, 3, 3, Fvterm_new, "Allocates a new vterm.", NULL);
   bind_function(env, "vterm-new", fun);
 
   fun = env->make_function(env, 1, 5, Fvterm_update,

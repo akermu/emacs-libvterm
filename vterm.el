@@ -12,6 +12,10 @@
 (require 'cl-lib)
 (require 'color)
 
+(defcustom vterm-shell (getenv "SHELL")
+  "The shell that gets run in the vterm."
+  :group 'vterm)
+
 (defcustom vterm-keymap-exceptions '("C-x" "C-u" "C-g" "C-h" "M-x" "M-o")
   "Exceptions for vterm-keymap.
 
@@ -74,7 +78,7 @@ be send to the terminal."
 (define-derived-mode vterm-mode fundamental-mode "VTerm"
   "Mayor mode for vterm buffer."
   (buffer-disable-undo)
-  (setq vterm--term (vterm-new (window-body-height) (window-body-width))
+  (setq vterm--term (vterm-new vterm-shell (window-body-height) (window-body-width))
         buffer-read-only t)
   (setq-local scroll-conservatively 101)
   (setq-local scroll-margin 0)

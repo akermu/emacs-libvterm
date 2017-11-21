@@ -35,6 +35,10 @@ M-x vterm-create
 
 # Customization
 
+## `vterm-shell`
+
+Shell to run in a new vterm. Defaults to `$SHELL`.
+
 ## `vterm-keymap-exceptions`
 
 List of keys, which should be processed by emacs and not by the terminal.
