@@ -35,6 +35,10 @@ M-x vterm-create
 
 # Customization
 
+## `vterm-keymap-exceptions`
+
+List of keys, which should be processed by emacs and not by the terminal.
+
 ## Colors
 
 Set the `:foreground` and `:background` attributes of the following faces to a

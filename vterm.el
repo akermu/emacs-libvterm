@@ -19,11 +19,12 @@
 (defvar vterm--buffers nil
   "List of active vterm-buffers.")
 
-(defvar vterm-keymap-exceptions '("C-x" "C-u" "C-g" "C-h" "M-x" "M-o")
+(defcustom vterm-keymap-exceptions '("C-x" "C-u" "C-g" "C-h" "M-x" "M-o")
   "Exceptions for vterm-keymap.
 
 If you use a keybinding with a prefix-key that prefix-key cannot
-be send to the terminal.")
+be send to the terminal."
+  :group 'vterm)
 
 (defface vterm
   '((t :inherit default))
