@@ -12,13 +12,6 @@
 (require 'cl-lib)
 (require 'color)
 
-(defvar vterm--term nil
-  "Pointer to struct Term.")
-(make-variable-buffer-local 'vterm--term)
-
-(defvar vterm--buffers nil
-  "List of active vterm-buffers.")
-
 (defcustom vterm-keymap-exceptions '("C-x" "C-u" "C-g" "C-h" "M-x" "M-o")
   "Exceptions for vterm-keymap.
 
@@ -70,6 +63,13 @@ be send to the terminal."
   '((t :foreground "white" :background "white"))
   "Face used to render white color code."
   :group 'vterm)
+
+(defvar vterm--term nil
+  "Pointer to struct Term.")
+(make-variable-buffer-local 'vterm--term)
+
+(defvar vterm--buffers nil
+  "List of active vterm-buffers.")
 
 (define-derived-mode vterm-mode fundamental-mode "VTerm"
   "Mayor mode for vterm buffer."
