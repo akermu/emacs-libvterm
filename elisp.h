@@ -37,8 +37,6 @@ emacs_value string_length(emacs_env *env, emacs_value string);
 emacs_value list(emacs_env *env, emacs_value *elements, ptrdiff_t len);
 void put_text_property(emacs_env *env, emacs_value string, emacs_value property,
                        emacs_value value);
-emacs_value render_text(emacs_env *env, char *string, int len,
-                        VTermScreenCell *cell);
 void byte_to_hex(uint8_t byte, char *hex);
 emacs_value color_to_rgb_string(emacs_env *env, VTermColor color);
 void erase_buffer(emacs_env *env);

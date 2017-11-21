@@ -17,6 +17,8 @@ struct Term {
 
 static bool compare_cells(VTermScreenCell *a, VTermScreenCell *b);
 static bool is_key(unsigned char *key, size_t len, char *key_description);
+static emacs_value render_text(emacs_env *env, char *string, int len,
+                               VTermScreenCell *cell);
 
 static int set_term_prop_cb(VTermProp prop, VTermValue *val, void *user_data);
 

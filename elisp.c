@@ -41,31 +41,6 @@ void put_text_property(emacs_env *env, emacs_value string, emacs_value property,
                (emacs_value[]){start, end, property, value, string});
 }
 
-emacs_value render_text(emacs_env *env, char *buffer, int len,
-                        VTermScreenCell *cell) {
-  emacs_value text = env->make_string(env, buffer, len);
-
-  emacs_value foreground = color_to_rgb_string(env, cell->fg);
-  emacs_value background = color_to_rgb_string(env, cell->bg);
-  emacs_value bold = cell->attrs.bold ? Qbold : Qnormal;
-  emacs_value underline = cell->attrs.underline ? Qt : Qnil;
-  emacs_value italic = cell->attrs.italic ? Qitalic : Qnormal;
-  emacs_value reverse = cell->attrs.reverse ? Qt : Qnil;
-  emacs_value strike = cell->attrs.strike ? Qt : Qnil;
-
-  // TODO: Blink, font, dwl, dhl is missing
-  emacs_value properties =
-      list(env,
-           (emacs_value[]){Qforeground, foreground, Qbackground, background,
-                           Qweight, bold, Qunderline, underline, Qslant, italic,
-                           Qreverse, reverse, Qstrike, strike},
-           14);
-
-  put_text_property(env, text, Qface, properties);
-
-  return text;
-}
-
 void byte_to_hex(uint8_t byte, char *hex) { snprintf(hex, 3, "%.2X", byte); }
 
 emacs_value color_to_rgb_string(emacs_env *env, VTermColor color) {
