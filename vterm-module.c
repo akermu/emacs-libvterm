@@ -137,10 +137,11 @@ static void term_redraw(struct Term *term, emacs_env *env) {
 }
 
 static void term_setup_colors(struct Term *term, emacs_env *env) {
+  VTermColor fg, bg;
   VTermState *state = vterm_obtain_state(term->vt);
-  VTermColor fg = rgb_string_to_color(env, get_hex_color_fg(env, Qterm));
-  VTermColor bg = rgb_string_to_color(env, get_hex_color_bg(env, Qterm));
 
+  fg = rgb_string_to_color(env, get_hex_color_fg(env, Qterm));
+  bg = rgb_string_to_color(env, get_hex_color_bg(env, Qterm));
   vterm_state_set_default_colors(state, &fg, &bg);
 
   fg = rgb_string_to_color(env, get_hex_color_fg(env, Qterm_color_black));
