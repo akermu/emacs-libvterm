@@ -474,7 +474,7 @@ int emacs_module_init(struct emacs_runtime *ert) {
   Fgoto_char = env->intern(env, "goto-char");
   Fput_text_property = env->intern(env, "put-text-property");
   Fset = env->intern(env, "set");
-  Fvterm_face_color_hex = env->intern(env, "vterm-face-color-hex");
+  Fvterm_face_color_hex = env->intern(env, "vterm--face-color-hex");
 
   // Faces
   Qterm = env->intern(env, "vterm");
