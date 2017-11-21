@@ -27,6 +27,15 @@ And add this to your `init.el`
 (add-to-list 'load-path "path/to/emacs-libvterm")
 ```
 
+# Debugging and testing
+
+If you have successfully build the module, you can test the module by executing
+the following command in the `build` directory:
+
+```
+make run
+```
+
 # Usage
 
 ```
