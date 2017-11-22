@@ -382,23 +382,20 @@ static emacs_value Fvterm_update(emacs_env *env, ptrdiff_t nargs,
     term_process_key(term, key, len - 1, modifier);
   }
 
+  VTermScreenCallbacks cb = {
+      .settermprop = set_term_prop_cb,
+  };
+  VTermScreen *screen = vterm_obtain_screen(term->vt);
+  vterm_screen_set_callbacks(screen, &cb, env);
+
   // Read input from masterfd
   char bytes[4096];
   int len;
   struct timeval start, end;
+
   gettimeofday(&start, NULL);
-
   while ((len = read(term->masterfd, bytes, 4096)) > 0) {
-    VTermScreenCallbacks cb = {
-        .settermprop = set_term_prop_cb,
-    };
-    VTermScreen *screen = vterm_obtain_screen(term->vt);
-    vterm_screen_set_callbacks(screen, &cb, env);
-
     vterm_input_write(term->vt, bytes, len);
-    term_redraw(term, env);
-
-    vterm_screen_set_callbacks(screen, NULL, NULL);
 
     // Break after 40 milliseconds
     gettimeofday(&end, NULL);
@@ -406,6 +403,9 @@ static emacs_value Fvterm_update(emacs_env *env, ptrdiff_t nargs,
       break;
     }
   }
+  vterm_screen_set_callbacks(screen, NULL, NULL);
+
+  term_redraw(term, env);
 
   return env->make_integer(env, 0);
 }
