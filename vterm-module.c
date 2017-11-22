@@ -398,6 +398,8 @@ static emacs_value Fvterm_update(emacs_env *env, ptrdiff_t nargs,
     vterm_input_write(term->vt, bytes, len);
     term_redraw(term, env);
 
+    vterm_screen_set_callbacks(screen, NULL, NULL);
+
     // Break after 40 milliseconds
     gettimeofday(&end, NULL);
     if (end.tv_usec - start.tv_usec > 40000) {
