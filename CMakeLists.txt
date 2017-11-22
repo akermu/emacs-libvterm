@@ -15,6 +15,11 @@ target_link_libraries(vterm-module vterm)
 # Link with libutil
 target_link_libraries(vterm-module util)
 
+# Link with pthread
+set(THREADS_PREFER_PTHREAD_FLAG ON)
+find_package(Threads REQUIRED)
+target_link_libraries(vterm-module Threads::Threads)
+
 # We need the right emacs-module header
 set(EMACS_SOURCE "" CACHE PATH "Path to emacs source.")
 
