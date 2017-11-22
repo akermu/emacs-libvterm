@@ -117,13 +117,23 @@ be send to the terminal."
       (with-selected-window window
         (vterm-update vterm--term key shift meta ctrl)))))
 
-(defun vterm-create ()
+(defun vterm ()
   "Create a new vterm."
   (interactive)
   (let ((buffer (generate-new-buffer "vterm")))
+    (set-buffer buffer)
+    (vterm-mode)
     (add-to-list 'vterm--buffers buffer)
-    (pop-to-buffer buffer)
-    (vterm-mode)))
+    (switch-to-buffer buffer)))
+
+(defun vterm-other-window ()
+  "Create a new vterm."
+  (interactive)
+  (let ((buffer (generate-new-buffer "vterm")))
+    (set-buffer buffer)
+    (vterm-mode)
+    (add-to-list 'vterm--buffers buffer)
+    (pop-to-buffer buffer)))
 
 (defun vterm--event ()
   "Update the vterm BUFFER."

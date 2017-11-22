@@ -38,9 +38,13 @@ make run
 
 # Usage
 
-```
-M-x vterm-create
-```
+## `vterm`
+
+Open a terminal in the current window.
+
+## `vterm-other-window`
+
+Open a terminal in another window.
 
 # Customization
 
