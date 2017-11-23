@@ -261,8 +261,6 @@ static void term_process_key(struct Term *term, unsigned char *key, size_t len,
       vterm_keyboard_unichar(term->vt, codepoint, modifier);
     }
   }
-
-  term_flush_output(term);
 }
 
 static void term_put_caret(struct Term *term, emacs_env *env, int row, int col,
@@ -380,6 +378,9 @@ static emacs_value Fvterm_update(emacs_env *env, ptrdiff_t nargs,
 
     // Ignore the final zero byte
     term_process_key(term, key, len - 1, modifier);
+
+    // Flush output
+    term_flush_output(term);
   }
 
   VTermScreenCallbacks cb = {
