@@ -165,7 +165,9 @@ be send to the terminal."
 
 (defun vterm--face-color-hex (face attr)
   "Return the color of the FACE's ATTR as a hex string."
-  (apply #'color-rgb-to-hex (color-name-to-rgb (face-attribute face attr nil 'default))))
+  (if (< emacs-major-version 26)
+      (apply #'color-rgb-to-hex (color-name-to-rgb (face-attribute face attr nil 'default)))
+    (apply #'color-rgb-to-hex (append (color-name-to-rgb (face-attribute face attr nil 'default)) '(2)))))
 
 (provide 'vterm)
 ;;; vterm.el ends here
