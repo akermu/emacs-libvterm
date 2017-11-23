@@ -498,19 +498,19 @@ int emacs_module_init(struct emacs_runtime *ert) {
   emacs_value fun;
   fun =
       env->make_function(env, 3, 3, Fvterm_new, "Allocates a new vterm.", NULL);
-  bind_function(env, "vterm-new", fun);
+  bind_function(env, "vterm--new", fun);
 
   fun = env->make_function(env, 1, 5, Fvterm_update,
                            "Process io and update the screen.", NULL);
-  bind_function(env, "vterm-update", fun);
+  bind_function(env, "vterm--update", fun);
 
   fun = env->make_function(env, 1, 1, Fvterm_kill,
                            "Kill the the shell process.", NULL);
-  bind_function(env, "vterm-kill", fun);
+  bind_function(env, "vterm--kill", fun);
 
   fun = env->make_function(env, 3, 3, Fvterm_set_size,
                            "Sets the size of the terminal.", NULL);
-  bind_function(env, "vterm-set-size", fun);
+  bind_function(env, "vterm--set-size", fun);
 
   provide(env, "vterm-module");
 

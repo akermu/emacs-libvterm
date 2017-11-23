@@ -78,7 +78,7 @@ be send to the terminal."
 (define-derived-mode vterm-mode fundamental-mode "VTerm"
   "Mayor mode for vterm buffer."
   (buffer-disable-undo)
-  (setq vterm--term (vterm-new vterm-shell (window-body-height) (window-body-width))
+  (setq vterm--term (vterm--new vterm-shell (window-body-height) (window-body-width))
         buffer-read-only t)
   (setq-local scroll-conservatively 101)
   (setq-local scroll-margin 0)
@@ -115,7 +115,7 @@ be send to the terminal."
       (when (equal modifiers '(shift))
         (setq key (upcase key)))
       (with-selected-window window
-        (vterm-update vterm--term key shift meta ctrl)))))
+        (vterm--update vterm--term key shift meta ctrl)))))
 
 (defun vterm ()
   "Create a new vterm."
@@ -142,7 +142,7 @@ be send to the terminal."
         (inhibit-read-only t))
     (mapc (lambda (buffer)
             (with-current-buffer buffer
-              (unless (vterm-update vterm--term)
+              (unless (vterm--update vterm--term)
                 (kill-buffer-and-window)
                 (message "Shell exited!"))))
           vterm--buffers)))
@@ -153,7 +153,7 @@ be send to the terminal."
   "Kill the corresponding process of vterm."
   (when (eq major-mode 'vterm-mode)
     (setq vterm--buffers (remove (current-buffer) vterm--buffers))
-    (vterm-kill vterm--term)))
+    (vterm--kill vterm--term)))
 
 (defun vterm--window-size-change (frame)
   "Notify the vterm over size-change in FRAME."
@@ -161,7 +161,7 @@ be send to the terminal."
     (let ((buffer (window-buffer window)))
       (with-current-buffer buffer
         (when (eq major-mode 'vterm-mode)
-          (vterm-set-size vterm--term (window-body-height) (window-body-width)))))))
+          (vterm--set-size vterm--term (window-body-height) (window-body-width)))))))
 
 (defun vterm--face-color-hex (face attr)
   "Return the color of the FACE's ATTR as a hex string."
