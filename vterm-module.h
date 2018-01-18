@@ -11,9 +11,6 @@ int plugin_is_GPL_compatible;
 
 struct Term {
   VTerm *vt;
-  int masterfd;
-  pid_t pid;
-  pthread_t thread;
 };
 
 // Faces
@@ -36,7 +33,7 @@ static int set_term_prop_cb(VTermProp prop, VTermValue *val, void *user_data);
 
 static void term_redraw(struct Term *term, emacs_env *env);
 static void term_setup_colors(struct Term *term, emacs_env *env);
-static void term_flush_output(struct Term *term);
+static void term_flush_output(struct Term *term, emacs_env *env);
 static void term_process_key(struct Term *term, unsigned char *key, size_t len,
                              VTermModifier modifier);
 static void term_put_caret(struct Term *term, emacs_env *env, int row, int col,
@@ -47,12 +44,6 @@ static emacs_value Fvterm_new(emacs_env *env, ptrdiff_t nargs,
                               emacs_value args[], void *data);
 static emacs_value Fvterm_update(emacs_env *env, ptrdiff_t nargs,
                                  emacs_value args[], void *data);
-static emacs_value Fvterm_kill(emacs_env *env, ptrdiff_t nargs,
-                               emacs_value args[], void *data);
-static emacs_value Fvterm_set_size(emacs_env *env, ptrdiff_t nargs,
-                                   emacs_value args[], void *data);
-
-static void *event_loop(void *arg);
 int emacs_module_init(struct emacs_runtime *ert);
 
 #endif /* VTERM_MODULE_H */

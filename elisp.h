@@ -29,6 +29,7 @@ emacs_value Fgoto_char;
 emacs_value Fput_text_property;
 emacs_value Fset;
 emacs_value Fvterm_face_color_hex;
+emacs_value Fvterm_flush_output;
 
 // Utils
 void bind_function(emacs_env *env, const char *name, emacs_value Sfun);

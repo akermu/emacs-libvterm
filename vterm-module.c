@@ -1,19 +1,7 @@
 #include "vterm-module.h"
 #include "elisp.h"
-#include <fcntl.h>
-#ifdef __APPLE__
-#include <util.h>
-#else
-#include <pty.h>
-#endif
 #include "utf8.h"
-#include <pthread.h>
-#include <signal.h>
 #include <string.h>
-#include <sys/ioctl.h>
-#include <sys/select.h>
-#include <sys/time.h>
-#include <sys/wait.h>
 #include <termios.h>
 #include <unistd.h>
 #include <vterm.h>
@@ -185,17 +173,14 @@ static void term_setup_colors(struct Term *term, emacs_env *env) {
   vterm_state_set_palette_color(state, 15, &bg);
 }
 
-static void term_flush_output(struct Term *term) {
-  size_t bufflen = vterm_output_get_buffer_current(term->vt);
-  if (bufflen) {
-    char buffer[bufflen];
-    bufflen = vterm_output_read(term->vt, buffer, bufflen);
+static void term_flush_output(struct Term *term, emacs_env *env) {
+  size_t len = vterm_output_get_buffer_current(term->vt);
+  if (len) {
+    char buffer[len];
+    len = vterm_output_read(term->vt, buffer, len);
 
-    // TODO: Make work with NON-Blocking io. (buffer in term)
-    fcntl(term->masterfd, F_SETFL,
-          fcntl(term->masterfd, F_GETFL) & ~O_NONBLOCK);
-    write(term->masterfd, buffer, bufflen);
-    fcntl(term->masterfd, F_SETFL, fcntl(term->masterfd, F_GETFL) | O_NONBLOCK);
+    emacs_value output = env->make_string(env, buffer, len);
+    env->funcall(env, Fvterm_flush_output, 1, (emacs_value[]){output});
   }
 }
 
@@ -275,8 +260,6 @@ static void term_put_caret(struct Term *term, emacs_env *env, int row, int col,
 
 static void term_finalize(void *object) {
   struct Term *term = (struct Term *)object;
-  pthread_cancel(term->thread);
-  pthread_join(term->thread, NULL);
   vterm_free(term->vt);
   free(term);
 }
@@ -285,60 +268,8 @@ static emacs_value Fvterm_new(emacs_env *env, ptrdiff_t nargs,
                               emacs_value args[], void *data) {
   struct Term *term = malloc(sizeof(struct Term));
 
-  ptrdiff_t len = string_bytes(env, args[0]);
-  char shell[len];
-  env->copy_string_contents(env, args[0], shell, &len);
-
-  int rows = env->extract_integer(env, args[1]);
-  int cols = env->extract_integer(env, args[2]);
-
-  struct winsize size = {rows, cols, 0, 0};
-
-  // Taken almost verbatim from https://bazaar.launchpad.net/~leonerd/pangoterm
-  struct termios termios = {
-      .c_iflag = ICRNL | IXON,
-      .c_oflag = OPOST | ONLCR,
-      .c_cflag = CS8 | CREAD,
-      .c_lflag = ISIG | ICANON | IEXTEN | ECHO | ECHOE | ECHOK,
-      /* c_cc later */
-  };
-
-  termios.c_iflag |= IUTF8;
-  termios.c_oflag |= NL0;
-  termios.c_oflag |= CR0;
-  termios.c_oflag |= BS0;
-  termios.c_oflag |= VT0;
-  termios.c_oflag |= FF0;
-  termios.c_lflag |= ECHOCTL;
-  termios.c_lflag |= ECHOKE;
-
-  cfsetspeed(&termios, 38400);
-
-  termios.c_cc[VINTR] = 0x1f & 'C';
-  termios.c_cc[VQUIT] = 0x1f & '\\';
-  termios.c_cc[VERASE] = 0x7f;
-  termios.c_cc[VKILL] = 0x1f & 'U';
-  termios.c_cc[VEOF] = 0x1f & 'D';
-  termios.c_cc[VEOL] = _POSIX_VDISABLE;
-  termios.c_cc[VEOL2] = _POSIX_VDISABLE;
-  termios.c_cc[VSTART] = 0x1f & 'Q';
-  termios.c_cc[VSTOP] = 0x1f & 'S';
-  termios.c_cc[VSUSP] = 0x1f & 'Z';
-  termios.c_cc[VREPRINT] = 0x1f & 'R';
-  termios.c_cc[VWERASE] = 0x1f & 'W';
-  termios.c_cc[VLNEXT] = 0x1f & 'V';
-  termios.c_cc[VMIN] = 1;
-  termios.c_cc[VTIME] = 0;
-
-  term->pid = forkpty(&term->masterfd, NULL, &termios, &size);
-  fcntl(term->masterfd, F_SETFL, fcntl(term->masterfd, F_GETFL) | O_NONBLOCK);
-
-  if (term->pid == 0) {
-    setenv("TERM", "xterm", 1);
-    char *args[2] = {shell, NULL};
-    execvp(shell, args);
-    exit(1);
-  }
+  int rows = env->extract_integer(env, args[0]);
+  int cols = env->extract_integer(env, args[1]);
 
   term->vt = vterm_new(rows, cols);
   vterm_set_utf8(term->vt, 1);
@@ -348,20 +279,12 @@ static emacs_value Fvterm_new(emacs_env *env, ptrdiff_t nargs,
   VTermScreen *screen = vterm_obtain_screen(term->vt);
   vterm_screen_reset(screen, 1);
 
-  pthread_create(&term->thread, NULL, &event_loop, term);
-
   return env->make_user_ptr(env, term_finalize, term);
 }
 
 static emacs_value Fvterm_update(emacs_env *env, ptrdiff_t nargs,
                                  emacs_value args[], void *data) {
   struct Term *term = env->get_user_ptr(env, args[0]);
-
-  // Check if exited
-  int status;
-  if (waitpid(term->pid, &status, WNOHANG) > 0) {
-    return Qnil;
-  }
 
   // Process keys
   if (nargs > 1) {
@@ -378,46 +301,27 @@ static emacs_value Fvterm_update(emacs_env *env, ptrdiff_t nargs,
 
     // Ignore the final zero byte
     term_process_key(term, key, len - 1, modifier);
-
-    // Flush output
-    term_flush_output(term);
   }
 
-  VTermScreenCallbacks cb = {
-      .settermprop = set_term_prop_cb,
-  };
-  VTermScreen *screen = vterm_obtain_screen(term->vt);
-  vterm_screen_set_callbacks(screen, &cb, env);
-
-  // Read input from masterfd
-  char bytes[4096];
-  int len;
-  struct timeval start, end;
-
-  gettimeofday(&start, NULL);
-  while ((len = read(term->masterfd, bytes, 4096)) > 0) {
-    vterm_input_write(term->vt, bytes, len);
-
-    // Break after 40 milliseconds
-    gettimeofday(&end, NULL);
-    if (end.tv_usec - start.tv_usec > 40000) {
-      break;
-    }
-  }
-  vterm_screen_set_callbacks(screen, NULL, NULL);
+  // Flush output
+  term_flush_output(term, env);
 
   term_redraw(term, env);
 
   return env->make_integer(env, 0);
 }
 
-static emacs_value Fvterm_kill(emacs_env *env, ptrdiff_t nargs,
-                               emacs_value args[], void *data) {
+static emacs_value Fvterm_write_input(emacs_env *env, ptrdiff_t nargs,
+                                      emacs_value args[], void *data) {
   struct Term *term = env->get_user_ptr(env, args[0]);
-  kill(term->pid, SIGKILL);
-  int status;
-  waitpid(term->pid, &status, 0);
-  return Qnil;
+  ptrdiff_t len = string_bytes(env, args[1]);
+  char bytes[len];
+
+  env->copy_string_contents(env, args[1], bytes, &len);
+
+  vterm_input_write(term->vt, bytes, len);
+
+  return env->make_integer(env, 0);
 }
 
 static emacs_value Fvterm_set_size(emacs_env *env, ptrdiff_t nargs,
@@ -430,28 +334,10 @@ static emacs_value Fvterm_set_size(emacs_env *env, ptrdiff_t nargs,
   vterm_get_size(term->vt, &old_rows, &old_cols);
 
   if (cols != old_cols || rows != old_rows) {
-    struct winsize size = {rows, cols, 0, 0};
-    ioctl(term->masterfd, TIOCSWINSZ, &size);
     vterm_set_size(term->vt, rows, cols);
   }
 
   return Qnil;
-}
-
-static void *event_loop(void *arg) {
-  struct Term *term = arg;
-  fd_set rfds;
-
-  while (1) {
-    FD_ZERO(&rfds);
-    FD_SET(term->masterfd, &rfds);
-    if (select(term->masterfd + 1, &rfds, NULL, NULL, NULL) == 1) {
-      kill(getpid(), SIGUSR1);
-      usleep(20000);
-    }
-  }
-
-  return NULL;
 }
 
 int emacs_module_init(struct emacs_runtime *ert) {
@@ -482,6 +368,7 @@ int emacs_module_init(struct emacs_runtime *ert) {
   Fput_text_property = env->intern(env, "put-text-property");
   Fset = env->intern(env, "set");
   Fvterm_face_color_hex = env->intern(env, "vterm--face-color-hex");
+  Fvterm_flush_output = env->intern(env, "vterm--flush-output");
 
   // Faces
   Qterm = env->intern(env, "vterm");
@@ -497,16 +384,16 @@ int emacs_module_init(struct emacs_runtime *ert) {
   // Exported functions
   emacs_value fun;
   fun =
-      env->make_function(env, 3, 3, Fvterm_new, "Allocates a new vterm.", NULL);
+      env->make_function(env, 2, 2, Fvterm_new, "Allocates a new vterm.", NULL);
   bind_function(env, "vterm--new", fun);
 
   fun = env->make_function(env, 1, 5, Fvterm_update,
                            "Process io and update the screen.", NULL);
   bind_function(env, "vterm--update", fun);
 
-  fun = env->make_function(env, 1, 1, Fvterm_kill,
-                           "Kill the the shell process.", NULL);
-  bind_function(env, "vterm--kill", fun);
+  fun = env->make_function(env, 2, 2, Fvterm_write_input,
+                           "Write input to vterm.", NULL);
+  bind_function(env, "vterm--write-input", fun);
 
   fun = env->make_function(env, 3, 3, Fvterm_set_size,
                            "Sets the size of the terminal.", NULL);

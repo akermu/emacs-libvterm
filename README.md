@@ -74,5 +74,4 @@ color you like:
 # Limitations
 
 - No support for scrolling (But you can use tmux/screen to emulate scrolling) 
-- Hijacks SIGUSR1
 - Mouse support is non-existing

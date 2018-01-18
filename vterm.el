@@ -72,18 +72,27 @@ be send to the terminal."
   "Pointer to struct Term.")
 (make-variable-buffer-local 'vterm--term)
 
-(defvar vterm--buffers nil
-  "List of active vterm-buffers.")
+(defvar vterm--process nil
+  "Shell process of current term.")
+(make-variable-buffer-local 'vterm--term)
 
 (define-derived-mode vterm-mode fundamental-mode "VTerm"
   "Mayor mode for vterm buffer."
   (buffer-disable-undo)
-  (setq vterm--term (vterm--new vterm-shell (window-body-height) (window-body-width))
+  (setq vterm--term (vterm--new (window-body-height) (window-body-width))
         buffer-read-only t)
   (setq-local scroll-conservatively 101)
   (setq-local scroll-margin 0)
-  (add-hook 'kill-buffer-hook #'vterm--kill-buffer-hook t t)
-  (add-hook 'window-size-change-functions #'vterm--window-size-change t t))
+  (add-hook 'window-size-change-functions #'vterm--window-size-change t t)
+  (let ((process-environment (nconc '("TERM=xterm") process-environment)))
+    (setq vterm--process (make-process
+                          :name "vterm"
+                          :buffer buffer
+                          :command `("/bin/sh" "-c" ,(format "stty -nl sane iutf8 rows %d columns %d >/dev/null && exec %s" (window-body-height) (window-body-width) vterm-shell))
+                          :coding 'no-conversion
+                          :connection-type 'pty
+                          :filter #'vterm--filter
+                          :sentinel #'vterm--sentinel))))
 
 ;; Keybindings
 (define-key vterm-mode-map [t] #'vterm--self-insert)
@@ -104,17 +113,16 @@ be send to the terminal."
 (defun vterm--self-insert ()
   "Sends invoking key to libvterm."
   (interactive)
-  (let* ((modifiers (event-modifiers last-input-event))
-         (shift (memq 'shift modifiers))
-         (meta (memq 'meta modifiers))
-         (ctrl (memq 'control modifiers))
-         (window (posn-window (event-end last-input-event))))
-    (when-let ((key (key-description (vector (event-basic-type last-input-event))))
-               (inhibit-redisplay t)
-               (inhibit-read-only t))
-      (when (equal modifiers '(shift))
-        (setq key (upcase key)))
-      (with-selected-window window
+  (when vterm--term
+    (let* ((modifiers (event-modifiers last-input-event))
+           (shift (memq 'shift modifiers))
+           (meta (memq 'meta modifiers))
+           (ctrl (memq 'control modifiers)))
+      (when-let ((key (key-description (vector (event-basic-type last-input-event))))
+                 (inhibit-redisplay t)
+                 (inhibit-read-only t))
+        (when (equal modifiers '(shift))
+          (setq key (upcase key)))
         (vterm--update vterm--term key shift meta ctrl)))))
 
 (defun vterm ()
@@ -123,7 +131,6 @@ be send to the terminal."
   (let ((buffer (generate-new-buffer "vterm")))
     (set-buffer buffer)
     (vterm-mode)
-    (add-to-list 'vterm--buffers buffer)
     (switch-to-buffer buffer)))
 
 (defun vterm-other-window ()
@@ -132,36 +139,31 @@ be send to the terminal."
   (let ((buffer (generate-new-buffer "vterm")))
     (set-buffer buffer)
     (vterm-mode)
-    (add-to-list 'vterm--buffers buffer)
     (pop-to-buffer buffer)))
 
-(defun vterm--event ()
-  "Update the vterm BUFFER."
-  (interactive)
-  (let ((inhibit-redisplay t)
-        (inhibit-read-only t))
-    (mapc (lambda (buffer)
-            (with-current-buffer buffer
-              (unless (vterm--update vterm--term)
-                (kill-buffer-and-window)
-                (message "Shell exited!"))))
-          vterm--buffers)))
+(defun vterm--flush-output (output)
+  (process-send-string vterm--process output))
 
-(define-key special-event-map [sigusr1] #'vterm--event)
+(defun vterm--filter (process input)
+  (with-current-buffer (process-buffer process)
+    (vterm--write-input vterm--term input)
+    (let ((inhibit-read-only t)
+          (inhibit-redisplay t))
+      (vterm--update vterm--term))))
 
-(defun vterm--kill-buffer-hook ()
-  "Kill the corresponding process of vterm."
-  (when (eq major-mode 'vterm-mode)
-    (setq vterm--buffers (remove (current-buffer) vterm--buffers))
-    (vterm--kill vterm--term)))
+(defun vterm--sentinel (process event)
+  )
 
 (defun vterm--window-size-change (frame)
-  "Notify the vterm over size-change in FRAME."
-  (dolist (window (window-list frame 1))
-    (let ((buffer (window-buffer window)))
-      (with-current-buffer buffer
-        (when (eq major-mode 'vterm-mode)
-          (vterm--set-size vterm--term (window-body-height) (window-body-width)))))))
+  (dolist (window (window-list frame))
+    (with-current-buffer (window-buffer window)
+      (when (and (processp vterm--process)
+                 (process-live-p vterm--process))
+        (let ((height (window-body-height window))
+              (width (window-body-width window)))
+          (set-process-window-size vterm--process height width)
+          (message "%s %s" height width)
+          (vterm--set-size vterm--term height width))))))
 
 (defun vterm--face-color-hex (face attr)
   "Return the color of the FACE's ATTR as a hex string."
