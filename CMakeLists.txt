@@ -19,7 +19,7 @@ target_link_libraries(vterm-module util)
 set(EMACS_SOURCE "" CACHE PATH "Path to emacs source.")
 
 if (NOT EMACS_SOURCE)
-  execute_process(COMMAND emacs --batch --eval "(message \"%s.%s\" emacs-major-version emacs-minor-version)"
+  execute_process(COMMAND emacs --batch -Q --eval "(message \"%s.%s\" emacs-major-version emacs-minor-version)"
     ERROR_VARIABLE EMACS_VERSION
     RESULT_VARIABLE RESULT
     ERROR_STRIP_TRAILING_WHITESPACE)
