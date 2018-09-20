@@ -39,6 +39,7 @@ emacs_value Fvterm_flush_output;
 emacs_value Fblink_cursor_mode;
 emacs_value Fget_buffer_window;
 emacs_value Fselected_window;
+emacs_value Fvterm_toggle_mouse;
 
 // Utils
 void bind_function(emacs_env *env, const char *name, emacs_value Sfun);
@@ -59,6 +60,7 @@ void forward_line(emacs_env *env, int n);
 void goto_line(emacs_env *env, int n);
 void toggle_cursor(emacs_env *env, bool visible);
 void toggle_cursor_blinking(emacs_env *env, bool visible);
+void toggle_mouse(emacs_env *env, bool mouse);
 void delete_lines(emacs_env *env, int linenum, int count, bool del_whole_line);
 emacs_value get_hex_color_fg(emacs_env *env, emacs_value face);
 emacs_value get_hex_color_bg(emacs_env *env, emacs_value face);

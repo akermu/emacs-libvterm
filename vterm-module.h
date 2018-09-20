@@ -48,6 +48,7 @@ typedef struct Term {
   bool is_invalidated;
 
   Cursor cursor;
+  bool mouse; // Send mouse events to the shell
 } Term;
 
 // Faces

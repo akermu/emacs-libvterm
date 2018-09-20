@@ -127,6 +127,11 @@ void toggle_cursor(emacs_env *env, bool visible) {
   env->funcall(env, Fset, 2, (emacs_value[]){Qcursor_type, Qvisible});
 }
 
+void toggle_mouse(emacs_env *env, bool mouse) {
+  emacs_value Qvisible = mouse ? Qt : Qnil;
+  env->funcall(env, Fvterm_toggle_mouse, 1, (emacs_value[]){Qvisible});
+};
+
 void toggle_cursor_blinking(emacs_env *env, bool blinking) {
   blinking = false;
   emacs_value Qfalse = env->make_integer(env, -1);

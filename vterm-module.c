@@ -313,6 +313,7 @@ static void term_redraw(Term *term, emacs_env *env) {
   if (term->is_invalidated) {
     toggle_cursor_blinking(env, term->cursor.blinking);
     toggle_cursor(env, term->cursor.visible);
+    toggle_mouse(env, term->mouse);
     long bufline_before = env->extract_integer(env, buffer_line_number(env));
     refresh_scrollback(term, env);
     refresh_screen(term, env);
@@ -364,6 +365,10 @@ static int term_settermprop(VTermProp prop, VTermValue *val, void *user_data) {
     break;
   case VTERM_PROP_CURSORBLINK:
     term->cursor.blinking = val->boolean;
+    break;
+  case VTERM_PROP_MOUSE:
+    term->mouse = val->boolean;
+    break;
   default:
     return 0;
   }
@@ -518,6 +523,10 @@ static void term_process_key(Term *term, unsigned char *key, size_t len,
     vterm_keyboard_key(term->vt, VTERM_KEY_FUNCTION(12), modifier);
   } else if (is_key(key, len, "SPC")) {
     vterm_keyboard_unichar(term->vt, ' ', modifier);
+  } else if (is_key(key, len, "<mouse-4>")) {
+    vterm_mouse_button(term->vt, 4, true, modifier);
+  } else if (is_key(key, len, "<mouse-5>")) {
+    vterm_mouse_button(term->vt, 5, true, modifier);
   } else if (len <= 4) {
     uint32_t codepoint;
     if (utf8_to_codepoint(key, len, &codepoint)) {
@@ -571,6 +580,7 @@ static emacs_value Fvterm_new(emacs_env *env, ptrdiff_t nargs,
   term->invalid_end = rows;
   term->cursor.visible = true;
   term->cursor.blinking = false;
+  term->mouse = false;
 
   return env->make_user_ptr(env, term_finalize, term);
 }
@@ -682,6 +692,7 @@ int emacs_module_init(struct emacs_runtime *ert) {
       env->make_global_ref(env, env->intern(env, "get-buffer-window"));
   Fselected_window =
       env->make_global_ref(env, env->intern(env, "selected-window"));
+  Fvterm_toggle_mouse = env->make_global_ref(env, env->intern(env, "vterm--toggle-mouse"));
 
   // Faces
   Qterm = env->make_global_ref(env, env->intern(env, "vterm"));

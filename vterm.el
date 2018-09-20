@@ -267,5 +267,14 @@ Feeds the size change to the virtual terminal."
   "Return the maximum line number."
   (line-number-at-pos (point-max)))
 
+(defun vterm--toggle-mouse (bool)
+  (if bool
+      (progn
+        (define-key vterm-mode-map [mouse-4] #'vterm--self-insert)
+        (define-key vterm-mode-map [mouse-5] #'vterm--self-insert))
+    (local-set-key [mouse-4] nil)
+    (local-set-key [mouse-5] nil)))
+
+
 (provide 'vterm)
 ;;; vterm.el ends here
