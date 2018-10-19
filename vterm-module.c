@@ -344,42 +344,42 @@ int emacs_module_init(struct emacs_runtime *ert) {
   emacs_env *env = ert->get_environment(ert);
 
   // Symbols;
-  Qt = env->intern(env, "t");
-  Qnil = env->intern(env, "nil");
-  Qnormal = env->intern(env, "normal");
-  Qbold = env->intern(env, "bold");
-  Qitalic = env->intern(env, "italic");
-  Qforeground = env->intern(env, ":foreground");
-  Qbackground = env->intern(env, ":background");
-  Qweight = env->intern(env, ":weight");
-  Qunderline = env->intern(env, ":underline");
-  Qslant = env->intern(env, ":slant");
-  Qreverse = env->intern(env, ":inverse-video");
-  Qstrike = env->intern(env, ":strike-through");
-  Qface = env->intern(env, "font-lock-face");
-  Qcursor_type = env->intern(env, "cursor-type");
+  Qt = env->make_global_ref(env, env->intern(env, "t"));
+  Qnil = env->make_global_ref(env, env->intern(env, "nil"));
+  Qnormal = env->make_global_ref(env, env->intern(env, "normal"));
+  Qbold = env->make_global_ref(env, env->intern(env, "bold"));
+  Qitalic = env->make_global_ref(env, env->intern(env, "italic"));
+  Qforeground = env->make_global_ref(env, env->intern(env, ":foreground"));
+  Qbackground = env->make_global_ref(env, env->intern(env, ":background"));
+  Qweight = env->make_global_ref(env, env->intern(env, ":weight"));
+  Qunderline = env->make_global_ref(env, env->intern(env, ":underline"));
+  Qslant = env->make_global_ref(env, env->intern(env, ":slant"));
+  Qreverse = env->make_global_ref(env, env->intern(env, ":inverse-video"));
+  Qstrike = env->make_global_ref(env, env->intern(env, ":strike-through"));
+  Qface = env->make_global_ref(env, env->intern(env, "font-lock-face"));
+  Qcursor_type = env->make_global_ref(env, env->intern(env, "cursor-type"));
 
   // Functions
-  Flength = env->intern(env, "length");
-  Flist = env->intern(env, "list");
-  Ferase_buffer = env->intern(env, "erase-buffer");
-  Finsert = env->intern(env, "insert");
-  Fgoto_char = env->intern(env, "goto-char");
-  Fput_text_property = env->intern(env, "put-text-property");
-  Fset = env->intern(env, "set");
-  Fvterm_face_color_hex = env->intern(env, "vterm--face-color-hex");
-  Fvterm_flush_output = env->intern(env, "vterm--flush-output");
+  Flength = env->make_global_ref(env, env->intern(env, "length"));
+  Flist = env->make_global_ref(env, env->intern(env, "list"));
+  Ferase_buffer = env->make_global_ref(env, env->intern(env, "erase-buffer"));
+  Finsert = env->make_global_ref(env, env->intern(env, "insert"));
+  Fgoto_char = env->make_global_ref(env, env->intern(env, "goto-char"));
+  Fput_text_property = env->make_global_ref(env, env->intern(env, "put-text-property"));
+  Fset = env->make_global_ref(env, env->intern(env, "set"));
+  Fvterm_face_color_hex = env->make_global_ref(env, env->intern(env, "vterm--face-color-hex"));
+  Fvterm_flush_output = env->make_global_ref(env, env->intern(env, "vterm--flush-output"));
 
   // Faces
-  Qterm = env->intern(env, "vterm");
-  Qterm_color_black = env->intern(env, "vterm-color-black");
-  Qterm_color_red = env->intern(env, "vterm-color-red");
-  Qterm_color_green = env->intern(env, "vterm-color-green");
-  Qterm_color_yellow = env->intern(env, "vterm-color-yellow");
-  Qterm_color_blue = env->intern(env, "vterm-color-blue");
-  Qterm_color_magenta = env->intern(env, "vterm-color-magenta");
-  Qterm_color_cyan = env->intern(env, "vterm-color-cyan");
-  Qterm_color_white = env->intern(env, "vterm-color-white");
+  Qterm = env->make_global_ref(env, env->intern(env, "vterm"));
+  Qterm_color_black = env->make_global_ref(env, env->intern(env, "vterm-color-black"));
+  Qterm_color_red = env->make_global_ref(env, env->intern(env, "vterm-color-red"));
+  Qterm_color_green = env->make_global_ref(env, env->intern(env, "vterm-color-green"));
+  Qterm_color_yellow = env->make_global_ref(env, env->intern(env, "vterm-color-yellow"));
+  Qterm_color_blue = env->make_global_ref(env, env->intern(env, "vterm-color-blue"));
+  Qterm_color_magenta = env->make_global_ref(env, env->intern(env, "vterm-color-magenta"));
+  Qterm_color_cyan = env->make_global_ref(env, env->intern(env, "vterm-color-cyan"));
+  Qterm_color_white = env->make_global_ref(env, env->intern(env, "vterm-color-white"));
 
   // Exported functions
   emacs_value fun;
