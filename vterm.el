@@ -92,7 +92,7 @@ be send to the terminal."
   :group 'vterm)
 
 (defvar vterm--term nil
-  "Pointer to struct Term.")
+  "Pointer to Term.")
 (make-variable-buffer-local 'vterm--term)
 
 (defvar vterm--process nil

@@ -9,9 +9,12 @@
 int plugin_is_GPL_compatible;
 
 struct Term {
+struct term {
   VTerm *vt;
 };
 
+
+typedef struct term Term;
 // Faces
 emacs_value Qterm;
 emacs_value Qterm_color_black;
@@ -30,12 +33,12 @@ static emacs_value render_text(emacs_env *env, char *string, int len,
 
 static int set_term_prop_cb(VTermProp prop, VTermValue *val, void *user_data);
 
-static void term_redraw(struct Term *term, emacs_env *env);
-static void term_setup_colors(struct Term *term, emacs_env *env);
-static void term_flush_output(struct Term *term, emacs_env *env);
-static void term_process_key(struct Term *term, unsigned char *key, size_t len,
+static void term_redraw(Term *term, emacs_env *env);
+static void term_setup_colors(Term *term, emacs_env *env);
+static void term_flush_output(Term *term, emacs_env *env);
+static void term_process_key(Term *term, unsigned char *key, size_t len,
                              VTermModifier modifier);
-static void term_put_caret(struct Term *term, emacs_env *env, int row, int col,
+static void term_put_caret(Term *term, emacs_env *env, int row, int col,
                            int offset);
 static void term_finalize(void *object);
 

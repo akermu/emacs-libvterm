@@ -64,7 +64,7 @@ static emacs_value render_text(emacs_env *env, char *buffer, int len,
   return text;
 }
 
-static void term_redraw(struct Term *term, emacs_env *env) {
+static void term_redraw(Term *term, emacs_env *env) {
   int i, j;
   int rows, cols;
   VTermScreen *screen = vterm_obtain_screen(term->vt);
@@ -123,7 +123,7 @@ static void term_redraw(struct Term *term, emacs_env *env) {
   term_put_caret(term, env, pos.row, pos.col, -offset);
 }
 
-static void term_setup_colors(struct Term *term, emacs_env *env) {
+static void term_setup_colors(Term *term, emacs_env *env) {
   VTermColor fg, bg;
   VTermState *state = vterm_obtain_state(term->vt);
 
@@ -172,7 +172,7 @@ static void term_setup_colors(struct Term *term, emacs_env *env) {
   vterm_state_set_palette_color(state, 15, &bg);
 }
 
-static void term_flush_output(struct Term *term, emacs_env *env) {
+static void term_flush_output(Term *term, emacs_env *env) {
   size_t len = vterm_output_get_buffer_current(term->vt);
   if (len) {
     char buffer[len];
@@ -183,7 +183,7 @@ static void term_flush_output(struct Term *term, emacs_env *env) {
   }
 }
 
-static void term_process_key(struct Term *term, unsigned char *key, size_t len,
+static void term_process_key(Term *term, unsigned char *key, size_t len,
                              VTermModifier modifier) {
   if (is_key(key, len, "<return>")) {
     vterm_keyboard_key(term->vt, VTERM_KEY_ENTER, modifier);
@@ -247,7 +247,7 @@ static void term_process_key(struct Term *term, unsigned char *key, size_t len,
   }
 }
 
-static void term_put_caret(struct Term *term, emacs_env *env, int row, int col,
+static void term_put_caret(Term *term, emacs_env *env, int row, int col,
                            int offset) {
   int rows, cols;
   vterm_get_size(term->vt, &rows, &cols);
@@ -258,14 +258,14 @@ static void term_put_caret(struct Term *term, emacs_env *env, int row, int col,
 }
 
 static void term_finalize(void *object) {
-  struct Term *term = (struct Term *)object;
+  Term *term = (Term *)object;
   vterm_free(term->vt);
   free(term);
 }
 
 static emacs_value Fvterm_new(emacs_env *env, ptrdiff_t nargs,
                               emacs_value args[], void *data) {
-  struct Term *term = malloc(sizeof(struct Term));
+  Term *term = malloc(sizeof(Term));
 
   int rows = env->extract_integer(env, args[0]);
   int cols = env->extract_integer(env, args[1]);
@@ -283,7 +283,7 @@ static emacs_value Fvterm_new(emacs_env *env, ptrdiff_t nargs,
 
 static emacs_value Fvterm_update(emacs_env *env, ptrdiff_t nargs,
                                  emacs_value args[], void *data) {
-  struct Term *term = env->get_user_ptr(env, args[0]);
+  Term *term = env->get_user_ptr(env, args[0]);
 
   // Process keys
   if (nargs > 1) {
@@ -312,7 +312,7 @@ static emacs_value Fvterm_update(emacs_env *env, ptrdiff_t nargs,
 
 static emacs_value Fvterm_write_input(emacs_env *env, ptrdiff_t nargs,
                                       emacs_value args[], void *data) {
-  struct Term *term = env->get_user_ptr(env, args[0]);
+  Term *term = env->get_user_ptr(env, args[0]);
   ptrdiff_t len = string_bytes(env, args[1]);
   char bytes[len];
 
@@ -325,7 +325,7 @@ static emacs_value Fvterm_write_input(emacs_env *env, ptrdiff_t nargs,
 
 static emacs_value Fvterm_set_size(emacs_env *env, ptrdiff_t nargs,
                                    emacs_value args[], void *data) {
-  struct Term *term = env->get_user_ptr(env, args[0]);
+  Term *term = env->get_user_ptr(env, args[0]);
   int rows = env->extract_integer(env, args[1]);
   int cols = env->extract_integer(env, args[2]);
 
