@@ -74,7 +74,7 @@ be send to the terminal."
 
 (defvar vterm--process nil
   "Shell process of current term.")
-(make-variable-buffer-local 'vterm--term)
+(make-variable-buffer-local 'vterm--process)
 
 (define-derived-mode vterm-mode fundamental-mode "VTerm"
   "Mayor mode for vterm buffer."
