@@ -84,7 +84,7 @@ be send to the terminal."
   (setq-local scroll-conservatively 101)
   (setq-local scroll-margin 0)
   (add-hook 'window-size-change-functions #'vterm--window-size-change t t)
-  (let ((process-environment (nconc '("TERM=xterm") process-environment)))
+  (let ((process-environment (append '("TERM=xterm") process-environment)))
     (setq vterm--process (make-process
                           :name "vterm"
                           :buffer buffer
