@@ -2,7 +2,6 @@
 #include "elisp.h"
 #include "utf8.h"
 #include <string.h>
-#include <termios.h>
 #include <unistd.h>
 #include <vterm.h>
 

@@ -1,7 +1,5 @@
 cmake_minimum_required(VERSION 3.0.2)
 
-include(ExternalProject)
-
 project(emacs-libvterm C)
 
 add_library(vterm-module MODULE vterm-module.c utf8.c elisp.c)
@@ -11,9 +9,6 @@ set_target_properties(vterm-module PROPERTIES LIBRARY_OUTPUT_DIRECTORY ${CMAKE_S
 
 # Link with libvterm
 target_link_libraries(vterm-module vterm)
-
-# Link with libutil
-target_link_libraries(vterm-module util)
 
 # Custom run command for testing
 add_custom_target(run

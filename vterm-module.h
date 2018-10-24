@@ -3,7 +3,6 @@
 
 #include "emacs-module.h"
 #include <inttypes.h>
-#include <pthread.h>
 #include <stdbool.h>
 #include <vterm.h>
 
