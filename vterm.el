@@ -7,6 +7,29 @@
 
 ;;; Code:
 
+(defun vterm-module-compile ()
+  "This function compiles the vterm-module."
+  (interactive)
+  (let ((buffer (get-buffer-create " *Install vterm"))
+        (default-directory (file-name-directory (locate-library "vterm"))))
+    (make-process
+     :name "build-vterm-module"
+     :buffer buffer
+     :command '("sh" "-c" "mkdir -p build; cd build; cmake -DCMAKE_BUILD_TYPE=RelWithDebInfo ..; make")
+     :stderr buffer
+     :sentinel (lambda (process status)
+                 (if (equal status "finished\n")
+                     (progn (let ((buffer (process-buffer process)))
+                              (bury-buffer buffer)
+                              (when-let ((window (get-buffer-window buffer)))
+                                (delete-window window)))
+                            (message "Sucessfully compiled the emacs-libvterm module."))
+                   (message "Compilation of libvterm has failed."))))
+    (pop-to-buffer buffer)))
+
+(when (boundp 'vterm-install)
+  (vterm-module-compile))
+
 (require 'vterm-module)
 (require 'subr-x)
 (require 'cl-lib)
