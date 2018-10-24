@@ -92,7 +92,7 @@ be send to the terminal."
                           :coding 'no-conversion
                           :connection-type 'pty
                           :filter #'vterm--filter
-                          :sentinel #'vterm--sentinel))))
+                          :sentinel #'ignore))))
 
 ;; Keybindings
 (define-key vterm-mode-map [t] #'vterm--self-insert)
@@ -141,18 +141,12 @@ be send to the terminal."
     (vterm-mode)
     (pop-to-buffer buffer)))
 
-(defun vterm--flush-output (output)
-  (process-send-string vterm--process output))
-
 (defun vterm--filter (process input)
   (with-current-buffer (process-buffer process)
     (vterm--write-input vterm--term input)
     (let ((inhibit-read-only t)
           (inhibit-redisplay t))
       (vterm--update vterm--term))))
-
-(defun vterm--sentinel (process event)
-  )
 
 (defun vterm--window-size-change (frame)
   (dolist (window (window-list frame))
