@@ -1,7 +1,7 @@
 #ifndef VTERM_MODULE_H
 #define VTERM_MODULE_H
 
-#include <emacs-module.h>
+#include "emacs-module.h"
 #include <inttypes.h>
 #include <pthread.h>
 #include <stdbool.h>
