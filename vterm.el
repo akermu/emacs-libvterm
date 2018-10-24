@@ -166,7 +166,6 @@ Feeds the size change to the virtual terminal."
         (let ((height (window-body-height window))
               (width (window-body-width window)))
           (set-process-window-size vterm--process height width)
-          (message "%s %s" height width)
           (vterm--set-size vterm--term height width))))))
 
 (defun vterm--face-color-hex (face attr)

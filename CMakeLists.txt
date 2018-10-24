@@ -12,7 +12,7 @@ target_link_libraries(vterm-module vterm)
 
 # Custom run command for testing
 add_custom_target(run
-  COMMAND emacs -Q -L ${CMAKE_SOURCE_DIR} --eval "\\(require \\'vterm\\)"
+  COMMAND emacs -Q -L ${CMAKE_SOURCE_DIR} --eval "\\(require \\'vterm\\)" --eval "\\(vterm\\)"
   DEPENDS vterm-module
   WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
   )
