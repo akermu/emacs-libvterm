@@ -142,6 +142,9 @@ be send to the terminal."
     (pop-to-buffer buffer)))
 
 (defun vterm--filter (process input)
+  "I/O Event. Feeds PROCESS's INPUT to the virtual terminal.
+
+Then triggers a redraw from the module."
   (with-current-buffer (process-buffer process)
     (vterm--write-input vterm--term input)
     (let ((inhibit-read-only t)
@@ -149,6 +152,9 @@ be send to the terminal."
       (vterm--update vterm--term))))
 
 (defun vterm--window-size-change (frame)
+  "Callback triggered by a size change of the FRAME.
+
+Feeds the size change to the virtual terminal."
   (dolist (window (window-list frame))
     (with-current-buffer (window-buffer window)
       (when (and (processp vterm--process)
