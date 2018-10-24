@@ -37,13 +37,20 @@
 
 (defcustom vterm-shell (getenv "SHELL")
   "The shell that gets run in the vterm."
+  :type 'string
   :group 'vterm)
 
-(defcustom vterm-keymap-exceptions '("C-x" "C-u" "C-g" "C-h" "M-x" "M-o")
+(defcustom vterm-max-scrollback 1000
+  "Maximum 'scrollback' value."
+  :type 'number
+  :group 'vterm)
+
+(defcustom vterm-keymap-exceptions '("C-x" "C-u" "C-g" "C-h" "M-x" "M-o" "C-v" "M-v")
   "Exceptions for vterm-keymap.
 
 If you use a keybinding with a prefix-key that prefix-key cannot
 be send to the terminal."
+  :type '(repeat string)
   :group 'vterm)
 
 (defface vterm
@@ -102,15 +109,21 @@ be send to the terminal."
 (define-derived-mode vterm-mode fundamental-mode "VTerm"
   "Mayor mode for vterm buffer."
   (buffer-disable-undo)
-  (setq vterm--term (vterm--new (window-body-height) (window-body-width))
-        buffer-read-only t)
+  (setq vterm--term (vterm--new (window-body-height)
+                                (window-body-width)
+                                vterm-max-scrollback))
+  (cl-loop repeat (1- (window-body-height)) do
+           (insert "\n"))
+
+  (setq buffer-read-only t)
   (setq-local scroll-conservatively 101)
   (setq-local scroll-margin 0)
+
   (add-hook 'window-size-change-functions #'vterm--window-size-change t t)
   (let ((process-environment (append '("TERM=xterm") process-environment)))
     (setq vterm--process (make-process
                           :name "vterm"
-                          :buffer buffer
+                          :buffer (current-buffer)
                           :command `("/bin/sh" "-c" ,(format "stty -nl sane iutf8 rows %d columns %d >/dev/null && exec %s" (window-body-height) (window-body-width) vterm-shell))
                           :coding 'no-conversion
                           :connection-type 'pty
@@ -152,16 +165,17 @@ be send to the terminal."
   "Create a new vterm."
   (interactive)
   (let ((buffer (generate-new-buffer "vterm")))
-    (set-buffer buffer)
-    (vterm-mode)
+    (with-current-buffer buffer
+      (vterm-mode))
     (switch-to-buffer buffer)))
 
 (defun vterm-other-window ()
   "Create a new vterm."
   (interactive)
   (let ((buffer (generate-new-buffer "vterm")))
-    (set-buffer buffer)
-    (vterm-mode)
+    (with-current-buffer buffer
+      (vterm-mode))
+
     (pop-to-buffer buffer)))
 
 (defun vterm--flush-output (output)
@@ -196,6 +210,56 @@ Feeds the size change to the virtual terminal."
   (if (< emacs-major-version 26)
       (apply #'color-rgb-to-hex (color-name-to-rgb (face-attribute face attr nil 'default)))
     (apply #'color-rgb-to-hex (append (color-name-to-rgb (face-attribute face attr nil 'default)) '(2)))))
+
+
+(defun vterm--delete-lines (line-num count &optional delete-whole-line)
+  "Delete lines from line-num. If option ‘kill-whole-line’ is non-nil,
+ then this command kills the whole line including its terminating newline"
+  (ignore-errors
+    (save-excursion
+      (when (vterm--goto-line line-num)
+        (delete-region (point) (point-at-eol))
+        (when delete-whole-line
+          (when (looking-at "\n")
+            (delete-char 1))
+          (when (and (eobp) (looking-back "\n"))
+            (delete-char -1))
+
+          )
+        (cl-loop repeat (1- count) do
+                 (when (or delete-whole-line (forward-line 1))
+                   (delete-region (point) (point-at-eol))
+                   (when delete-whole-line
+                     (when (looking-at "\n")
+                       (delete-char 1))
+                     (when (and (eobp) (looking-back "\n"))
+                       (delete-char -1)))
+                   ))))))
+
+
+
+(defun vterm--recenter(&optional arg)
+  (when (get-buffer-window)
+    (with-current-buffer (window-buffer)
+      (when vterm--term
+        (recenter arg)))))
+
+(defun vterm--goto-line(n)
+  "If move succ return t"
+  (ignore-errors
+    (goto-char (point-min))
+    (let ((succ (eq 0 (forward-line (1- n)))))
+      succ)))
+
+(defun vterm--buffer-line-num()
+  (ignore-errors
+  (save-excursion
+    (goto-char (point-max))
+    (line-number-at-pos))))
+
+(defun vterm--forward-char(n )
+  (ignore-errors
+    (forward-char n)))
 
 (provide 'vterm)
 ;;; vterm.el ends here
