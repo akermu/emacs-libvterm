@@ -141,6 +141,10 @@ be send to the terminal."
     (vterm-mode)
     (pop-to-buffer buffer)))
 
+(defun vterm--flush-output (output)
+  "Sends the virtual terminal's OUTPUT to the shell."
+  (process-send-string vterm--process output))
+
 (defun vterm--filter (process input)
   "I/O Event. Feeds PROCESS's INPUT to the virtual terminal.
 
