@@ -23,7 +23,7 @@ static bool refresh_pending = false;
 #endif
 
 
-struct term {
+typedef struct Term {
   VTerm *vt;
   VTermScreen *vts;
   // buffer used to:
@@ -44,10 +44,10 @@ struct term {
 
   // Flag to indicate cursor is visible
   bool cursor_visible;
-};
+  // Flag to indicate cursor is blinking
+  bool cursor_blinking;
+} Term;
 
-
-typedef struct term Term;
 // Faces
 emacs_value Qterm;
 emacs_value Qterm_color_black;
