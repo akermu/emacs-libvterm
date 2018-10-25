@@ -307,7 +307,7 @@ static VTermScreenCallbacks vterm_screen_callbacks = {
   /* .damage      = term_damage, */
   /* .moverect    = term_moverect, */
   /* .movecursor  = term_movecursor, */
-  /* .settermprop = term_settermprop, */
+  .settermprop = term_settermprop,
   /* .bell        = term_bell, */
   .sb_pushline = term_sb_push,
   .sb_popline  = term_sb_pop,
@@ -335,11 +335,11 @@ static bool is_key(unsigned char *key, size_t len, char *key_description) {
           memcmp(key, key_description, len) == 0);
 }
 
-static int set_term_prop_cb(VTermProp prop, VTermValue *val, void *user_data) {
-  emacs_env *env = (emacs_env *)user_data;
+static int term_settermprop(VTermProp prop, VTermValue *val, void *user_data) {
+  Term *term = (Term *)user_data;
   switch (prop) {
   case VTERM_PROP_CURSORVISIBLE:
-    toggle_cursor(env, val->boolean);
+    term->cursor_visible = val->boolean;
     break;
   default:
     return 0;
@@ -555,6 +555,8 @@ static emacs_value Fvterm_new(emacs_env *env, ptrdiff_t nargs,
 static emacs_value Fvterm_update(emacs_env *env, ptrdiff_t nargs,
                                  emacs_value args[], void *data) {
   Term *term = env->get_user_ptr(env, args[0]);
+
+  toggle_cursor(env, term->cursor_visible);
 
   // Process keys
   if (nargs > 1) {

@@ -42,6 +42,8 @@ struct term {
 
   int invalid_start, invalid_end;   // invalid rows in libvterm screen
 
+  // Flag to indicate cursor is visible
+  bool cursor_visible;
 };
 
 
@@ -62,7 +64,7 @@ static bool is_key(unsigned char *key, size_t len, char *key_description);
 static emacs_value render_text(emacs_env *env, char *string, int len,
                                VTermScreenCell *cell);
 
-static int set_term_prop_cb(VTermProp prop, VTermValue *val, void *user_data);
+static int term_settermprop(VTermProp prop, VTermValue *val, void *user_data);
 
 static void term_redraw(Term *term, emacs_env *env);
 static void term_setup_colors(Term *term, emacs_env *env);
