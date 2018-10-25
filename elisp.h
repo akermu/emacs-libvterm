@@ -26,6 +26,12 @@ emacs_value Flist;
 emacs_value Ferase_buffer;
 emacs_value Finsert;
 emacs_value Fgoto_char;
+emacs_value Fforward_char;
+emacs_value Fforward_line;
+emacs_value Fgoto_line;
+emacs_value Fdelete_lines;
+emacs_value Fbuffer_line_number;
+emacs_value Frecenter;
 emacs_value Fput_text_property;
 emacs_value Fset;
 emacs_value Fvterm_face_color_hex;
@@ -46,8 +52,13 @@ VTermColor rgb_string_to_color(emacs_env *env, emacs_value string);
 void erase_buffer(emacs_env *env);
 void insert(emacs_env *env, emacs_value string);
 void goto_char(emacs_env *env, int pos);
+void forward_line(emacs_env *env, int n) ;
+void goto_line(emacs_env *env, int n) ;
 void toggle_cursor(emacs_env *env, bool visible);
+void delete_lines(emacs_env *env ,int linenum,int count ,bool del_whole_line);
 emacs_value get_hex_color_fg(emacs_env *env, emacs_value face);
 emacs_value get_hex_color_bg(emacs_env *env, emacs_value face);
-
+emacs_value buffer_line_number(emacs_env *env);
+void recenter(emacs_env *env, emacs_value pos);
+void forward_char(emacs_env *env, emacs_value n);
 #endif /* ELISP_H */
