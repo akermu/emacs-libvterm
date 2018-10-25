@@ -87,31 +87,30 @@ void goto_char(emacs_env *env, int pos) {
 }
 
 void forward_line(emacs_env *env, int n) {
-  emacs_value nline = env->make_integer(env, n );
+  emacs_value nline = env->make_integer(env, n);
   env->funcall(env, Fforward_line, 1, (emacs_value[]){nline});
 }
 void goto_line(emacs_env *env, int n) {
-  emacs_value nline = env->make_integer(env, n );
+  emacs_value nline = env->make_integer(env, n);
   env->funcall(env, Fgoto_line, 1, (emacs_value[]){nline});
 }
-void delete_lines(emacs_env *env ,int linenum,int count ,bool del_whole_line){
+void delete_lines(emacs_env *env, int linenum, int count, bool del_whole_line) {
   emacs_value Qlinenum = env->make_integer(env, linenum);
   emacs_value Qcount = env->make_integer(env, count);
-  if(del_whole_line){
-    env->funcall(env, Fdelete_lines, 3, (emacs_value[]){Qlinenum,Qcount,Qt});
-  }else{
-    env->funcall(env, Fdelete_lines, 3, (emacs_value[]){Qlinenum,Qcount,Qnil});
+  if (del_whole_line) {
+    env->funcall(env, Fdelete_lines, 3, (emacs_value[]){Qlinenum, Qcount, Qt});
+  } else {
+    env->funcall(env, Fdelete_lines, 3,
+                 (emacs_value[]){Qlinenum, Qcount, Qnil});
   }
 }
-void recenter(emacs_env *env, emacs_value pos){
-   env->funcall(env, Frecenter, 1,
-                      (emacs_value[]){pos});
+void recenter(emacs_env *env, emacs_value pos) {
+  env->funcall(env, Frecenter, 1, (emacs_value[]){pos});
 }
-void forward_char(emacs_env *env, emacs_value n){
-   env->funcall(env, Fforward_char, 1,
-                      (emacs_value[]){n});
+void forward_char(emacs_env *env, emacs_value n) {
+  env->funcall(env, Fforward_char, 1, (emacs_value[]){n});
 }
-emacs_value buffer_line_number(emacs_env *env){
+emacs_value buffer_line_number(emacs_env *env) {
   return env->funcall(env, Fbuffer_line_number, 0, (emacs_value[]){});
 }
 
@@ -136,4 +135,3 @@ emacs_value get_hex_color_bg(emacs_env *env, emacs_value face) {
   return env->funcall(env, Fvterm_face_color_hex, 2,
                       (emacs_value[]){face, Qbackground});
 }
-

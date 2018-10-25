@@ -1,8 +1,8 @@
 #ifndef ELISP_H
 #define ELISP_H
 
-#include "vterm.h"
 #include "emacs-module.h"
+#include "vterm.h"
 
 // Emacs symbols
 emacs_value Qt;
@@ -53,11 +53,11 @@ VTermColor rgb_string_to_color(emacs_env *env, emacs_value string);
 void erase_buffer(emacs_env *env);
 void insert(emacs_env *env, emacs_value string);
 void goto_char(emacs_env *env, int pos);
-void forward_line(emacs_env *env, int n) ;
-void goto_line(emacs_env *env, int n) ;
+void forward_line(emacs_env *env, int n);
+void goto_line(emacs_env *env, int n);
 void toggle_cursor(emacs_env *env, bool visible);
 void toggle_cursor_blinking(emacs_env *env, bool visible);
-void delete_lines(emacs_env *env ,int linenum,int count ,bool del_whole_line);
+void delete_lines(emacs_env *env, int linenum, int count, bool del_whole_line);
 emacs_value get_hex_color_fg(emacs_env *env, emacs_value face);
 emacs_value get_hex_color_bg(emacs_env *env, emacs_value face);
 emacs_value buffer_line_number(emacs_env *env);

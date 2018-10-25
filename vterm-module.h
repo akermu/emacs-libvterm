@@ -12,16 +12,15 @@ typedef struct {
   VTermScreenCell cells[];
 } ScrollbackLine;
 
-#define SB_MAX 100000  // Maximum 'scrollback' value.
+#define SB_MAX 100000 // Maximum 'scrollback' value.
 static bool refresh_pending = false;
 
 #ifndef MIN
-# define MIN(X, Y) ((X) < (Y) ? (X) : (Y))
+#define MIN(X, Y) ((X) < (Y) ? (X) : (Y))
 #endif
 #ifndef MAX
-# define MAX(X, Y) ((X) > (Y) ? (X) : (Y))
+#define MAX(X, Y) ((X) > (Y) ? (X) : (Y))
 #endif
-
 
 typedef struct Term {
   VTerm *vt;
@@ -30,17 +29,16 @@ typedef struct Term {
   //  - convert VTermScreen cell arrays into utf8 strings
   //  - receive data from libvterm as a result of key presses.
   char textbuf[0x1fff];
-  ScrollbackLine **sb_buffer;       // Scrollback buffer storage for libvterm
-  size_t sb_current;                // number of rows pushed to sb_buffer
-  size_t sb_size;                   // sb_buffer size
+  ScrollbackLine **sb_buffer; // Scrollback buffer storage for libvterm
+  size_t sb_current;          // number of rows pushed to sb_buffer
+  size_t sb_size;             // sb_buffer size
   // "virtual index" that points to the first sb_buffer row that we need to
   // push to the terminal buffer when refreshing the scrollback. When negative,
   // it actually points to entries that are no longer in sb_buffer (because the
   // window height has increased) and must be deleted from the terminal buffer
   int sb_pending;
 
-
-  int invalid_start, invalid_end;   // invalid rows in libvterm screen
+  int invalid_start, invalid_end; // invalid rows in libvterm screen
 
   // Flag to indicate cursor is visible
   bool cursor_visible;

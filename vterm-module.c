@@ -1,11 +1,11 @@
 #include "vterm-module.h"
 #include "elisp.h"
 #include "utf8.h"
+#include <assert.h>
+#include <limits.h>
 #include <string.h>
 #include <unistd.h>
-#include <limits.h>
 #include <vterm.h>
-#include <assert.h>
 
 static int term_sb_push(int cols, const VTermScreenCell *cells, void *data) {
   Term *term = (Term *)data;
@@ -59,7 +59,7 @@ static int term_sb_push(int cols, const VTermScreenCell *cells, void *data) {
 /// @param cols
 /// @param cells  VTerm state to update.
 /// @param data   Term
-static int term_sb_pop(int cols, VTermScreenCell *cells, void *data){
+static int term_sb_pop(int cols, VTermScreenCell *cells, void *data) {
   Term *term = (Term *)data;
 
   if (!term->sb_current) {
@@ -83,7 +83,7 @@ static int term_sb_pop(int cols, VTermScreenCell *cells, void *data){
 
   // copy to vterm state
   memcpy(cells, sbrow->cells, sizeof(cells[0]) * cols_to_copy);
-  size_t col ;
+  size_t col;
   for (col = cols_to_copy; col < (size_t)cols; col++) {
     cells[col].chars[0] = 0;
     cells[col].width = 1;
@@ -94,16 +94,15 @@ static int term_sb_pop(int cols, VTermScreenCell *cells, void *data){
   return 1;
 }
 
-static int row_to_linenr(Term *term, int row){
+static int row_to_linenr(Term *term, int row) {
   return row != INT_MAX ? row + (int)term->sb_current + 1 : INT_MAX;
 }
 
-static int linenr_to_row(Term *term, int linenr){
+static int linenr_to_row(Term *term, int linenr) {
   return linenr - (int)term->sb_current - 1;
 }
 
-static void fetch_cell(Term *term, int row, int col,
-                       VTermScreenCell *cell){
+static void fetch_cell(Term *term, int row, int col, VTermScreenCell *cell) {
   if (row < 0) {
     ScrollbackLine *sbrow = term->sb_buffer[-row - 1];
     if ((size_t)col < sbrow->cols) {
@@ -114,40 +113,34 @@ static void fetch_cell(Term *term, int row, int col,
       VTermState *state = vterm_obtain_state(term->vt);
       vterm_state_get_default_colors(state, &fg, &bg);
 
-      *cell = (VTermScreenCell) {
-                                 .chars = { 0 },
-                                 .width = 1,
-                                 .bg = bg
-      };
+      *cell = (VTermScreenCell){.chars = {0}, .width = 1, .bg = bg};
     }
   } else {
-    vterm_screen_get_cell(term->vts, (VTermPos){.row = row, .col = col},
-                          cell);
+    vterm_screen_get_cell(term->vts, (VTermPos){.row = row, .col = col}, cell);
   }
 }
 
-static size_t get_col_offset(Term *term, int row, int end_col){
+static size_t get_col_offset(Term *term, int row, int end_col) {
   int col = 0;
   size_t offset = 0;
-  unsigned char  buf[4];
+  unsigned char buf[4];
 
   while (col < end_col) {
     VTermScreenCell cell;
     fetch_cell(term, row, col, &cell);
     if (cell.chars[0]) {
-      if(cell.width>1){
-        offset+=cell.width-1;
+      if (cell.width > 1) {
+        offset += cell.width - 1;
       }
     }
     col += cell.width;
-
   }
   return offset;
 }
 
-static size_t refresh_row(Term *term,emacs_env* env, int row,
-                          int end_col,bool append_newline){
-  int  j;
+static size_t refresh_row(Term *term, emacs_env *env, int row, int end_col,
+                          bool append_newline) {
+  int j;
   char *ptr = term->textbuf;
   int length = 0;
   VTermScreenCell cell;
@@ -159,10 +152,10 @@ static size_t refresh_row(Term *term,emacs_env* env, int row,
     fetch_cell(term, row, j, &cell);
 
     if (!compare_cells(&cell, &lastCell)) {
-      ptr[length]='\0';
+      ptr[length] = '\0';
       emacs_value text = render_text(env, ptr, length, &lastCell);
-      insert(env,text);
-      ptr+=length;
+      insert(env, text);
+      ptr += length;
       length = 0;
     }
 
@@ -184,25 +177,24 @@ static size_t refresh_row(Term *term,emacs_env* env, int row,
       int w = cell.width - 1;
       j = j + w;
     }
-
   }
-  if(length>0){
+  if (length > 0) {
     emacs_value text = render_text(env, ptr, length, &lastCell);
-    insert(env,text);
-    ptr+=length;
+    insert(env, text);
+    ptr += length;
   }
-  if(append_newline){
-    *ptr='\n';
-    ptr+=1;
-    insert(env,env->make_string(env, "\n", 1));
+  if (append_newline) {
+    *ptr = '\n';
+    ptr += 1;
+    insert(env, env->make_string(env, "\n", 1));
   }
-  *ptr=0;
-  return ptr-term->textbuf;
+  *ptr = 0;
+  return ptr - term->textbuf;
 }
 
 // Refresh the screen (visible part of the buffer when the terminal is
 // focused) of a invalidated terminal
-static void refresh_screen(Term *term,emacs_env *env){
+static void refresh_screen(Term *term, emacs_env *env) {
   int height;
   int width;
   vterm_get_size(term->vt, &height, &width);
@@ -212,33 +204,32 @@ static void refresh_screen(Term *term,emacs_env *env){
   term->invalid_start = 0;
   term->invalid_end = height;
 
-  int line_start=row_to_linenr(term, term->invalid_start);
-  goto_line(env,line_start-1);
-  int liner ;
+  int line_start = row_to_linenr(term, term->invalid_start);
+  goto_line(env, line_start - 1);
+  int liner;
   int r;
   for (r = term->invalid_start; r < term->invalid_end; r++) {
-    liner =row_to_linenr(term,r);
+    liner = row_to_linenr(term, r);
     int buffer_lnum = env->extract_integer(env, buffer_line_number(env));
-    if(liner>buffer_lnum){
-      goto_line(env,buffer_lnum); /* maybe should goto end of buffer */
+    if (liner > buffer_lnum) {
+      goto_line(env, buffer_lnum); /* maybe should goto end of buffer */
       int i;
-      for (i = 0; i < liner-buffer_lnum; i++){
-        insert(env,env->make_string(env,"\n",1));
+      for (i = 0; i < liner - buffer_lnum; i++) {
+        insert(env, env->make_string(env, "\n", 1));
       }
     }
-    delete_lines(env,liner,1,false);
-    goto_line(env,liner);
-    refresh_row(term,env,r,width,false);
+    delete_lines(env, liner, 1, false);
+    goto_line(env, liner);
+    refresh_row(term, env, r, width, false);
   }
   term->invalid_start = INT_MAX;
   term->invalid_end = -1;
 }
 
-
 // Refresh the scrollback of an invalidated terminal.
-static void refresh_scrollback(Term *term,emacs_env *env) {
+static void refresh_scrollback(Term *term, emacs_env *env) {
   int width, height;
-  int buffer_lnum ;
+  int buffer_lnum;
   vterm_get_size(term->vt, &height, &width);
 
   while (term->sb_pending > 0) {
@@ -248,28 +239,28 @@ static void refresh_scrollback(Term *term,emacs_env *env) {
     // section of the buffer
     buffer_lnum = env->extract_integer(env, buffer_line_number(env));
 
-    if ((buffer_lnum- height) >= (int)term->sb_size) {
+    if ((buffer_lnum - height) >= (int)term->sb_size) {
       // scrollback full, delete lines at the top
-      delete_lines(env,1, 1,true);
+      delete_lines(env, 1, 1, true);
       /* insert(env,env->make_string(env, "\n", 1)); */
     }
     buffer_lnum = env->extract_integer(env, buffer_line_number(env));
-    int buf_index = buffer_lnum- height+1;
-    goto_line(env,buf_index);
-    size_t length=refresh_row(term,env,-term->sb_pending,width,true);
+    int buf_index = buffer_lnum - height + 1;
+    goto_line(env, buf_index);
+    size_t length = refresh_row(term, env, -term->sb_pending, width, true);
     term->sb_pending--;
   }
   // Remove extra lines at the bottom
   int max_line_count = (int)term->sb_current + height;
-  buffer_lnum=env->extract_integer(env, buffer_line_number(env));
+  buffer_lnum = env->extract_integer(env, buffer_line_number(env));
 
   // Remove extra lines at the bottom
-  if (buffer_lnum> max_line_count) {
-    delete_lines(env,max_line_count,buffer_lnum-max_line_count, true);
+  if (buffer_lnum > max_line_count) {
+    delete_lines(env, max_line_count, buffer_lnum - max_line_count, true);
   }
 }
 
-static void adjust_topline(Term *term,emacs_env *env, long added){
+static void adjust_topline(Term *term, emacs_env *env, long added) {
   int height, width;
   vterm_get_size(term->vt, &height, &width);
   /* FOR_ALL_WINDOWS_IN_TAB(wp, curtab) { */
@@ -277,42 +268,42 @@ static void adjust_topline(Term *term,emacs_env *env, long added){
   VTermState *state = vterm_obtain_state(term->vt);
   VTermPos pos;
   vterm_state_get_cursorpos(state, &pos);
-  int cursor_lnum=row_to_linenr(term,pos.row);
-  bool following = buffer_lnum ==cursor_lnum + added;  // cursor at end?
+  int cursor_lnum = row_to_linenr(term, pos.row);
+  bool following = buffer_lnum == cursor_lnum + added; // cursor at end?
 
-
-  if (following ) {             /* || (wp == curwin && is_focused(term)) */
+  if (following) { /* || (wp == curwin && is_focused(term)) */
     // "Follow" the terminal output
-    goto_line(env,MIN(cursor_lnum,buffer_lnum));
-    size_t offset=get_col_offset(term,pos.row,pos.col);
-    forward_char(env,env->make_integer(env,pos.col-offset));
-    recenter(env,env->make_integer(env,-1)); /* make current lien at the screen bottom */
+    goto_line(env, MIN(cursor_lnum, buffer_lnum));
+    size_t offset = get_col_offset(term, pos.row, pos.col);
+    forward_char(env, env->make_integer(env, pos.col - offset));
+    recenter(env, env->make_integer(
+                      env, -1)); /* make current lien at the screen bottom */
 
   } else {
-    goto_line(env,MIN(cursor_lnum,buffer_lnum));
-    size_t offset=get_col_offset(term,pos.row,pos.col);
-    forward_char(env,env->make_integer(env,pos.col-offset));
-    recenter(env,env->make_integer(env,pos.row));
+    goto_line(env, MIN(cursor_lnum, buffer_lnum));
+    size_t offset = get_col_offset(term, pos.row, pos.col);
+    forward_char(env, env->make_integer(env, pos.col - offset));
+    recenter(env, env->make_integer(env, pos.row));
   }
 }
-static void term_redraw(Term *term,emacs_env *env) {
+static void term_redraw(Term *term, emacs_env *env) {
   long ml_before = env->extract_integer(env, buffer_line_number(env));
-  refresh_scrollback(term,env);
-  refresh_screen(term,env);
-  long ml_added = env->extract_integer(env, buffer_line_number(env))- ml_before;
-  adjust_topline(term,env, ml_added);
+  refresh_scrollback(term, env);
+  refresh_screen(term, env);
+  long ml_added =
+      env->extract_integer(env, buffer_line_number(env)) - ml_before;
+  adjust_topline(term, env, ml_added);
 }
 
 static VTermScreenCallbacks vterm_screen_callbacks = {
-  /* .damage      = term_damage, */
-  /* .moverect    = term_moverect, */
-  /* .movecursor  = term_movecursor, */
-  .settermprop = term_settermprop,
-  /* .bell        = term_bell, */
-  .sb_pushline = term_sb_push,
-  .sb_popline  = term_sb_pop,
+    /* .damage      = term_damage, */
+    /* .moverect    = term_moverect, */
+    /* .movecursor  = term_movecursor, */
+    .settermprop = term_settermprop,
+    /* .bell        = term_bell, */
+    .sb_pushline = term_sb_push,
+    .sb_popline = term_sb_pop,
 };
-
 
 static bool compare_cells(VTermScreenCell *a, VTermScreenCell *b) {
   bool equal = true;
@@ -353,12 +344,11 @@ static int term_settermprop(VTermProp prop, VTermValue *val, void *user_data) {
 static emacs_value render_text(emacs_env *env, char *buffer, int len,
                                VTermScreenCell *cell) {
   emacs_value text;
-  if(len==0){
-     text= env->make_string(env, "", 0);
-     return text;
-     /* return NULL; */
-  }else{
-     text= env->make_string(env, buffer, len);
+  if (len == 0) {
+    text = env->make_string(env, "", 0);
+    return text;
+  } else {
+    text = env->make_string(env, buffer, len);
   }
 
   emacs_value foreground = color_to_rgb_string(env, cell->fg);
@@ -381,8 +371,6 @@ static emacs_value render_text(emacs_env *env, char *buffer, int len,
 
   return text;
 }
-
-
 
 static void term_setup_colors(Term *term, emacs_env *env) {
   VTermColor fg, bg;
@@ -514,7 +502,7 @@ static void term_put_caret(Term *term, emacs_env *env, int row, int col,
   vterm_get_size(term->vt, &rows, &cols);
   // row * (cols + 1) because of newline character
   // col + 1 because (goto-char 1) sets point to first position
-  int point = ((row+term->sb_current) * (cols + 1)) + col + 1 + offset;
+  int point = ((row + term->sb_current) * (cols + 1)) + col + 1 + offset;
   goto_char(env, point);
 }
 
@@ -537,19 +525,16 @@ static emacs_value Fvterm_new(emacs_env *env, ptrdiff_t nargs,
 
   term_setup_colors(term, env);
 
-
   term->vts = vterm_obtain_screen(term->vt);
-  vterm_screen_reset(term->vts , 1);
-  vterm_screen_set_callbacks(term->vts , &vterm_screen_callbacks, term);
-  vterm_screen_set_damage_merge(term->vts , VTERM_DAMAGE_SCROLL);
-  term->sb_size = MIN(SB_MAX,sb_size);
+  vterm_screen_reset(term->vts, 1);
+  vterm_screen_set_callbacks(term->vts, &vterm_screen_callbacks, term);
+  vterm_screen_set_damage_merge(term->vts, VTERM_DAMAGE_SCROLL);
+  term->sb_size = MIN(SB_MAX, sb_size);
   term->sb_current = 0;
   term->sb_pending = 0;
   term->sb_buffer = malloc(sizeof(ScrollbackLine *) * term->sb_size);
-  term->invalid_start=0;
-  term->invalid_end=cols;
-
-
+  term->invalid_start = 0;
+  term->invalid_end = cols;
 
   return env->make_user_ptr(env, term_finalize, term);
 }
@@ -610,7 +595,7 @@ static emacs_value Fvterm_set_size(emacs_env *env, ptrdiff_t nargs,
 
   if (cols != old_cols || rows != old_rows) {
     vterm_set_size(term->vt, rows, cols);
-    term_redraw(term,env);
+    term_redraw(term, env);
   }
 
   return Qnil;
@@ -640,28 +625,43 @@ int emacs_module_init(struct emacs_runtime *ert) {
   Ferase_buffer = env->make_global_ref(env, env->intern(env, "erase-buffer"));
   Finsert = env->make_global_ref(env, env->intern(env, "insert"));
   Fgoto_char = env->make_global_ref(env, env->intern(env, "goto-char"));
-  Fput_text_property = env->make_global_ref(env, env->intern(env, "put-text-property"));
+  Fput_text_property =
+      env->make_global_ref(env, env->intern(env, "put-text-property"));
   Fset = env->make_global_ref(env, env->intern(env, "set"));
-  Fvterm_face_color_hex = env->make_global_ref(env, env->intern(env, "vterm--face-color-hex"));
-  Fvterm_flush_output = env->make_global_ref(env, env->intern(env, "vterm--flush-output"));
+  Fvterm_face_color_hex =
+      env->make_global_ref(env, env->intern(env, "vterm--face-color-hex"));
+  Fvterm_flush_output =
+      env->make_global_ref(env, env->intern(env, "vterm--flush-output"));
   Fforward_line = env->make_global_ref(env, env->intern(env, "forward-line"));
   Fgoto_line = env->make_global_ref(env, env->intern(env, "vterm--goto-line"));
-  Fbuffer_line_number = env->make_global_ref(env, env->intern(env, "vterm--buffer-line-num"));
-  Fdelete_lines = env->make_global_ref(env, env->intern(env, "vterm--delete-lines"));
-  Frecenter = env->make_global_ref(env,env->intern(env, "vterm--recenter"));
-  Fforward_char = env->make_global_ref(env,env->intern(env, "vterm--forward-char"));
-  Fblink_cursor_mode = env->make_global_ref(env,env->intern(env, "blink-cursor-mode"));
+  Fbuffer_line_number =
+      env->make_global_ref(env, env->intern(env, "vterm--buffer-line-num"));
+  Fdelete_lines =
+      env->make_global_ref(env, env->intern(env, "vterm--delete-lines"));
+  Frecenter = env->make_global_ref(env, env->intern(env, "vterm--recenter"));
+  Fforward_char =
+      env->make_global_ref(env, env->intern(env, "vterm--forward-char"));
+  Fblink_cursor_mode =
+      env->make_global_ref(env, env->intern(env, "blink-cursor-mode"));
 
   // Faces
   Qterm = env->make_global_ref(env, env->intern(env, "vterm"));
-  Qterm_color_black = env->make_global_ref(env, env->intern(env, "vterm-color-black"));
-  Qterm_color_red = env->make_global_ref(env, env->intern(env, "vterm-color-red"));
-  Qterm_color_green = env->make_global_ref(env, env->intern(env, "vterm-color-green"));
-  Qterm_color_yellow = env->make_global_ref(env, env->intern(env, "vterm-color-yellow"));
-  Qterm_color_blue = env->make_global_ref(env, env->intern(env, "vterm-color-blue"));
-  Qterm_color_magenta = env->make_global_ref(env, env->intern(env, "vterm-color-magenta"));
-  Qterm_color_cyan = env->make_global_ref(env, env->intern(env, "vterm-color-cyan"));
-  Qterm_color_white = env->make_global_ref(env, env->intern(env, "vterm-color-white"));
+  Qterm_color_black =
+      env->make_global_ref(env, env->intern(env, "vterm-color-black"));
+  Qterm_color_red =
+      env->make_global_ref(env, env->intern(env, "vterm-color-red"));
+  Qterm_color_green =
+      env->make_global_ref(env, env->intern(env, "vterm-color-green"));
+  Qterm_color_yellow =
+      env->make_global_ref(env, env->intern(env, "vterm-color-yellow"));
+  Qterm_color_blue =
+      env->make_global_ref(env, env->intern(env, "vterm-color-blue"));
+  Qterm_color_magenta =
+      env->make_global_ref(env, env->intern(env, "vterm-color-magenta"));
+  Qterm_color_cyan =
+      env->make_global_ref(env, env->intern(env, "vterm-color-cyan"));
+  Qterm_color_white =
+      env->make_global_ref(env, env->intern(env, "vterm-color-white"));
 
   // Exported functions
   emacs_value fun;
@@ -684,4 +684,3 @@ int emacs_module_init(struct emacs_runtime *ert) {
   provide(env, "vterm-module");
   return 0;
 }
-

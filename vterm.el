@@ -253,9 +253,9 @@ Feeds the size change to the virtual terminal."
 
 (defun vterm--buffer-line-num()
   (ignore-errors
-  (save-excursion
-    (goto-char (point-max))
-    (line-number-at-pos))))
+    (save-excursion
+      (goto-char (point-max))
+      (line-number-at-pos))))
 
 (defun vterm--forward-char(n )
   (ignore-errors
