@@ -341,6 +341,8 @@ static int term_settermprop(VTermProp prop, VTermValue *val, void *user_data) {
   case VTERM_PROP_CURSORVISIBLE:
     term->cursor_visible = val->boolean;
     break;
+  case VTERM_PROP_CURSORBLINK:
+    term->cursor_blinking = val->boolean;
   default:
     return 0;
   }
@@ -556,6 +558,7 @@ static emacs_value Fvterm_update(emacs_env *env, ptrdiff_t nargs,
                                  emacs_value args[], void *data) {
   Term *term = env->get_user_ptr(env, args[0]);
 
+  toggle_cursor_blinking(env, term->cursor_blinking);
   toggle_cursor(env, term->cursor_visible);
 
   // Process keys
@@ -647,9 +650,7 @@ int emacs_module_init(struct emacs_runtime *ert) {
   Fdelete_lines = env->make_global_ref(env, env->intern(env, "vterm--delete-lines"));
   Frecenter = env->make_global_ref(env,env->intern(env, "vterm--recenter"));
   Fforward_char = env->make_global_ref(env,env->intern(env, "vterm--forward-char"));
-
-
-
+  Fblink_cursor_mode = env->make_global_ref(env,env->intern(env, "blink-cursor-mode"));
 
   // Faces
   Qterm = env->make_global_ref(env, env->intern(env, "vterm"));
