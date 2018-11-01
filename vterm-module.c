@@ -154,6 +154,10 @@ static size_t refresh_lines(Term *term, emacs_env *env, int start_row,
   for (row = start_row; row < end_row; row++) {
     for (j = 0; j < end_col; j++) {
       VTermPos pos = {.row = row, .col = j};
+      if(vterm_screen_is_eol(term->vts,pos)){
+        /* This cell is EOL if this and every cell to the right is black */
+        break;
+      }
       fetch_cell(term, row, j, &cell);
 
       if (!compare_cells(&cell, &lastCell)) {
