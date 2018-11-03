@@ -112,6 +112,9 @@ be send to the terminal."
   (setq vterm--term (vterm--new (window-body-height)
                                 (window-body-width)
                                 vterm-max-scrollback))
+  ;; (cl-loop repeat (1- (window-body-height)) do
+  ;;          (insert "\n"))
+
   (setq buffer-read-only t)
   (setq-local scroll-conservatively 101)
   (setq-local scroll-margin 0)
