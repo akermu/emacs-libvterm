@@ -28,7 +28,6 @@ typedef struct Term {
   // buffer used to:
   //  - convert VTermScreen cell arrays into utf8 strings
   //  - receive data from libvterm as a result of key presses.
-  char textbuf[0x1fff];
   ScrollbackLine **sb_buffer; // Scrollback buffer storage for libvterm
   size_t sb_current;          // number of rows pushed to sb_buffer
   size_t sb_size;             // sb_buffer size
@@ -39,6 +38,12 @@ typedef struct Term {
   int sb_pending;
 
   int invalid_start, invalid_end; // invalid rows in libvterm screen
+  bool pending_resize;            // pending width/height
+  bool is_invalidated;
+
+  struct {
+    int row, col;
+  } cursor;
 
   // Flag to indicate cursor is visible
   bool cursor_visible;
