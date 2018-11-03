@@ -112,8 +112,8 @@ be send to the terminal."
   (setq vterm--term (vterm--new (window-body-height)
                                 (window-body-width)
                                 vterm-max-scrollback))
-  ;; (cl-loop repeat (1- (window-body-height)) do
-  ;;          (insert "\n"))
+  (cl-loop repeat (1- (window-body-height)) do
+           (insert "\n"))
 
   (setq buffer-read-only t)
   (setq-local scroll-conservatively 101)
@@ -186,12 +186,11 @@ be send to the terminal."
   "I/O Event. Feeds PROCESS's INPUT to the virtual terminal.
 
 Then triggers a redraw from the module."
-  (let ((inhibit-redisplay t)
-        (inhibit-read-only t))
-    (with-current-buffer (process-buffer process)
-      (vterm--write-input vterm--term input)
+  (with-current-buffer (process-buffer process)
+    (vterm--write-input vterm--term input)
+    (let ((inhibit-read-only t)
+          (inhibit-redisplay t))
       (vterm--update vterm--term))))
-
 
 (defun vterm--window-size-change (frame)
   "Callback triggered by a size change of the FRAME.
@@ -202,9 +201,7 @@ Feeds the size change to the virtual terminal."
       (when (and (processp vterm--process)
                  (process-live-p vterm--process))
         (let ((height (window-body-height window))
-              (width (window-body-width window))
-              (inhibit-redisplay t)
-              (inhibit-read-only t))
+              (width (window-body-width window)))
           (set-process-window-size vterm--process height width)
           (vterm--set-size vterm--term height width))))))
 
@@ -224,13 +221,20 @@ Feeds the size change to the virtual terminal."
         (delete-region (point) (point-at-eol))
         (when delete-whole-line
           (when (looking-at "\n")
-            (delete-char 1)))
+            (delete-char 1))
+          (when (and (eobp) (looking-back "\n"))
+            (delete-char -1))
+
+          )
         (cl-loop repeat (1- count) do
                  (when (or delete-whole-line (forward-line 1))
                    (delete-region (point) (point-at-eol))
                    (when delete-whole-line
                      (when (looking-at "\n")
-                       (delete-char 1)))))))))
+                       (delete-char 1))
+                     (when (and (eobp) (looking-back "\n"))
+                       (delete-char -1)))
+                   ))))))
 
 
 
