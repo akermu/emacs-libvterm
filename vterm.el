@@ -112,8 +112,6 @@ be send to the terminal."
   (setq vterm--term (vterm--new (window-body-height)
                                 (window-body-width)
                                 vterm-max-scrollback))
-  (cl-loop repeat (1- (window-body-height)) do
-           (insert "\n"))
 
   (setq buffer-read-only t)
   (setq-local scroll-conservatively 101)
@@ -215,51 +213,35 @@ Feeds the size change to the virtual terminal."
 (defun vterm--delete-lines (line-num count &optional delete-whole-line)
   "Delete lines from line-num. If option ‘kill-whole-line’ is non-nil,
  then this command kills the whole line including its terminating newline"
-  (ignore-errors
-    (save-excursion
-      (when (vterm--goto-line line-num)
-        (delete-region (point) (point-at-eol))
-        (when delete-whole-line
-          (when (looking-at "\n")
-            (delete-char 1))
-          (when (and (eobp) (looking-back "\n"))
-            (delete-char -1))
+  (save-excursion
+    (when (vterm--goto-line line-num)
+      (delete-region (point) (point-at-eol))
+      (when delete-whole-line
+        (when (looking-at "\n")
+          (delete-char 1))
+        (when (and (eobp) (looking-back "\n"))
+          (delete-char -1))
 
-          )
-        (cl-loop repeat (1- count) do
-                 (when (or delete-whole-line (forward-line 1))
-                   (delete-region (point) (point-at-eol))
-                   (when delete-whole-line
-                     (when (looking-at "\n")
-                       (delete-char 1))
-                     (when (and (eobp) (looking-back "\n"))
-                       (delete-char -1)))
-                   ))))))
-
-
-
-(defun vterm--recenter(&optional arg)
-  (when (get-buffer-window)
-    (with-current-buffer (window-buffer)
-      (when vterm--term
-        (recenter arg)))))
+        )
+      (cl-loop repeat (1- count) do
+               (when (or delete-whole-line (forward-line 1))
+                 (delete-region (point) (point-at-eol))
+                 (when delete-whole-line
+                   (when (looking-at "\n")
+                     (delete-char 1))
+                   (when (and (eobp) (looking-back "\n"))
+                     (delete-char -1)))
+                 )))))
 
 (defun vterm--goto-line(n)
   "If move succ return t"
-  (ignore-errors
-    (goto-char (point-min))
-    (let ((succ (eq 0 (forward-line (1- n)))))
-      succ)))
+  (goto-char (point-min))
+  (let ((succ (eq 0 (forward-line (1- n)))))
+    succ))
 
 (defun vterm--buffer-line-num()
-  (ignore-errors
-    (save-excursion
-      (goto-char (point-max))
-      (line-number-at-pos))))
-
-(defun vterm--forward-char(n )
-  (ignore-errors
-    (forward-char n)))
+  "Return the maximum line number."
+  (line-number-at-pos (point-max)))
 
 (provide 'vterm)
 ;;; vterm.el ends here

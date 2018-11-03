@@ -276,8 +276,7 @@ static void adjust_topline(Term *term, emacs_env *env, long added) {
     goto_line(env, MIN(cursor_lnum, buffer_lnum));
     size_t offset = get_col_offset(term, pos.row, pos.col);
     forward_char(env, env->make_integer(env, pos.col - offset));
-    recenter(env, env->make_integer(
-                      env, -1)); /* make current lien at the screen bottom */
+    recenter(env, env->make_integer(env, -1)); /* make current line at the screen bottom */
 
   } else {
     goto_line(env, MIN(cursor_lnum, buffer_lnum));
@@ -638,9 +637,9 @@ int emacs_module_init(struct emacs_runtime *ert) {
       env->make_global_ref(env, env->intern(env, "vterm--buffer-line-num"));
   Fdelete_lines =
       env->make_global_ref(env, env->intern(env, "vterm--delete-lines"));
-  Frecenter = env->make_global_ref(env, env->intern(env, "vterm--recenter"));
+  Frecenter = env->make_global_ref(env, env->intern(env, "recenter"));
   Fforward_char =
-      env->make_global_ref(env, env->intern(env, "vterm--forward-char"));
+      env->make_global_ref(env, env->intern(env, "forward-char"));
   Fblink_cursor_mode =
       env->make_global_ref(env, env->intern(env, "blink-cursor-mode"));
 
