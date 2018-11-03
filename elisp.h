@@ -37,6 +37,8 @@ emacs_value Fset;
 emacs_value Fvterm_face_color_hex;
 emacs_value Fvterm_flush_output;
 emacs_value Fblink_cursor_mode;
+emacs_value Fget_buffer_window;
+emacs_value Fselected_window;
 
 // Utils
 void bind_function(emacs_env *env, const char *name, emacs_value Sfun);
@@ -63,4 +65,7 @@ emacs_value get_hex_color_bg(emacs_env *env, emacs_value face);
 emacs_value buffer_line_number(emacs_env *env);
 void recenter(emacs_env *env, emacs_value pos);
 void forward_char(emacs_env *env, emacs_value n);
+emacs_value get_buffer_window(emacs_env *env);
+emacs_value selected_window(emacs_env *env);
+
 #endif /* ELISP_H */

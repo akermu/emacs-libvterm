@@ -114,6 +114,14 @@ emacs_value buffer_line_number(emacs_env *env) {
   return env->funcall(env, Fbuffer_line_number, 0, (emacs_value[]){});
 }
 
+emacs_value get_buffer_window(emacs_env *env) {
+  return env->funcall(env, Fget_buffer_window, 0, (emacs_value[]){});
+}
+
+emacs_value selected_window(emacs_env *env) {
+  return env->funcall(env, Fselected_window, 0, (emacs_value[]){});
+}
+
 void toggle_cursor(emacs_env *env, bool visible) {
   emacs_value Qvisible = visible ? Qt : Qnil;
   env->funcall(env, Fset, 2, (emacs_value[]){Qcursor_type, Qvisible});

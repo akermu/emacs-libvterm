@@ -263,28 +263,33 @@ static void refresh_scrollback(Term *term, emacs_env *env) {
 static void adjust_topline(Term *term, emacs_env *env, long added) {
   int height, width;
   vterm_get_size(term->vt, &height, &width);
-  /* FOR_ALL_WINDOWS_IN_TAB(wp, curtab) { */
+
   int buffer_lnum = env->extract_integer(env, buffer_line_number(env));
   VTermState *state = vterm_obtain_state(term->vt);
   VTermPos pos;
   vterm_state_get_cursorpos(state, &pos);
   int cursor_lnum = row_to_linenr(term, pos.row);
+
+  goto_line(env, MIN(cursor_lnum, buffer_lnum));
+  size_t offset = get_col_offset(term, pos.row, pos.col);
+  forward_char(env, env->make_integer(env, pos.col - offset));
+
+
   bool following = buffer_lnum == cursor_lnum + added; // cursor at end?
 
-  if (following) { /* || (wp == curwin && is_focused(term)) */
-    // "Follow" the terminal output
-    goto_line(env, MIN(cursor_lnum, buffer_lnum));
-    size_t offset = get_col_offset(term, pos.row, pos.col);
-    forward_char(env, env->make_integer(env, pos.col - offset));
-    recenter(env, env->make_integer(env, -1)); /* make current line at the screen bottom */
+  emacs_value window = get_buffer_window(env);
+  emacs_value swindow = selected_window(env);
 
-  } else {
-    goto_line(env, MIN(cursor_lnum, buffer_lnum));
-    size_t offset = get_col_offset(term, pos.row, pos.col);
-    forward_char(env, env->make_integer(env, pos.col - offset));
-    recenter(env, env->make_integer(env, pos.row));
+  if (swindow == window) {
+    if (following) {
+      // "Follow" the terminal output
+      recenter(env, env->make_integer(env, -1)); /* make current line at the screen bottom */
+    } else {
+      recenter(env, env->make_integer(env, pos.row));
+    }
   }
 }
+
 static void term_redraw(Term *term, emacs_env *env) {
   long ml_before = env->extract_integer(env, buffer_line_number(env));
   refresh_scrollback(term, env);
@@ -642,6 +647,8 @@ int emacs_module_init(struct emacs_runtime *ert) {
       env->make_global_ref(env, env->intern(env, "forward-char"));
   Fblink_cursor_mode =
       env->make_global_ref(env, env->intern(env, "blink-cursor-mode"));
+  Fget_buffer_window = env->make_global_ref(env, env->intern(env, "get-buffer-window"));
+  Fselected_window = env->make_global_ref(env, env->intern(env, "selected-window"));
 
   // Faces
   Qterm = env->make_global_ref(env, env->intern(env, "vterm"));
