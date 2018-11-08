@@ -183,6 +183,7 @@ be send to the terminal."
         (setq key (upcase key)))
       (vterm--update vterm--term key shift meta ctrl))))
 
+;;;###autoload
 (defun vterm ()
   "Create a new vterm."
   (interactive)
@@ -191,6 +192,7 @@ be send to the terminal."
       (vterm-mode))
     (switch-to-buffer buffer)))
 
+;;;###autoload
 (defun vterm-other-window ()
   "Create a new vterm."
   (interactive)
