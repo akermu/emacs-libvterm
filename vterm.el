@@ -129,12 +129,25 @@ be send to the terminal."
                           :sentinel #'ignore))))
 
 ;; Keybindings
-(define-key vterm-mode-map [t] #'vterm--self-insert)
+;; (define-key vterm-mode-map [t] #'vterm--self-insert)
 (define-key vterm-mode-map [mouse-1] nil)
 (define-key vterm-mode-map [mouse-2] nil)
 (define-key vterm-mode-map [mouse-3] nil)
 (define-key vterm-mode-map [mouse-4] #'ignore)
 (define-key vterm-mode-map [mouse-5] #'ignore)
+(define-key vterm-mode-map [(tab)]  #'vterm--self-insert)
+(define-key vterm-mode-map (kbd "TAB")   #'vterm--self-insert)
+(define-key vterm-mode-map (kbd "<backspace>")   #'vterm--self-insert)
+(define-key vterm-mode-map (kbd "M-<backspace>")   #'vterm--self-insert)
+(define-key vterm-mode-map [left]   #'vterm--self-insert)
+(define-key vterm-mode-map [right]   #'vterm--self-insert)
+(define-key vterm-mode-map [up]   #'vterm--self-insert)
+(define-key vterm-mode-map [down]   #'vterm--self-insert)
+(define-key vterm-mode-map [home]   #'vterm--self-insert)
+(define-key vterm-mode-map [end]   #'vterm--self-insert)
+(define-key vterm-mode-map [escape] 'vterm--self-insert)
+(define-key vterm-mode-map [remap self-insert-command] 'vterm--self-insert)
+
 (dolist (prefix '("M-" "C-"))
   (dolist (char (cl-loop for char from ?a to ?z
                          collect char))
@@ -158,6 +171,17 @@ be send to the terminal."
         (when (equal modifiers '(shift))
           (setq key (upcase key)))
         (vterm--update vterm--term key shift meta ctrl)))))
+
+
+(defun vterm-send-key (key &optional shift meta ctrl)
+  "Sends  key to libvterm."
+  (when vterm--term
+    (let* ((inhibit-redisplay t)
+           (inhibit-read-only t)
+           (key key))
+      (when (and shift (not meta) (not ctrl))
+        (setq key (upcase key)))
+      (vterm--update vterm--term key shift meta ctrl))))
 
 (defun vterm ()
   "Create a new vterm."
