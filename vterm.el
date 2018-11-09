@@ -110,7 +110,7 @@ be send to the terminal."
   "Mayor mode for vterm buffer."
   (buffer-disable-undo)
   (setq vterm--term (vterm--new (window-body-height)
-                                (window-body-width)
+                                (vterm--window-width)
                                 vterm-max-scrollback))
 
   (setq buffer-read-only t)
@@ -118,11 +118,13 @@ be send to the terminal."
   (setq-local scroll-margin 0)
 
   (add-hook 'window-size-change-functions #'vterm--window-size-change t t)
+  (add-hook 'display-line-numbers-mode-hook #'vterm--window-size-change t t)
+
   (let ((process-environment (append '("TERM=xterm") process-environment)))
     (setq vterm--process (make-process
                           :name "vterm"
                           :buffer (current-buffer)
-                          :command `("/bin/sh" "-c" ,(format "stty -nl sane iutf8 rows %d columns %d >/dev/null && exec %s" (window-body-height) (window-body-width) vterm-shell))
+                          :command `("/bin/sh" "-c" ,(format "stty -nl sane iutf8 rows %d columns %d >/dev/null && exec %s" (window-body-height) (vterm--window-width) vterm-shell))
                           :coding 'no-conversion
                           :connection-type 'pty
                           :filter #'vterm--filter
@@ -165,7 +167,8 @@ be send to the terminal."
   (let ((buffer (generate-new-buffer "vterm")))
     (with-current-buffer buffer
       (vterm-mode))
-    (switch-to-buffer buffer)))
+    (switch-to-buffer buffer)
+    (vterm--window-size-change)))
 
 (defun vterm-other-window ()
   "Create a new vterm."
@@ -173,8 +176,8 @@ be send to the terminal."
   (let ((buffer (generate-new-buffer "vterm")))
     (with-current-buffer buffer
       (vterm-mode))
-
-    (pop-to-buffer buffer)))
+    (pop-to-buffer buffer)
+    (vterm--window-size-change)))
 
 (defun vterm--flush-output (output)
   "Sends the virtual terminal's OUTPUT to the shell."
@@ -190,7 +193,17 @@ Then triggers a redraw from the module."
           (inhibit-redisplay t))
       (vterm--update vterm--term))))
 
-(defun vterm--window-size-change (frame)
+(defun vterm--window-width(&optional window)
+  "Return window width. doesn't include line-number-display-width and
+ the 2 columns used for padding the numbers on display. "
+  (let ((line-number-width 0))
+    (when (and (symbolp display-line-numbers)
+               display-line-numbers
+               (functionp 'line-number-display-width))
+      (setq line-number-width (line-number-display-width)))
+    (- (window-body-width window) line-number-width 2)))
+
+(defun vterm--window-size-change (&optional frame)
   "Callback triggered by a size change of the FRAME.
 
 Feeds the size change to the virtual terminal."
@@ -199,7 +212,9 @@ Feeds the size change to the virtual terminal."
       (when (and (processp vterm--process)
                  (process-live-p vterm--process))
         (let ((height (window-body-height window))
-              (width (window-body-width window)))
+              (width (vterm--window-width window))
+              (inhibit-read-only t)
+              (inhibit-redisplay t))
           (set-process-window-size vterm--process height width)
           (vterm--set-size vterm--term height width))))))
 
