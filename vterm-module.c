@@ -197,15 +197,11 @@ static void refresh_screen(Term *term, emacs_env *env) {
   int height;
   int width;
 
-  /* if (term->invalid_end < term->invalid_start) { */
-  /*   goto end; */
-  /* } */
+  if (term->invalid_end < term->invalid_start) {
+    goto end;
+  }
 
   vterm_get_size(term->vt, &height, &width);
-  /* refresh full screen now  */
-  /* TODO: only refresh invalid lines */
-  term->invalid_start = 0;
-  term->invalid_end = height;
 
   // Term height may have decreased before `invalid_end` reflects it.
   int line_start = row_to_linenr(term, term->invalid_start);
@@ -213,9 +209,21 @@ static void refresh_screen(Term *term, emacs_env *env) {
   delete_lines(env, line_start, term->invalid_end - term->invalid_start, true);
   refresh_lines(term, env, term->invalid_start, term->invalid_end, width);
 
-  /* end: */
-  /*   term->invalid_start = INT_MAX; */
-  /*   term->invalid_end = -1; */
+end:
+  term->invalid_start = INT_MAX;
+  term->invalid_end = -1;
+}
+
+static void refresh_size(Term *term, emacs_env *env) {
+  if (!term->pending_resize) {
+    return;
+  }
+
+  term->pending_resize = false;
+  int width, height;
+  vterm_get_size(term->vt, &height, &width);
+  term->invalid_start = 0;
+  term->invalid_end = height;
 }
 
 // Refresh the scrollback of an invalidated terminal.
@@ -281,25 +289,55 @@ static void adjust_topline(Term *term, emacs_env *env, long added) {
   }
 }
 
+static void invalidate_terminal(Term *term, int start_row, int end_row) {
+  if (start_row != -1 && end_row != -1) {
+    term->invalid_start = MIN(term->invalid_start, start_row);
+    term->invalid_end = MAX(term->invalid_end, end_row);
+  }
+  term->is_invalidated = true;
+}
+
+static int term_damage(VTermRect rect, void *data) {
+  invalidate_terminal(data, rect.start_row, rect.end_row);
+  return 1;
+}
+
+static int term_moverect(VTermRect dest, VTermRect src, void *data) {
+  invalidate_terminal(data, MIN(dest.start_row, src.start_row),
+                      MAX(dest.end_row, src.end_row));
+  return 1;
+}
+
+static int term_movecursor(VTermPos new, VTermPos old, int visible,
+                           void *data) {
+  Term *term = data;
+  term->cursor.row = new.row;
+  term->cursor.col = new.col;
+  invalidate_terminal(term, old.row, old.row + 1);
+  invalidate_terminal(term, new.row, new.row + 1);
+
+  return 1;
+}
+
 static void term_redraw(Term *term, emacs_env *env) {
-  /* if (term->is_invalidated) { */
-  toggle_cursor_blinking(env, term->cursor_blinking);
-  toggle_cursor(env, term->cursor_visible);
-  long bufline_before = env->extract_integer(env, buffer_line_number(env));
-  /* refresh_size(term, env); */
-  refresh_scrollback(term, env);
-  refresh_screen(term, env);
-  long line_added =
-      env->extract_integer(env, buffer_line_number(env)) - bufline_before;
-  adjust_topline(term, env, line_added);
-  /* } */
-  /* term->is_invalidated = false; */
+  if (term->is_invalidated) {
+    toggle_cursor_blinking(env, term->cursor_blinking);
+    toggle_cursor(env, term->cursor_visible);
+    long bufline_before = env->extract_integer(env, buffer_line_number(env));
+    /* refresh_size(term, env); */
+    refresh_scrollback(term, env);
+    refresh_screen(term, env);
+    long line_added =
+        env->extract_integer(env, buffer_line_number(env)) - bufline_before;
+    adjust_topline(term, env, line_added);
+  }
+  term->is_invalidated = false;
 }
 
 static VTermScreenCallbacks vterm_screen_callbacks = {
-    /* .damage      = term_damage, */
-    /* .moverect    = term_moverect, */
-    /* .movecursor  = term_movecursor, */
+    .damage = term_damage,
+    .moverect = term_moverect,
+    .movecursor = term_movecursor,
     .settermprop = term_settermprop,
     /* .bell        = term_bell, */
     .sb_pushline = term_sb_push,
@@ -331,6 +369,8 @@ static int term_settermprop(VTermProp prop, VTermValue *val, void *user_data) {
   Term *term = (Term *)user_data;
   switch (prop) {
   case VTERM_PROP_CURSORVISIBLE:
+    invalidate_terminal(term, term->cursor.row, term->cursor.row + 1);
+
     term->cursor_visible = val->boolean;
     break;
   case VTERM_PROP_CURSORBLINK:
@@ -578,6 +618,7 @@ static emacs_value Fvterm_write_input(emacs_env *env, ptrdiff_t nargs,
   env->copy_string_contents(env, args[1], bytes, &len);
 
   vterm_input_write(term->vt, bytes, len);
+  vterm_screen_flush_damage(term->vts);
 
   return env->make_integer(env, 0);
 }
@@ -593,6 +634,10 @@ static emacs_value Fvterm_set_size(emacs_env *env, ptrdiff_t nargs,
 
   if (cols != old_cols || rows != old_rows) {
     vterm_set_size(term->vt, rows, cols);
+    vterm_screen_flush_damage(term->vts);
+    term->pending_resize = true;
+    invalidate_terminal(term, -1, -1);
+
     term_redraw(term, env);
   }
 

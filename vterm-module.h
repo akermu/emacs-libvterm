@@ -38,6 +38,12 @@ typedef struct Term {
   int sb_pending;
 
   int invalid_start, invalid_end; // invalid rows in libvterm screen
+  bool pending_resize;            // pending width/height
+  bool is_invalidated;
+
+  struct {
+    int row, col;
+  } cursor;
 
   // Flag to indicate cursor is visible
   bool cursor_visible;
