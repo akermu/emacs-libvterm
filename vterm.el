@@ -126,7 +126,7 @@ value with `add-hook'."
   (setq-local scroll-margin 0)
 
   (add-hook 'window-size-change-functions #'vterm--window-size-change t t)
-  (let ((process-environment (append '("TERM=xterm") process-environment)))
+  (let ((process-environment (append '("TERM=eterm-color") process-environment)))
     (setq vterm--process (make-process
                           :name "vterm"
                           :buffer (current-buffer)
@@ -210,12 +210,76 @@ value with `add-hook'."
   "Sends the virtual terminal's OUTPUT to the shell."
   (process-send-string vterm--process output))
 
+(defconst vterm-control-seq-regexp
+  "\\(\033AnSiT[^\n]+\r?\n\\)"
+  "Regexp matching control sequences handled by vterm.el.")
+
+
+(defvar vterm-ansi-at-dir nil)
+(defvar vterm-ansi-at-host nil)
+(defvar vterm-ansi-at-user nil)
+
+(defun vterm-handle-ansi-terminal-messages (message)
+  ;; Is there a command here?
+  (while (string-match "\eAnSiT.+\n" message)
+    ;; Extract the command code and the argument.
+    (let* ((start (match-beginning 0))
+	       (command-code (aref message (+ start 6)))
+	       (argument
+	        (save-match-data
+	          (substring message
+			             (+ start 8)
+			             (string-match "\r?\n" message
+				                       (+ start 8)))))
+	       ignore)
+      ;; Delete this command from MESSAGE.
+      (setq message (replace-match "" t t message))
+
+      ;; If we recognize the type of command, set the appropriate variable.
+      (cond ((= command-code ?c)
+	         (setq vterm-ansi-at-dir argument))
+	        ((= command-code ?h)
+	         (setq vterm-ansi-at-host argument))
+	        ((= command-code ?u)
+	         (setq vterm-ansi-at-user argument))
+	        ;; Otherwise ignore this one.
+	        (t
+	         (setq ignore t)))
+
+      ;; Update default-directory based on the changes this command made.
+      (if ignore
+	      nil
+	    (setq default-directory
+	          (file-name-as-directory
+	           (if (and (string= vterm-ansi-at-host (system-name))
+                        (string= vterm-ansi-at-user (user-real-login-name)))
+		           (expand-file-name vterm-ansi-at-dir)
+                 (concat "/-:" vterm-ansi-at-user "@" vterm-ansi-at-host ":"
+                         vterm-ansi-at-dir))))
+
+	    )))
+  message)
+
 (defun vterm--filter (process input)
   "I/O Event. Feeds PROCESS's INPUT to the virtual terminal.
 
 Then triggers a redraw from the module."
   (let ((inhibit-redisplay t)
-        (inhibit-read-only t))
+        (inhibit-read-only t)
+        (str-length (length input))
+        (i 0) funny)
+    (save-restriction
+      (while (< i str-length)
+        (setq funny (string-match vterm-control-seq-regexp input i))
+        (let ((ctl-end (if funny (match-end 0)
+                         (1+ str-length)))
+              str)
+          (if funny
+              (progn
+                (setq str (match-string 1 input))
+                (setq input (replace-match "" nil nil input 0))
+                (vterm-handle-ansi-terminal-messages str))
+            (setq i ctl-end)))))
     (with-current-buffer (process-buffer process)
       (vterm--write-input vterm--term input)
       (vterm--update vterm--term))))
