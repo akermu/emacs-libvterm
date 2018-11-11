@@ -7,13 +7,9 @@
 #include <vterm.h>
 
 int plugin_is_GPL_compatible;
-typedef struct {
-  size_t cols;
-  VTermScreenCell cells[];
-} ScrollbackLine;
+
 
 #define SB_MAX 100000 // Maximum 'scrollback' value.
-static bool refresh_pending = false;
 
 #ifndef MIN
 #define MIN(X, Y) ((X) < (Y) ? (X) : (Y))
@@ -21,6 +17,11 @@ static bool refresh_pending = false;
 #ifndef MAX
 #define MAX(X, Y) ((X) > (Y) ? (X) : (Y))
 #endif
+
+typedef struct ScrollbackLine {
+  size_t cols;
+  VTermScreenCell cells[];
+} ScrollbackLine;
 
 typedef struct Term {
   VTerm *vt;

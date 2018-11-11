@@ -242,7 +242,6 @@ static void refresh_scrollback(Term *term, emacs_env *env) {
     if ((buffer_lnum - height) >= (int)term->sb_size) {
       // scrollback full, delete lines at the top
       delete_lines(env, 1, 1, true);
-      /* insert(env,env->make_string(env, "\n", 1)); */
     }
     buffer_lnum = env->extract_integer(env, buffer_line_number(env));
     int buf_index = buffer_lnum - height + 1;
