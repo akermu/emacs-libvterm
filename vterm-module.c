@@ -138,58 +138,57 @@ static size_t get_col_offset(Term *term, int row, int end_col) {
   return offset;
 }
 
-static size_t refresh_row(Term *term, emacs_env *env, int row, int end_col,
-                          bool append_newline) {
-  int j;
-  char *ptr = term->textbuf;
+static void refresh_lines(Term *term, emacs_env *env, int start_row,
+                          int end_row, int end_col) {
+  if (end_row < start_row) {
+    return;
+  }
+  int i, j;
+
+  char buffer[((end_row - start_row + 1) * end_col) * 4];
   int length = 0;
   VTermScreenCell cell;
   VTermScreenCell lastCell;
-  fetch_cell(term, row, 0, &lastCell);
+  fetch_cell(term, start_row, 0, &lastCell);
 
-  for (j = 0; j < end_col; j++) {
-    VTermPos pos = {.row = row, .col = j};
-    fetch_cell(term, row, j, &cell);
+  int offset = 0;
+  for (i = start_row; i < end_row; i++) {
+    for (j = 0; j < end_col; j++) {
+      fetch_cell(term, i, j, &cell);
 
-    if (!compare_cells(&cell, &lastCell)) {
-      ptr[length] = '\0';
-      emacs_value text = render_text(env, ptr, length, &lastCell);
-      insert(env, text);
-      ptr += length;
-      length = 0;
-    }
+      if (!compare_cells(&cell, &lastCell)) {
+        emacs_value text = render_text(env, buffer, length, &lastCell);
+        insert(env, text);
+        length = 0;
+      }
 
-    lastCell = cell;
-    if (cell.chars[0] == 0) {
-      ptr[length] = ' ';
-      length++;
-    } else {
-      unsigned char bytes[4];
-      size_t count = codepoint_to_utf8(cell.chars[0], bytes);
-      int k;
-      for (k = 0; k < count; k++) {
-        ptr[length] = bytes[k];
+      lastCell = cell;
+      if (cell.chars[0] == 0) {
+        buffer[length] = ' ';
         length++;
+      } else {
+        unsigned char bytes[4];
+        size_t count = codepoint_to_utf8(cell.chars[0], bytes);
+        for (int k = 0; k < count; k++) {
+          buffer[length] = bytes[k];
+          length++;
+        }
+      }
+
+      if (cell.width > 1) {
+        int w = cell.width - 1;
+        offset += w;
+        j = j + w;
       }
     }
 
-    if (cell.width > 1) {
-      int w = cell.width - 1;
-      j = j + w;
-    }
+    buffer[length] = '\n';
+    length++;
   }
-  if (length > 0) {
-    emacs_value text = render_text(env, ptr, length, &lastCell);
-    insert(env, text);
-    ptr += length;
-  }
-  if (append_newline) {
-    *ptr = '\n';
-    ptr += 1;
-    insert(env, env->make_string(env, "\n", 1));
-  }
-  *ptr = 0;
-  return ptr - term->textbuf;
+  emacs_value text = render_text(env, buffer, length, &lastCell);
+  insert(env, text);
+
+  return;
 }
 
 // Refresh the screen (visible part of the buffer when the terminal is
@@ -197,33 +196,31 @@ static size_t refresh_row(Term *term, emacs_env *env, int row, int end_col,
 static void refresh_screen(Term *term, emacs_env *env) {
   int height;
   int width;
-  vterm_get_size(term->vt, &height, &width);
-  // Term height may have decreased before `invalid_end` reflects it.
-  /* refresh full screen now  */
-  /* TODO: only refresh invalid lines */
-  term->invalid_start = 0;
-  term->invalid_end = height;
 
-  int line_start = row_to_linenr(term, term->invalid_start);
-  goto_line(env, line_start - 1);
-  int liner;
-  int r;
-  for (r = term->invalid_start; r < term->invalid_end; r++) {
-    liner = row_to_linenr(term, r);
-    int buffer_lnum = env->extract_integer(env, buffer_line_number(env));
-    if (liner > buffer_lnum) {
-      goto_line(env, buffer_lnum); /* maybe should goto end of buffer */
-      int i;
-      for (i = 0; i < liner - buffer_lnum; i++) {
-        insert(env, env->make_string(env, "\n", 1));
-      }
-    }
-    delete_lines(env, liner, 1, false);
-    goto_line(env, liner);
-    refresh_row(term, env, r, width, false);
+  if (term->invalid_end >= term->invalid_start) {
+    vterm_get_size(term->vt, &height, &width);
+
+    // Term height may have decreased before `invalid_end` reflects it.
+    int line_start = row_to_linenr(term, term->invalid_start);
+    goto_line(env, line_start);
+    delete_lines(env, line_start, term->invalid_end - term->invalid_start, true);
+    refresh_lines(term, env, term->invalid_start, term->invalid_end, width);
   }
+
   term->invalid_start = INT_MAX;
   term->invalid_end = -1;
+}
+
+static void refresh_size(Term *term, emacs_env *env) {
+  if (!term->pending_resize) {
+    return;
+  }
+
+  term->pending_resize = false;
+  int width, height;
+  vterm_get_size(term->vt, &height, &width);
+  term->invalid_start = 0;
+  term->invalid_end = height;
 }
 
 // Refresh the scrollback of an invalidated terminal.
@@ -232,30 +229,30 @@ static void refresh_scrollback(Term *term, emacs_env *env) {
   int buffer_lnum;
   vterm_get_size(term->vt, &height, &width);
 
-  while (term->sb_pending > 0) {
+  if (term->sb_pending > 0) {
     // This means that either the window height has decreased or the screen
     // became full and libvterm had to push all rows up. Convert the first
     // pending scrollback row into a string and append it just above the visible
     // section of the buffer
     buffer_lnum = env->extract_integer(env, buffer_line_number(env));
 
-    if ((buffer_lnum - height) >= (int)term->sb_size) {
-      // scrollback full, delete lines at the top
-      delete_lines(env, 1, 1, true);
+    int del_cnt = buffer_lnum - height - (int)term->sb_size + term->sb_pending;
+    if (del_cnt > 0) {
+      delete_lines(env, 1, del_cnt, true);
+      buffer_lnum = env->extract_integer(env, buffer_line_number(env));
     }
-    buffer_lnum = env->extract_integer(env, buffer_line_number(env));
     int buf_index = buffer_lnum - height + 1;
     goto_line(env, buf_index);
-    size_t length = refresh_row(term, env, -term->sb_pending, width, true);
-    term->sb_pending--;
+    refresh_lines(term, env, -term->sb_pending, 0, width);
+    term->sb_pending = 0;
   }
-  // Remove extra lines at the bottom
   int max_line_count = (int)term->sb_current + height;
   buffer_lnum = env->extract_integer(env, buffer_line_number(env));
 
   // Remove extra lines at the bottom
   if (buffer_lnum > max_line_count) {
-    delete_lines(env, max_line_count, buffer_lnum - max_line_count, true);
+    delete_lines(env, max_line_count + 1, buffer_lnum - max_line_count + 1,
+                 true);
   }
 }
 
@@ -273,7 +270,6 @@ static void adjust_topline(Term *term, emacs_env *env, long added) {
   size_t offset = get_col_offset(term, pos.row, pos.col);
   forward_char(env, env->make_integer(env, pos.col - offset));
 
-
   bool following = buffer_lnum == cursor_lnum + added; // cursor at end?
 
   emacs_value window = get_buffer_window(env);
@@ -282,26 +278,62 @@ static void adjust_topline(Term *term, emacs_env *env, long added) {
   if (swindow == window) {
     if (following) {
       // "Follow" the terminal output
-      recenter(env, env->make_integer(env, -1)); /* make current line at the screen bottom */
+      recenter(env, env->make_integer(
+                        env, -1)); /* make current line at the screen bottom */
     } else {
       recenter(env, env->make_integer(env, pos.row));
     }
   }
 }
 
+static void invalidate_terminal(Term *term, int start_row, int end_row) {
+  if (start_row != -1 && end_row != -1) {
+    term->invalid_start = MIN(term->invalid_start, start_row);
+    term->invalid_end = MAX(term->invalid_end, end_row);
+  }
+  term->is_invalidated = true;
+}
+
+static int term_damage(VTermRect rect, void *data) {
+  invalidate_terminal(data, rect.start_row, rect.end_row);
+  return 1;
+}
+
+static int term_moverect(VTermRect dest, VTermRect src, void *data) {
+  invalidate_terminal(data, MIN(dest.start_row, src.start_row),
+                      MAX(dest.end_row, src.end_row));
+  return 1;
+}
+
+static int term_movecursor(VTermPos new, VTermPos old, int visible,
+                           void *data) {
+  Term *term = data;
+  term->cursor.row = new.row;
+  term->cursor.col = new.col;
+  invalidate_terminal(term, old.row, old.row + 1);
+  invalidate_terminal(term, new.row, new.row + 1);
+
+  return 1;
+}
+
 static void term_redraw(Term *term, emacs_env *env) {
-  long ml_before = env->extract_integer(env, buffer_line_number(env));
-  refresh_scrollback(term, env);
-  refresh_screen(term, env);
-  long ml_added =
-      env->extract_integer(env, buffer_line_number(env)) - ml_before;
-  adjust_topline(term, env, ml_added);
+  if (term->is_invalidated) {
+    toggle_cursor_blinking(env, term->cursor.blinking);
+    toggle_cursor(env, term->cursor.visible);
+    long bufline_before = env->extract_integer(env, buffer_line_number(env));
+    refresh_scrollback(term, env);
+    refresh_screen(term, env);
+    long line_added =
+        env->extract_integer(env, buffer_line_number(env)) - bufline_before;
+    adjust_topline(term, env, line_added);
+  }
+  term->is_invalidated = false;
 }
 
 static VTermScreenCallbacks vterm_screen_callbacks = {
-    /* .damage      = term_damage, */
-    /* .moverect    = term_moverect, */
-    /* .movecursor  = term_movecursor, */
+    .damage = term_damage,
+    .moverect = term_moverect,
+    .movecursor = term_movecursor,
     .settermprop = term_settermprop,
     /* .bell        = term_bell, */
     .sb_pushline = term_sb_push,
@@ -333,10 +365,12 @@ static int term_settermprop(VTermProp prop, VTermValue *val, void *user_data) {
   Term *term = (Term *)user_data;
   switch (prop) {
   case VTERM_PROP_CURSORVISIBLE:
-    term->cursor_visible = val->boolean;
+    invalidate_terminal(term, term->cursor.row, term->cursor.row + 1);
+
+    term->cursor.visible = val->boolean;
     break;
   case VTERM_PROP_CURSORBLINK:
-    term->cursor_blinking = val->boolean;
+    term->cursor.blinking = val->boolean;
   default:
     return 0;
   }
@@ -537,9 +571,9 @@ static emacs_value Fvterm_new(emacs_env *env, ptrdiff_t nargs,
   term->sb_pending = 0;
   term->sb_buffer = malloc(sizeof(ScrollbackLine *) * term->sb_size);
   term->invalid_start = 0;
-  term->invalid_end = cols;
-  term->cursor_visible = true;
-  term->cursor_blinking = false;
+  term->invalid_end = rows;
+  term->cursor.visible = true;
+  term->cursor.blinking = false;
 
   return env->make_user_ptr(env, term_finalize, term);
 }
@@ -547,9 +581,6 @@ static emacs_value Fvterm_new(emacs_env *env, ptrdiff_t nargs,
 static emacs_value Fvterm_update(emacs_env *env, ptrdiff_t nargs,
                                  emacs_value args[], void *data) {
   Term *term = env->get_user_ptr(env, args[0]);
-
-  toggle_cursor_blinking(env, term->cursor_blinking);
-  toggle_cursor(env, term->cursor_visible);
 
   // Process keys
   if (nargs > 1) {
@@ -585,6 +616,7 @@ static emacs_value Fvterm_write_input(emacs_env *env, ptrdiff_t nargs,
   env->copy_string_contents(env, args[1], bytes, &len);
 
   vterm_input_write(term->vt, bytes, len);
+  vterm_screen_flush_damage(term->vts);
 
   return env->make_integer(env, 0);
 }
@@ -599,7 +631,11 @@ static emacs_value Fvterm_set_size(emacs_env *env, ptrdiff_t nargs,
   vterm_get_size(term->vt, &old_rows, &old_cols);
 
   if (cols != old_cols || rows != old_rows) {
+    term->pending_resize = true;
     vterm_set_size(term->vt, rows, cols);
+    vterm_screen_flush_damage(term->vts);
+    invalidate_terminal(term, -1, -1);
+
     term_redraw(term, env);
   }
 
@@ -644,12 +680,13 @@ int emacs_module_init(struct emacs_runtime *ert) {
   Fdelete_lines =
       env->make_global_ref(env, env->intern(env, "vterm--delete-lines"));
   Frecenter = env->make_global_ref(env, env->intern(env, "recenter"));
-  Fforward_char =
-      env->make_global_ref(env, env->intern(env, "forward-char"));
+  Fforward_char = env->make_global_ref(env, env->intern(env, "forward-char"));
   Fblink_cursor_mode =
       env->make_global_ref(env, env->intern(env, "blink-cursor-mode"));
-  Fget_buffer_window = env->make_global_ref(env, env->intern(env, "get-buffer-window"));
-  Fselected_window = env->make_global_ref(env, env->intern(env, "selected-window"));
+  Fget_buffer_window =
+      env->make_global_ref(env, env->intern(env, "get-buffer-window"));
+  Fselected_window =
+      env->make_global_ref(env, env->intern(env, "selected-window"));
 
   // Faces
   Qterm = env->make_global_ref(env, env->intern(env, "vterm"));

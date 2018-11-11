@@ -206,10 +206,10 @@ be send to the terminal."
   "I/O Event. Feeds PROCESS's INPUT to the virtual terminal.
 
 Then triggers a redraw from the module."
-  (with-current-buffer (process-buffer process)
-    (vterm--write-input vterm--term input)
-    (let ((inhibit-read-only t)
-          (inhibit-redisplay t))
+  (let ((inhibit-redisplay t)
+        (inhibit-read-only t))
+    (with-current-buffer (process-buffer process)
+      (vterm--write-input vterm--term input)
       (vterm--update vterm--term))))
 
 (defun vterm--window-size-change (frame)
@@ -238,23 +238,10 @@ Feeds the size change to the virtual terminal."
  then this command kills the whole line including its terminating newline"
   (save-excursion
     (when (vterm--goto-line line-num)
-      (delete-region (point) (point-at-eol))
-      (when delete-whole-line
-        (when (looking-at "\n")
-          (delete-char 1))
-        (when (and (eobp) (looking-back "\n"))
-          (delete-char -1))
-
-        )
-      (cl-loop repeat (1- count) do
-               (when (or delete-whole-line (forward-line 1))
-                 (delete-region (point) (point-at-eol))
-                 (when delete-whole-line
-                   (when (looking-at "\n")
-                     (delete-char 1))
-                   (when (and (eobp) (looking-back "\n"))
-                     (delete-char -1)))
-                 )))))
+      (delete-region (point) (point-at-eol count))
+      (when (and delete-whole-line
+                 (looking-at "\n"))
+        (delete-char 1)))))
 
 (defun vterm--goto-line(n)
   "If move succ return t"
