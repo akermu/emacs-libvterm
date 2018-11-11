@@ -10,9 +10,25 @@ report a bug!
 
 # Installation
 
+You need to have `libvterm` installed, on Linux use your distros package manager, for example:
+
+```
+sudo apt-get install libvterm
+```
+
+On MAC OS X:
+
+```
+hombrew install libvterm
+```
+
+Then clone the repository:
+
 ```
 git clone https://github.com/akermu/emacs-libvterm.git
 ```
+
+Run the build:
 
 ```
 mkdir -p build
@@ -82,5 +98,4 @@ color you like:
 
 # Limitations
 
-- No support for scrolling (But you can use tmux/screen to emulate scrolling) 
 - Mouse support is non-existing
