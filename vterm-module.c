@@ -539,6 +539,8 @@ static emacs_value Fvterm_new(emacs_env *env, ptrdiff_t nargs,
   term->sb_buffer = malloc(sizeof(ScrollbackLine *) * term->sb_size);
   term->invalid_start = 0;
   term->invalid_end = cols;
+  term->cursor_visible = true;
+  term->cursor_blinking = false;
 
   return env->make_user_ptr(env, term_finalize, term);
 }
