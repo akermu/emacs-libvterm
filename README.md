@@ -77,9 +77,13 @@ Open a terminal in another window.
 
 Shell to run in a new vterm. Defaults to `$SHELL`.
 
-## `vterm-keymap-exceptions`
+# Keybindings
 
-List of keys, which should be processed by emacs and not by the terminal.
+If you want a key to be send to the terminal bind it to `vterm--self-insert`,
+otherwise remove it from `vterm-mode-map`. By default vterm.el binds most of the
+`C-<char>` and `M-<char>` keys, `<f1>` through `<f12>` and some special keys
+like `<backspace>` and `<return>`. Sending a keyboard interrupt is by default
+bound to `C-c C-c`.
 
 ## Colors
 
@@ -95,7 +99,3 @@ color you like:
 - vterm-color-magenta
 - vterm-color-cyan
 - vterm-color-white
-
-# Limitations
-
-- Mouse support is non-existing
