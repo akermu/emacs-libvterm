@@ -45,7 +45,7 @@
   :type 'number
   :group 'vterm)
 
-(defcustom vterm-keymap-exceptions '("C-x" "C-u" "C-g" "C-h" "M-x" "M-o" "C-v" "M-v")
+(defcustom vterm-keymap-exceptions '("C-c" "C-x" "C-u" "C-g" "C-h" "M-x" "M-o" "C-v" "M-v")
   "Exceptions for vterm-keymap.
 
 If you use a keybinding with a prefix-key that prefix-key cannot
@@ -129,20 +129,30 @@ be send to the terminal."
                           :sentinel #'ignore))))
 
 ;; Keybindings
-(define-key vterm-mode-map [t] #'vterm--self-insert)
-(define-key vterm-mode-map [mouse-1] nil)
-(define-key vterm-mode-map [mouse-2] nil)
-(define-key vterm-mode-map [mouse-3] nil)
-(define-key vterm-mode-map [mouse-4] #'ignore)
-(define-key vterm-mode-map [mouse-5] #'ignore)
-(dolist (prefix '("M-" "C-"))
-  (dolist (char (cl-loop for char from ?a to ?z
-                         collect char))
-    (let ((key (concat prefix (char-to-string char))))
-      (unless (cl-member key vterm-keymap-exceptions)
-        (define-key vterm-mode-map (kbd key) #'vterm--self-insert)))))
-(dolist (exception vterm-keymap-exceptions)
-  (define-key vterm-mode-map (kbd exception) nil))
+(define-key vterm-mode-map [tab]                       #'vterm--self-insert)
+(define-key vterm-mode-map [backspace]                 #'vterm--self-insert)
+(define-key vterm-mode-map [M-backspace]               #'vterm--self-insert)
+(define-key vterm-mode-map [return]                    #'vterm--self-insert)
+(define-key vterm-mode-map [left]                      #'vterm--self-insert)
+(define-key vterm-mode-map [right]                     #'vterm--self-insert)
+(define-key vterm-mode-map [up]                        #'vterm--self-insert)
+(define-key vterm-mode-map [down]                      #'vterm--self-insert)
+(define-key vterm-mode-map [home]                      #'vterm--self-insert)
+(define-key vterm-mode-map [end]                       #'vterm--self-insert)
+(define-key vterm-mode-map [escape]                    #'vterm--self-insert)
+(define-key vterm-mode-map [remap self-insert-command] #'vterm--self-insert)
+(define-key vterm-mode-map (kbd "C-c C-c")             #'vterm-send-ctrl-c)
+
+;; Function keys and most of C- and M- bindings
+(mapcar (lambda (key)
+          (define-key vterm-mode-map (kbd key) #'vterm--self-insert))
+        (append (cl-loop for number from 1 to 12
+                         collect (format "<f%i>" number))
+                (cl-loop for prefix in '("C-" "M-")
+                         append (cl-loop for char from ?a to ?z
+                                         for key = (format "%s%c" prefix char)
+                                         unless (member key vterm-keymap-exceptions)
+                                         collect key))))
 
 (defun vterm--self-insert ()
   "Sends invoking key to libvterm."
@@ -152,13 +162,24 @@ be send to the terminal."
            (shift (memq 'shift modifiers))
            (meta (memq 'meta modifiers))
            (ctrl (memq 'control modifiers)))
-      (when-let ((key (key-description (vector (event-basic-type last-input-event))))
-                 (inhibit-redisplay t)
-                 (inhibit-read-only t))
-        (when (equal modifiers '(shift))
-          (setq key (upcase key)))
-        (vterm--update vterm--term key shift meta ctrl)))))
+      (when-let ((key (key-description (vector (event-basic-type last-input-event)))))
+        (vterm-send-key key shift meta ctrl)))))
 
+(defun vterm-send-key (key &optional shift meta ctrl)
+  "Sends KEY to libvterm with optional modifiers SHIFT, META and CTRL."
+  (when vterm--term
+    (let ((inhibit-redisplay t)
+          (inhibit-read-only t))
+      (when (and shift (not meta) (not ctrl))
+        (setq key (upcase key)))
+      (vterm--update vterm--term key shift meta ctrl))))
+
+(defun vterm-send-ctrl-c ()
+  "Sends C-c to the libvterm."
+  (interactive)
+  (vterm-send-key "c" nil nil t))
+
+;;;###autoload
 (defun vterm ()
   "Create a new vterm."
   (interactive)
@@ -167,6 +188,7 @@ be send to the terminal."
       (vterm-mode))
     (switch-to-buffer buffer)))
 
+;;;###autoload
 (defun vterm-other-window ()
   "Create a new vterm."
   (interactive)
