@@ -199,7 +199,8 @@ Feeds the size change to the virtual terminal."
       (when (and (processp vterm--process)
                  (process-live-p vterm--process))
         (let ((height (window-body-height window))
-              (width (window-body-width window)))
+              (width (window-body-width window))
+              (inhibit-read-only t))
           (set-process-window-size vterm--process height width)
           (vterm--set-size vterm--term height width))))))
 
