@@ -197,19 +197,16 @@ static void refresh_screen(Term *term, emacs_env *env) {
   int height;
   int width;
 
-  if (term->invalid_end < term->invalid_start) {
-    goto end;
+  if (term->invalid_end >= term->invalid_start) {
+    vterm_get_size(term->vt, &height, &width);
+
+    // Term height may have decreased before `invalid_end` reflects it.
+    int line_start = row_to_linenr(term, term->invalid_start);
+    goto_line(env, line_start);
+    delete_lines(env, line_start, term->invalid_end - term->invalid_start, true);
+    refresh_lines(term, env, term->invalid_start, term->invalid_end, width);
   }
 
-  vterm_get_size(term->vt, &height, &width);
-
-  // Term height may have decreased before `invalid_end` reflects it.
-  int line_start = row_to_linenr(term, term->invalid_start);
-  goto_line(env, line_start);
-  delete_lines(env, line_start, term->invalid_end - term->invalid_start, true);
-  refresh_lines(term, env, term->invalid_start, term->invalid_end, width);
-
-end:
   term->invalid_start = INT_MAX;
   term->invalid_end = -1;
 }
