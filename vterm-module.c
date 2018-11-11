@@ -318,8 +318,8 @@ static int term_movecursor(VTermPos new, VTermPos old, int visible,
 
 static void term_redraw(Term *term, emacs_env *env) {
   if (term->is_invalidated) {
-    toggle_cursor_blinking(env, term->cursor_blinking);
-    toggle_cursor(env, term->cursor_visible);
+    toggle_cursor_blinking(env, term->cursor.blinking);
+    toggle_cursor(env, term->cursor.visible);
     long bufline_before = env->extract_integer(env, buffer_line_number(env));
     /* refresh_size(term, env); */
     refresh_scrollback(term, env);
@@ -368,10 +368,10 @@ static int term_settermprop(VTermProp prop, VTermValue *val, void *user_data) {
   case VTERM_PROP_CURSORVISIBLE:
     invalidate_terminal(term, term->cursor.row, term->cursor.row + 1);
 
-    term->cursor_visible = val->boolean;
+    term->cursor.visible = val->boolean;
     break;
   case VTERM_PROP_CURSORBLINK:
-    term->cursor_blinking = val->boolean;
+    term->cursor.blinking = val->boolean;
   default:
     return 0;
   }
@@ -630,9 +630,9 @@ static emacs_value Fvterm_set_size(emacs_env *env, ptrdiff_t nargs,
   vterm_get_size(term->vt, &old_rows, &old_cols);
 
   if (cols != old_cols || rows != old_rows) {
+    term->pending_resize = true;
     vterm_set_size(term->vt, rows, cols);
     vterm_screen_flush_damage(term->vts);
-    term->pending_resize = true;
     invalidate_terminal(term, -1, -1);
 
     term_redraw(term, env);

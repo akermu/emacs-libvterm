@@ -22,6 +22,12 @@ static bool refresh_pending = false;
 #define MAX(X, Y) ((X) > (Y) ? (X) : (Y))
 #endif
 
+typedef struct Cursor {
+  int row, col;
+  bool blinking;
+  bool visible;
+} Cursor;
+
 typedef struct Term {
   VTerm *vt;
   VTermScreen *vts;
@@ -41,14 +47,7 @@ typedef struct Term {
   bool pending_resize;            // pending width/height
   bool is_invalidated;
 
-  struct {
-    int row, col;
-  } cursor;
-
-  // Flag to indicate cursor is visible
-  bool cursor_visible;
-  // Flag to indicate cursor is blinking
-  bool cursor_blinking;
+  Cursor cursor;
 } Term;
 
 // Faces
