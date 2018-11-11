@@ -211,16 +211,9 @@ static void refresh_screen(Term *term, emacs_env *env) {
   term->invalid_end = -1;
 }
 
-static void refresh_size(Term *term, emacs_env *env) {
-  if (!term->pending_resize) {
-    return;
-  }
-
-  term->pending_resize = false;
-  int width, height;
-  vterm_get_size(term->vt, &height, &width);
-  term->invalid_start = 0;
-  term->invalid_end = height;
+static int term_resize(int rows, int cols, void *term) {
+  invalidate_terminal(term, 0, rows);
+  return 1;
 }
 
 // Refresh the scrollback of an invalidated terminal.
@@ -335,7 +328,7 @@ static VTermScreenCallbacks vterm_screen_callbacks = {
     .moverect = term_moverect,
     .movecursor = term_movecursor,
     .settermprop = term_settermprop,
-    /* .bell        = term_bell, */
+    .resize = term_resize,
     .sb_pushline = term_sb_push,
     .sb_popline = term_sb_pop,
 };
@@ -631,10 +624,8 @@ static emacs_value Fvterm_set_size(emacs_env *env, ptrdiff_t nargs,
   vterm_get_size(term->vt, &old_rows, &old_cols);
 
   if (cols != old_cols || rows != old_rows) {
-    term->pending_resize = true;
     vterm_set_size(term->vt, rows, cols);
     vterm_screen_flush_damage(term->vts);
-    invalidate_terminal(term, -1, -1);
 
     term_redraw(term, env);
   }

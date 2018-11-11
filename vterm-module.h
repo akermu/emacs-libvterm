@@ -45,7 +45,6 @@ typedef struct Term {
   int sb_pending;
 
   int invalid_start, invalid_end; // invalid rows in libvterm screen
-  bool pending_resize;            // pending width/height
   bool is_invalidated;
 
   Cursor cursor;
@@ -76,6 +75,8 @@ static void term_process_key(Term *term, unsigned char *key, size_t len,
                              VTermModifier modifier);
 static void term_put_caret(Term *term, emacs_env *env, int row, int col,
                            int offset);
+static void invalidate_terminal(Term *term, int start_row, int end_row);
+static void refresh_size(Term *term);
 static void term_finalize(void *object);
 
 static emacs_value Fvterm_new(emacs_env *env, ptrdiff_t nargs,
