@@ -53,6 +53,14 @@ be send to the terminal."
   :type '(repeat string)
   :group 'vterm)
 
+(defcustom vterm-exit-hook nil
+  "Shell exit hook.
+
+This hook applies only to new vterms, created after setting this
+value with `add-hook'."
+  :type 'hook
+  :group 'vterm)
+
 (defface vterm
   '((t :inherit default))
   "Default face to use in Term mode."
@@ -126,7 +134,7 @@ be send to the terminal."
                           :coding 'no-conversion
                           :connection-type 'pty
                           :filter #'vterm--filter
-                          :sentinel #'ignore))))
+                          :sentinel (when vterm-exit-hook #'vterm--sentinel)))))
 
 ;; Keybindings
 (define-key vterm-mode-map [tab]                       #'vterm--self-insert)
@@ -211,6 +219,12 @@ Then triggers a redraw from the module."
     (with-current-buffer (process-buffer process)
       (vterm--write-input vterm--term input)
       (vterm--update vterm--term))))
+
+(defun vterm--sentinel (process event)
+  "Sentinel of vterm PROCESS."
+  (when (not (process-live-p process))
+    (with-current-buffer (process-buffer process)
+      (run-hooks 'vterm-exit-hook))))
 
 (defun vterm--window-size-change (frame)
   "Callback triggered by a size change of the FRAME.
