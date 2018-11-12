@@ -46,11 +46,11 @@ static int term_sb_push(int cols, const VTermScreenCell *cells, void *data) {
     term->sb_current++;
   }
 
-  if (term->sb_pending < (int)term->sb_size) {
+  if (term->sb_pending < term->sb_size) {
     term->sb_pending++;
   }
 
-  memcpy(sbrow->cells, cells, sizeof(cells[0]) * c);
+  memcpy(sbrow->cells, cells, c * sizeof(cells[0]));
 
   return 1;
 }
@@ -538,6 +538,10 @@ static void term_put_caret(Term *term, emacs_env *env, int row, int col,
 
 static void term_finalize(void *object) {
   Term *term = (Term *)object;
+  for (int i = 0; i < term->sb_current; i++) {
+    free(term->sb_buffer[i]);
+  }
+  free(term->sb_buffer);
   vterm_free(term->vt);
   free(term);
 }
