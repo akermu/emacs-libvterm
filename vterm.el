@@ -48,8 +48,9 @@
 (defcustom vterm-keymap-exceptions '("C-c" "C-x" "C-u" "C-g" "C-h" "M-x" "M-o" "C-v" "M-v")
   "Exceptions for vterm-keymap.
 
-If you use a keybinding with a prefix-key that prefix-key cannot
-be send to the terminal."
+If you use a keybinding with a prefix-key, add that prefix-key to
+this list. Note that after doing so that prefix-key cannot be sent
+to the terminal anymore."
   :type '(repeat string)
   :group 'vterm)
 
@@ -57,7 +58,10 @@ be send to the terminal."
   "Shell exit hook.
 
 This hook applies only to new vterms, created after setting this
-value with `add-hook'."
+value with `add-hook'.
+
+Note that this hook will not work if another package like
+`shell-pop' sets its own sentinel to the `vterm' process."
   :type 'hook
   :group 'vterm)
 

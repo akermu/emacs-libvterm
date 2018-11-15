@@ -10,16 +10,18 @@ report a bug!
 
 # Installation
 
-You need to have `libvterm` installed, on Linux use your distros package manager, for example:
+First, you need to have `libvterm` installed in your system.
+
+**On Ubuntu:**
 
 ```
 sudo apt-get install libvterm
 ```
 
-On MAC OS X:
+**On macOS:**
 
 ```
-hombrew install libvterm
+brew install libvterm
 ```
 
 Then clone the repository:
