@@ -61,6 +61,22 @@ value with `add-hook'."
   :type 'hook
   :group 'vterm)
 
+(defcustom vterm-set-title-hook nil
+  "Shell set title hook.
+
+those functions are called one by one, with 1 arguments.
+`vterm-set-title-hook' should be a symbol, a hook variable.
+The value of HOOK may be nil, a function, or a list of functions.
+for example
+(defun vterm--rename-buffer-as-title (title)
+  (rename-buffer (format \"vterm %s\" title)))
+(add-hook 'vterm-set-title-hook 'vterm--rename-buffer-as-title)
+
+see http://tldp.org/HOWTO/Xterm-Title-4.html about how to set terminal title
+for different shell. "
+  :type 'hook
+  :group 'vterm)
+
 (defface vterm
   '((t :inherit default))
   "Default face to use in Term mode."
@@ -248,8 +264,10 @@ Feeds the size change to the virtual terminal."
 
 
 (defun vterm--delete-lines (line-num count &optional delete-whole-line)
-  "Delete lines from line-num. If option ‘kill-whole-line’ is non-nil,
- then this command kills the whole line including its terminating newline"
+  "Delete COUNT lines from LINE-NUM.
+
+ If option DELETE-WHOLE-LINE is non-nil, then this command kills
+ the whole line including its terminating newline"
   (save-excursion
     (when (vterm--goto-line line-num)
       (delete-region (point) (point-at-eol count))
@@ -258,7 +276,7 @@ Feeds the size change to the virtual terminal."
         (delete-char 1)))))
 
 (defun vterm--goto-line(n)
-  "If move succ return t"
+  "Go to line N and return true on success."
   (goto-char (point-min))
   (let ((succ (eq 0 (forward-line (1- n)))))
     succ))
@@ -266,6 +284,11 @@ Feeds the size change to the virtual terminal."
 (defun vterm--buffer-line-num()
   "Return the maximum line number."
   (line-number-at-pos (point-max)))
+
+(defun vterm--set-title (title)
+  "Run the `vterm--set-title-hook' with TITLE as argument."
+  (run-hook-with-args 'vterm-set-title-hook title))
+
 
 (provide 'vterm)
 ;;; vterm.el ends here

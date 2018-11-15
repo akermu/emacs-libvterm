@@ -48,6 +48,8 @@ typedef struct Term {
   bool is_invalidated;
 
   Cursor cursor;
+  char *title;
+  bool is_title_changed;
 } Term;
 
 // Faces
