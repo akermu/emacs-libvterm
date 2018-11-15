@@ -143,3 +143,6 @@ emacs_value get_hex_color_bg(emacs_env *env, emacs_value face) {
   return env->funcall(env, Fvterm_face_color_hex, 2,
                       (emacs_value[]){face, Qbackground});
 }
+void set_title(emacs_env *env, emacs_value string) {
+   env->funcall(env, Fvterm_set_title, 1, (emacs_value[]){string});
+}

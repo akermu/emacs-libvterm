@@ -320,6 +320,10 @@ static void term_redraw(Term *term, emacs_env *env) {
         env->extract_integer(env, buffer_line_number(env)) - bufline_before;
     adjust_topline(term, env, line_added);
   }
+  if(term->is_title_changed){
+    set_title(env,env->make_string(env, term->title,strlen(term->title)));
+    term->is_title_changed=false;
+  }
   term->is_invalidated = false;
 }
 
@@ -353,6 +357,17 @@ static bool is_key(unsigned char *key, size_t len, char *key_description) {
   return (len == strlen(key_description) &&
           memcmp(key, key_description, len) == 0);
 }
+static void term_set_title(Term *term ,char* title) {
+  size_t len=strlen(title);
+  if (term->title){
+    free(term->title);
+  }
+  term->title=malloc(sizeof(char) * (len+1));
+  strncpy(term->title ,title,len);
+  term->title[len]=0;
+  term->is_title_changed=true;
+  return ;
+}
 
 static int term_settermprop(VTermProp prop, VTermValue *val, void *user_data) {
   Term *term = (Term *)user_data;
@@ -362,8 +377,12 @@ static int term_settermprop(VTermProp prop, VTermValue *val, void *user_data) {
 
     term->cursor.visible = val->boolean;
     break;
+  case VTERM_PROP_TITLE:
+    term_set_title(term,val->string);
+    break;
   case VTERM_PROP_CURSORBLINK:
     term->cursor.blinking = val->boolean;
+    break;
   default:
     return 0;
   }
@@ -541,6 +560,11 @@ static void term_finalize(void *object) {
   for (int i = 0; i < term->sb_current; i++) {
     free(term->sb_buffer[i]);
   }
+  if (term->title){
+    free(term->title);
+    term->title=NULL;
+  }
+
   free(term->sb_buffer);
   vterm_free(term->vt);
   free(term);
@@ -571,6 +595,8 @@ static emacs_value Fvterm_new(emacs_env *env, ptrdiff_t nargs,
   term->invalid_end = rows;
   term->cursor.visible = true;
   term->cursor.blinking = false;
+  term->title = NULL;
+  term->is_title_changed=false;
 
   return env->make_user_ptr(env, term_finalize, term);
 }
@@ -683,6 +709,8 @@ int emacs_module_init(struct emacs_runtime *ert) {
   Fselected_window =
       env->make_global_ref(env, env->intern(env, "selected-window"));
 
+  Fvterm_set_title =
+      env->make_global_ref(env, env->intern(env, "vterm--set-title"));
   // Faces
   Qterm = env->make_global_ref(env, env->intern(env, "vterm"));
   Qterm_color_black =

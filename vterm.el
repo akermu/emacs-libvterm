@@ -61,6 +61,22 @@ value with `add-hook'."
   :type 'hook
   :group 'vterm)
 
+(defcustom vterm-set-title-hook nil
+  "Shell set title hook.
+
+those functions are called one by one, with 1 arguments.
+`vterm-set-title-hook' should be a symbol, a hook variable.
+The value of HOOK may be nil, a function, or a list of functions.
+for example
+(defun vterm--rename-buffer-as-title (title)
+  (rename-buffer (format \"vterm %s\" title)))
+(add-hook 'vterm-set-title-hook 'vterm--rename-buffer-as-title)
+
+see http://tldp.org/HOWTO/Xterm-Title-4.html about how to set terminal title
+for different shell. "
+  :type 'hook
+  :group 'vterm)
+
 (defface vterm
   '((t :inherit default))
   "Default face to use in Term mode."
@@ -266,6 +282,12 @@ Feeds the size change to the virtual terminal."
 (defun vterm--buffer-line-num()
   "Return the maximum line number."
   (line-number-at-pos (point-max)))
+
+(defun vterm--set-title (title)
+  (run-hook-with-args 'vterm-set-title-hook title))
+
+
+
 
 (provide 'vterm)
 ;;; vterm.el ends here
