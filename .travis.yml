@@ -1,0 +1,36 @@
+# Template from https://github.com/flycheck/emacs-travis
+
+language: c
+sudo: required
+dist: trusty
+cache:
+  - directories:
+      - "$HOME/emacs/"
+
+addons:
+  apt:
+    packages:
+      - bzr
+
+matrix:
+  fast_finish: true
+
+env:
+  - EMACS_VERSION=25.3
+  - EMACS_VERSION=26.1
+
+before_install:
+  - export PATH="$HOME/bin:$PATH"
+  - wget 'https://raw.githubusercontent.com/flycheck/emacs-travis/master/emacs-travis.mk'
+  - make -f emacs-travis.mk EMACSCONFFLAGS="--with-x-toolkit=no --without-x --without-all --with-xml2 --with-modules CFLAGS='-O2 -march=native' CXXFLAGS='-O2 -march=native'" install_emacs
+    # libvterm
+  - bzr branch lp:libvterm $HOME/libvterm
+  - make -C "$HOME/libvterm" CFLAGS='-O2' PREFIX='/usr'
+  - sudo make -C "$HOME/libvterm" install
+
+script:
+  - mkdir build
+  - cd build
+  - cmake ..
+  - make
+
