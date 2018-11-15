@@ -203,7 +203,8 @@ static void refresh_screen(Term *term, emacs_env *env) {
     // Term height may have decreased before `invalid_end` reflects it.
     int line_start = row_to_linenr(term, term->invalid_start);
     goto_line(env, line_start);
-    delete_lines(env, line_start, term->invalid_end - term->invalid_start, true);
+    delete_lines(env, line_start, term->invalid_end - term->invalid_start,
+                 true);
     refresh_lines(term, env, term->invalid_start, term->invalid_end, width);
   }
 
@@ -320,9 +321,9 @@ static void term_redraw(Term *term, emacs_env *env) {
         env->extract_integer(env, buffer_line_number(env)) - bufline_before;
     adjust_topline(term, env, line_added);
   }
-  if(term->is_title_changed){
-    set_title(env,env->make_string(env, term->title,strlen(term->title)));
-    term->is_title_changed=false;
+  if (term->is_title_changed) {
+    set_title(env, env->make_string(env, term->title, strlen(term->title)));
+    term->is_title_changed = false;
   }
   term->is_invalidated = false;
 }
@@ -357,16 +358,16 @@ static bool is_key(unsigned char *key, size_t len, char *key_description) {
   return (len == strlen(key_description) &&
           memcmp(key, key_description, len) == 0);
 }
-static void term_set_title(Term *term ,char* title) {
-  size_t len=strlen(title);
-  if (term->title){
+static void term_set_title(Term *term, char *title) {
+  size_t len = strlen(title);
+  if (term->title) {
     free(term->title);
   }
-  term->title=malloc(sizeof(char) * (len+1));
-  strncpy(term->title ,title,len);
-  term->title[len]=0;
-  term->is_title_changed=true;
-  return ;
+  term->title = malloc(sizeof(char) * (len + 1));
+  strncpy(term->title, title, len);
+  term->title[len] = 0;
+  term->is_title_changed = true;
+  return;
 }
 
 static int term_settermprop(VTermProp prop, VTermValue *val, void *user_data) {
@@ -378,7 +379,7 @@ static int term_settermprop(VTermProp prop, VTermValue *val, void *user_data) {
     term->cursor.visible = val->boolean;
     break;
   case VTERM_PROP_TITLE:
-    term_set_title(term,val->string);
+    term_set_title(term, val->string);
     break;
   case VTERM_PROP_CURSORBLINK:
     term->cursor.blinking = val->boolean;
@@ -560,9 +561,9 @@ static void term_finalize(void *object) {
   for (int i = 0; i < term->sb_current; i++) {
     free(term->sb_buffer[i]);
   }
-  if (term->title){
+  if (term->title) {
     free(term->title);
-    term->title=NULL;
+    term->title = NULL;
   }
 
   free(term->sb_buffer);
@@ -596,7 +597,7 @@ static emacs_value Fvterm_new(emacs_env *env, ptrdiff_t nargs,
   term->cursor.visible = true;
   term->cursor.blinking = false;
   term->title = NULL;
-  term->is_title_changed=false;
+  term->is_title_changed = false;
 
   return env->make_user_ptr(env, term_finalize, term);
 }

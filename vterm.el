@@ -264,8 +264,10 @@ Feeds the size change to the virtual terminal."
 
 
 (defun vterm--delete-lines (line-num count &optional delete-whole-line)
-  "Delete lines from line-num. If option ‘kill-whole-line’ is non-nil,
- then this command kills the whole line including its terminating newline"
+  "Delete COUNT lines from LINE-NUM.
+
+ If option DELETE-WHOLE-LINE is non-nil, then this command kills
+ the whole line including its terminating newline"
   (save-excursion
     (when (vterm--goto-line line-num)
       (delete-region (point) (point-at-eol count))
@@ -274,7 +276,7 @@ Feeds the size change to the virtual terminal."
         (delete-char 1)))))
 
 (defun vterm--goto-line(n)
-  "If move succ return t"
+  "Go to line N and return true on success."
   (goto-char (point-min))
   (let ((succ (eq 0 (forward-line (1- n)))))
     succ))
@@ -284,9 +286,8 @@ Feeds the size change to the virtual terminal."
   (line-number-at-pos (point-max)))
 
 (defun vterm--set-title (title)
+  "Run the `vterm--set-title-hook' with TITLE as argument."
   (run-hook-with-args 'vterm-set-title-hook title))
-
-
 
 
 (provide 'vterm)
