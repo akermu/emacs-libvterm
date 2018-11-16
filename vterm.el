@@ -243,8 +243,10 @@ Then triggers a redraw from the module."
 (defun vterm--sentinel (process event)
   "Sentinel of vterm PROCESS."
   (when (not (process-live-p process))
-    (with-current-buffer (process-buffer process)
-      (run-hooks 'vterm-exit-hook))))
+    (let ((buf (process-buffer process)))
+      (when (buffer-live-p buf)
+        (with-current-buffer buf
+          (run-hooks 'vterm-exit-hook))))))
 
 (defun vterm--window-size-change (frame)
   "Callback triggered by a size change of the FRAME.
