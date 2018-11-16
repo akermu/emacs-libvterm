@@ -34,7 +34,6 @@ target_link_libraries(vterm-module ${LIBVTERM_LIBRARY})
 
 # Custom run command for testing
 add_custom_target(run
-  COMMAND emacs -Q -L ${CMAKE_SOURCE_DIR} --eval "\\(require \\'vterm\\)" --eval "\\(vterm\\)"
+  COMMAND emacs -Q -L ${CMAKE_SOURCE_DIR} -L ${CMAKE_BINARY_DIR} --eval "\\(require \\'vterm\\)" --eval "\\(vterm\\)"
   DEPENDS vterm-module
-  WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
   )
