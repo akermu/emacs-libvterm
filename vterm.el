@@ -136,7 +136,7 @@ for different shell. "
 (make-variable-buffer-local 'vterm--process)
 
 (define-derived-mode vterm-mode fundamental-mode "VTerm"
-  "Mayor mode for vterm buffer."
+  "Major mode for vterm buffer."
   (buffer-disable-undo)
   (setq vterm--term (vterm--new (window-body-height)
                                 (window-body-width)
@@ -148,14 +148,19 @@ for different shell. "
 
   (add-hook 'window-size-change-functions #'vterm--window-size-change t t)
   (let ((process-environment (append '("TERM=xterm") process-environment)))
-    (setq vterm--process (make-process
-                          :name "vterm"
-                          :buffer (current-buffer)
-                          :command `("/bin/sh" "-c" ,(format "stty -nl sane iutf8 rows %d columns %d >/dev/null && exec %s" (window-body-height) (window-body-width) vterm-shell))
-                          :coding 'no-conversion
-                          :connection-type 'pty
-                          :filter #'vterm--filter
-                          :sentinel (when vterm-exit-hook #'vterm--sentinel)))))
+    (setq vterm--process
+          (make-process
+           :name "vterm"
+           :buffer (current-buffer)
+           :command `("/bin/sh" "-c"
+                      ,(format "stty -nl sane iutf8 rows %d columns %d >/dev/null && exec %s"
+                               (window-body-height)
+                               (window-body-width)
+                               vterm-shell))
+           :coding 'no-conversion
+           :connection-type 'pty
+           :filter #'vterm--filter
+           :sentinel (when vterm-exit-hook #'vterm--sentinel)))))
 
 ;; Keybindings
 (define-key vterm-mode-map [tab]                       #'vterm--self-insert)
