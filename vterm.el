@@ -7,13 +7,16 @@
 
 ;;; Code:
 
+(defvar vterm-install-buffer-name " *Install vterm"
+  "Name of the buffer used for compiling vterm-module.")
+
 ;;;###autoload
 (defun vterm-module-compile ()
   "This function compiles the vterm-module."
   (interactive)
   (let ((default-directory (file-name-directory (locate-library "vterm"))))
     (unless (file-executable-p (concat default-directory "vterm-module.so" ))
-      (let* ((buffer (get-buffer-create " *Install vterm"))
+      (let* ((buffer (get-buffer-create vterm-install-buffer-name))
              (status (call-process "sh" nil buffer t "-c"
                                    "mkdir -p build;                             \
                                     cd build;                                   \
@@ -21,7 +24,8 @@
                                     make")))
         (if (eq status 0)
             (message "Compilation of emacs-libvterm module succeeded")
-          (message "Compilation of emacs-libvterm module failed"))))))
+          (pop-to-buffer vterm-install-buffer-name)
+          (error "Compilation of emacs-libvterm module failed!"))))))
 
 (when (boundp 'vterm-install)
   (vterm-module-compile))
