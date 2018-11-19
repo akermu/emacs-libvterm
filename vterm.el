@@ -13,20 +13,15 @@
   (interactive)
   (let ((default-directory (file-name-directory (locate-library "vterm"))))
     (unless (file-executable-p (concat default-directory "vterm-module.so" ))
-      (let ((buffer (get-buffer-create " *Install vterm")))
-        (pop-to-buffer buffer)
-        (let ((status (call-process "sh" nil buffer t "-c"
-                                    "mkdir -p build;                             \
-                                     cd build;                                   \
-                                     cmake -DCMAKE_BUILD_TYPE=RelWithDebInfo ..; \
-                                     make")))
-          (if (eq status 0)
-              (progn
-                (bury-buffer buffer)
-                (when-let ((window (get-buffer-window buffer)))
-                  (delete-window window))
-                (message "Compilation of emacs-libvterm module succeeded"))
-            (message "Compilation of emacs-libvterm module failed")))))))
+      (let* ((buffer (get-buffer-create " *Install vterm"))
+             (status (call-process "sh" nil buffer t "-c"
+                                   "mkdir -p build;                             \
+                                    cd build;                                   \
+                                    cmake -DCMAKE_BUILD_TYPE=RelWithDebInfo ..; \
+                                    make")))
+        (if (eq status 0)
+            (message "Compilation of emacs-libvterm module succeeded")
+          (message "Compilation of emacs-libvterm module failed"))))))
 
 (when (boundp 'vterm-install)
   (vterm-module-compile))
