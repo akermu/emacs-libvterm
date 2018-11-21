@@ -7,25 +7,25 @@
 
 ;;; Code:
 
+(defvar vterm-install-buffer-name " *Install vterm"
+  "Name of the buffer used for compiling vterm-module.")
+
+;;;###autoload
 (defun vterm-module-compile ()
   "This function compiles the vterm-module."
   (interactive)
-  (let ((buffer (get-buffer-create " *Install vterm"))
-        (default-directory (file-name-directory (locate-library "vterm"))))
-    (make-process
-     :name "build-vterm-module"
-     :buffer buffer
-     :command '("sh" "-c" "mkdir -p build; cd build; cmake -DCMAKE_BUILD_TYPE=RelWithDebInfo ..; make")
-     :stderr buffer
-     :sentinel (lambda (process status)
-                 (if (equal status "finished\n")
-                     (progn (let ((buffer (process-buffer process)))
-                              (bury-buffer buffer)
-                              (when-let ((window (get-buffer-window buffer)))
-                                (delete-window window)))
-                            (message "Sucessfully compiled the emacs-libvterm module."))
-                   (message "Compilation of libvterm has failed."))))
-    (pop-to-buffer buffer)))
+  (let ((default-directory (file-name-directory (locate-library "vterm"))))
+    (unless (file-executable-p (concat default-directory "vterm-module.so" ))
+      (let* ((buffer (get-buffer-create vterm-install-buffer-name))
+             (status (call-process "sh" nil buffer t "-c"
+                                   "mkdir -p build;                             \
+                                    cd build;                                   \
+                                    cmake -DCMAKE_BUILD_TYPE=RelWithDebInfo ..; \
+                                    make")))
+        (if (eq status 0)
+            (message "Compilation of emacs-libvterm module succeeded")
+          (pop-to-buffer vterm-install-buffer-name)
+          (error "Compilation of emacs-libvterm module failed!"))))))
 
 (when (boundp 'vterm-install)
   (vterm-module-compile))
@@ -135,7 +135,7 @@ for different shell. "
 (make-variable-buffer-local 'vterm--process)
 
 (define-derived-mode vterm-mode fundamental-mode "VTerm"
-  "Mayor mode for vterm buffer."
+  "Major mode for vterm buffer."
   (buffer-disable-undo)
   (setq vterm--term (vterm--new (window-body-height)
                                 (window-body-width)
@@ -147,14 +147,19 @@ for different shell. "
 
   (add-hook 'window-size-change-functions #'vterm--window-size-change t t)
   (let ((process-environment (append '("TERM=xterm") process-environment)))
-    (setq vterm--process (make-process
-                          :name "vterm"
-                          :buffer (current-buffer)
-                          :command `("/bin/sh" "-c" ,(format "stty -nl sane iutf8 rows %d columns %d >/dev/null && exec %s" (window-body-height) (window-body-width) vterm-shell))
-                          :coding 'no-conversion
-                          :connection-type 'pty
-                          :filter #'vterm--filter
-                          :sentinel (when vterm-exit-hook #'vterm--sentinel)))))
+    (setq vterm--process
+          (make-process
+           :name "vterm"
+           :buffer (current-buffer)
+           :command `("/bin/sh" "-c"
+                      ,(format "stty -nl sane iutf8 rows %d columns %d >/dev/null && exec %s"
+                               (window-body-height)
+                               (window-body-width)
+                               vterm-shell))
+           :coding 'no-conversion
+           :connection-type 'pty
+           :filter #'vterm--filter
+           :sentinel (when vterm-exit-hook #'vterm--sentinel)))))
 
 ;; Keybindings
 (define-key vterm-mode-map [tab]                       #'vterm--self-insert)

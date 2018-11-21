@@ -27,6 +27,7 @@ set_target_properties(vterm-module PROPERTIES
   C_STANDARD 99
   POSITION_INDEPENDENT_CODE ON
   PREFIX ""
+  LIBRARY_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}
   )
 
 # Link with libvterm
