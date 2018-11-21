@@ -45,7 +45,7 @@
   :type 'number
   :group 'vterm)
 
-(defcustom vterm-keymap-exceptions '("C-c" "C-x" "C-u" "C-g" "C-h" "M-x" "M-o" "C-v" "M-v")
+(defcustom vterm-keymap-exceptions '("C-c" "C-x" "C-u" "C-g" "C-h" "M-x" "M-o" "C-v" "M-v" "C-y")
   "Exceptions for vterm-keymap.
 
 If you use a keybinding with a prefix-key, add that prefix-key to
@@ -169,6 +169,7 @@ for different shell. "
 (define-key vterm-mode-map [end]                       #'vterm--self-insert)
 (define-key vterm-mode-map [escape]                    #'vterm--self-insert)
 (define-key vterm-mode-map [remap self-insert-command] #'vterm--self-insert)
+(define-key vterm-mode-map [remap yank]                #'vterm-yank)
 (define-key vterm-mode-map (kbd "C-c C-c")             #'vterm-send-ctrl-c)
 
 ;; Function keys and most of C- and M- bindings
@@ -206,6 +207,17 @@ for different shell. "
   "Sends C-c to the libvterm."
   (interactive)
   (vterm-send-key "c" nil nil t))
+
+(defun vterm-yank ()
+  "Implementation of `yank' (paste) in vterm."
+  (interactive)
+  (vterm-send-string (current-kill 0)))
+
+(defun vterm-send-string (string)
+  "Send the string STRING to vterm."
+  (when vterm--term
+    (dolist (char (string-to-list string))
+      (vterm--update vterm--term (char-to-string char) nil nil nil))))
 
 ;;;###autoload
 (defun vterm ()
