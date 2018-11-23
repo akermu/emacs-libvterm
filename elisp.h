@@ -40,6 +40,7 @@ emacs_value Fblink_cursor_mode;
 emacs_value Fget_buffer_window;
 emacs_value Fselected_window;
 emacs_value Fvterm_set_title;
+emacs_value Fvterm_invalidate;
 
 // Utils
 void bind_function(emacs_env *env, const char *name, emacs_value Sfun);
@@ -68,6 +69,7 @@ void recenter(emacs_env *env, emacs_value pos);
 void forward_char(emacs_env *env, emacs_value n);
 emacs_value get_buffer_window(emacs_env *env);
 emacs_value selected_window(emacs_env *env);
-void set_title(emacs_env *env, emacs_value string) ;
+void set_title(emacs_env *env, emacs_value string);
+void vterm_invalidate(emacs_env *env);
 
 #endif /* ELISP_H */

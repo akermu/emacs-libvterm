@@ -107,9 +107,11 @@ void delete_lines(emacs_env *env, int linenum, int count, bool del_whole_line) {
 void recenter(emacs_env *env, emacs_value pos) {
   env->funcall(env, Frecenter, 1, (emacs_value[]){pos});
 }
+
 void forward_char(emacs_env *env, emacs_value n) {
   env->funcall(env, Fforward_char, 1, (emacs_value[]){n});
 }
+
 emacs_value buffer_line_number(emacs_env *env) {
   return env->funcall(env, Fbuffer_line_number, 0, (emacs_value[]){});
 }
@@ -143,6 +145,11 @@ emacs_value get_hex_color_bg(emacs_env *env, emacs_value face) {
   return env->funcall(env, Fvterm_face_color_hex, 2,
                       (emacs_value[]){face, Qbackground});
 }
+
 void set_title(emacs_env *env, emacs_value string) {
-   env->funcall(env, Fvterm_set_title, 1, (emacs_value[]){string});
+  env->funcall(env, Fvterm_set_title, 1, (emacs_value[]){string});
+}
+
+void vterm_invalidate(emacs_env *env) {
+  env->funcall(env, Fvterm_invalidate, 0, NULL);
 }
