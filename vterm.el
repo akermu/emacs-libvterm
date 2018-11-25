@@ -175,6 +175,7 @@ for different shell. "
 (define-key vterm-mode-map [escape]                    #'vterm--self-insert)
 (define-key vterm-mode-map [remap self-insert-command] #'vterm--self-insert)
 (define-key vterm-mode-map [remap yank]                #'vterm-yank)
+(define-key vterm-mode-map (kbd "C-c C-y")             #'vterm--self-insert)
 (define-key vterm-mode-map (kbd "C-c C-c")             #'vterm-send-ctrl-c)
 
 ;; Function keys and most of C- and M- bindings
