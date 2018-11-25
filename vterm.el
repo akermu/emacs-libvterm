@@ -54,7 +54,7 @@ to the terminal anymore."
   :type '(repeat string)
   :group 'vterm)
 
-(defcustom vterm-exit-hook nil
+(defcustom vterm-exit-functions nil
   "Shell exit hook.
 
 This hook applies only to new vterms, created after setting this
@@ -159,7 +159,7 @@ for different shell. "
            :coding 'no-conversion
            :connection-type 'pty
            :filter #'vterm--filter
-           :sentinel (when vterm-exit-hook #'vterm--sentinel)))))
+           :sentinel (when vterm-exit-functions #'vterm--sentinel)))))
 
 ;; Keybindings
 (define-key vterm-mode-map [tab]                       #'vterm--self-insert)
@@ -260,8 +260,9 @@ Then triggers a redraw from the module."
 (defun vterm--sentinel (process event)
   "Sentinel of vterm PROCESS."
   (when (not (process-live-p process))
-    (with-current-buffer (process-buffer process)
-      (run-hooks 'vterm-exit-hook))))
+    (let ((buf (process-buffer process)))
+      (run-hook-with-args 'vterm-exit-functions
+                          (if (buffer-live-p buf) buf nil)))))
 
 (defun vterm--window-size-change (frame)
   "Callback triggered by a size change of the FRAME.
