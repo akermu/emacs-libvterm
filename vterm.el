@@ -65,16 +65,16 @@ Note that this hook will not work if another package like
   :type 'hook
   :group 'vterm)
 
-(defcustom vterm-set-title-hook nil
+(defcustom vterm-set-title-functions nil
   "Shell set title hook.
 
 those functions are called one by one, with 1 arguments.
-`vterm-set-title-hook' should be a symbol, a hook variable.
+`vterm-set-title-functions' should be a symbol, a hook variable.
 The value of HOOK may be nil, a function, or a list of functions.
 for example
 (defun vterm--rename-buffer-as-title (title)
   (rename-buffer (format \"vterm %s\" title)))
-(add-hook 'vterm-set-title-hook 'vterm--rename-buffer-as-title)
+(add-hook 'vterm-set-title-functions 'vterm--rename-buffer-as-title)
 
 see http://tldp.org/HOWTO/Xterm-Title-4.html about how to set terminal title
 for different shell. "
@@ -259,10 +259,9 @@ Then triggers a redraw from the module."
 
 (defun vterm--sentinel (process event)
   "Sentinel of vterm PROCESS."
-  (when (not (process-live-p process))
-    (let ((buf (process-buffer process)))
-      (run-hook-with-args 'vterm-exit-functions
-                          (if (buffer-live-p buf) buf nil)))))
+  (let ((buf (process-buffer process)))
+    (run-hook-with-args 'vterm-exit-functions
+                        (if (buffer-live-p buf) buf nil))))
 
 (defun vterm--window-size-change (frame)
   "Callback triggered by a size change of the FRAME.
@@ -309,7 +308,7 @@ Feeds the size change to the virtual terminal."
 
 (defun vterm--set-title (title)
   "Run the `vterm--set-title-hook' with TITLE as argument."
-  (run-hook-with-args 'vterm-set-title-hook title))
+  (run-hook-with-args 'vterm-set-title-functions title))
 
 
 (provide 'vterm)
