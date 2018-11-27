@@ -197,10 +197,12 @@ static void refresh_screen(Term *term, emacs_env *env) {
   int height;
   int width;
 
+  // Term height may have decreased before `invalid_end` reflects it.
+  term->invalid_end = MIN(term->invalid_end, height);
+
   if (term->invalid_end >= term->invalid_start) {
     vterm_get_size(term->vt, &height, &width);
 
-    // Term height may have decreased before `invalid_end` reflects it.
     int line_start = row_to_linenr(term, term->invalid_start);
     goto_line(env, line_start);
     delete_lines(env, line_start, term->invalid_end - term->invalid_start,
@@ -212,8 +214,15 @@ static void refresh_screen(Term *term, emacs_env *env) {
   term->invalid_end = -1;
 }
 
-static int term_resize(int rows, int cols, void *term) {
-  invalidate_terminal(term, 0, rows);
+static int term_resize(int rows, int cols, void *user_data) {
+  /* can not use invalidate_terminal here */
+  /* when the window heigh decreased, */
+  /*  the value of term->invalid_end can't bigger than window height */
+  Term *term = (Term *)user_data;
+  term->invalid_start = 0;
+  term->invalid_end = rows;
+  invalidate_terminal(term,-1,-1);
+
   return 1;
 }
 
