@@ -305,7 +305,7 @@ Feeds the size change to the virtual terminal."
 
 (defun vterm--buffer-line-num()
   "Return the maximum line number."
-  (line-number-at-pos (point-max)))
+  (count-lines (point-min) (point-max)))
 
 (defun vterm--set-title (title)
   "Run the `vterm--set-title-hook' with TITLE as argument."
