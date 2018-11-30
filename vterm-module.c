@@ -120,10 +120,32 @@ static void fetch_cell(Term *term, int row, int col, VTermScreenCell *cell) {
   }
 }
 
+static bool is_eol(Term *term, int end_col, int row, int col) {
+  /* This cell is EOL if this and every cell to the right is black */
+  if (row >= 0) {
+    VTermPos pos = {.row = row, .col = col};
+    return vterm_screen_is_eol(term->vts, pos);
+  }
+
+  ScrollbackLine *sbrow = term->sb_buffer[-row - 1];
+  int c;
+  for (c = col; c < end_col && c < sbrow->cols;) {
+    if (sbrow->cells[c].chars[0]) {
+      return 0;
+    }
+    c += sbrow->cells[c].width;
+  }
+  return 1;
+}
+
 static size_t get_col_offset(Term *term, int row, int end_col) {
   int col = 0;
   size_t offset = 0;
   unsigned char buf[4];
+  int height;
+  int width;
+  vterm_get_size(term->vt, &height, &width);
+
 
   while (col < end_col) {
     VTermScreenCell cell;
@@ -131,6 +153,10 @@ static size_t get_col_offset(Term *term, int row, int end_col) {
     if (cell.chars[0]) {
       if (cell.width > 1) {
         offset += cell.width - 1;
+      }
+    } else {
+      if (is_eol(term, term->width, row, col)) {
+        offset += cell.width;
       }
     }
     col += cell.width;
@@ -164,6 +190,10 @@ static void refresh_lines(Term *term, emacs_env *env, int start_row,
 
       lastCell = cell;
       if (cell.chars[0] == 0) {
+        if (is_eol(term, end_col, i, j)) {
+          /* This cell is EOL if this and every cell to the right is black */
+          break;
+        }
         buffer[length] = ' ';
         length++;
       } else {
