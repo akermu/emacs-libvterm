@@ -50,6 +50,8 @@ typedef struct Term {
   Cursor cursor;
   char *title;
   bool is_title_changed;
+
+  int width, height;
 } Term;
 
 // Faces

@@ -120,10 +120,32 @@ static void fetch_cell(Term *term, int row, int col, VTermScreenCell *cell) {
   }
 }
 
+static bool is_eol(Term *term, int end_col, int row, int col) {
+  /* This cell is EOL if this and every cell to the right is black */
+  if (row >= 0) {
+    VTermPos pos = {.row = row, .col = col};
+    return vterm_screen_is_eol(term->vts, pos);
+  }
+
+  ScrollbackLine *sbrow = term->sb_buffer[-row - 1];
+  int c;
+  for (c = col; c < end_col && c < sbrow->cols;) {
+    if (sbrow->cells[c].chars[0]) {
+      return 0;
+    }
+    c += sbrow->cells[c].width;
+  }
+  return 1;
+}
+
 static size_t get_col_offset(Term *term, int row, int end_col) {
   int col = 0;
   size_t offset = 0;
   unsigned char buf[4];
+  int height;
+  int width;
+  vterm_get_size(term->vt, &height, &width);
+
 
   while (col < end_col) {
     VTermScreenCell cell;
@@ -131,6 +153,10 @@ static size_t get_col_offset(Term *term, int row, int end_col) {
     if (cell.chars[0]) {
       if (cell.width > 1) {
         offset += cell.width - 1;
+      }
+    } else {
+      if (is_eol(term, term->width, row, col)) {
+        offset += cell.width;
       }
     }
     col += cell.width;
@@ -164,6 +190,10 @@ static void refresh_lines(Term *term, emacs_env *env, int start_row,
 
       lastCell = cell;
       if (cell.chars[0] == 0) {
+        if (is_eol(term, end_col, i, j)) {
+          /* This cell is EOL if this and every cell to the right is black */
+          break;
+        }
         buffer[length] = ' ';
         length++;
       } else {
@@ -194,34 +224,39 @@ static void refresh_lines(Term *term, emacs_env *env, int start_row,
 // Refresh the screen (visible part of the buffer when the terminal is
 // focused) of a invalidated terminal
 static void refresh_screen(Term *term, emacs_env *env) {
-  int height;
-  int width;
+  // Term height may have decreased before `invalid_end` reflects it.
+  term->invalid_end = MIN(term->invalid_end, term->height);
 
   if (term->invalid_end >= term->invalid_start) {
-    vterm_get_size(term->vt, &height, &width);
-
-    // Term height may have decreased before `invalid_end` reflects it.
     int line_start = row_to_linenr(term, term->invalid_start);
     goto_line(env, line_start);
     delete_lines(env, line_start, term->invalid_end - term->invalid_start,
                  true);
-    refresh_lines(term, env, term->invalid_start, term->invalid_end, width);
+    refresh_lines(term, env, term->invalid_start, term->invalid_end,
+                  term->width);
   }
 
   term->invalid_start = INT_MAX;
   term->invalid_end = -1;
 }
 
-static int term_resize(int rows, int cols, void *term) {
-  invalidate_terminal(term, 0, rows);
+static int term_resize(int rows, int cols, void *user_data) {
+  /* can not use invalidate_terminal here */
+  /* when the window heigh decreased, */
+  /*  the value of term->invalid_end can't bigger than window height */
+  Term *term = (Term *)user_data;
+  term->invalid_start = 0;
+  term->invalid_end = rows;
+  term->width = cols;
+  term->height = rows;
+  invalidate_terminal(term, -1, -1);
+
   return 1;
 }
 
 // Refresh the scrollback of an invalidated terminal.
 static void refresh_scrollback(Term *term, emacs_env *env) {
-  int width, height;
   int buffer_lnum;
-  vterm_get_size(term->vt, &height, &width);
 
   if (term->sb_pending > 0) {
     // This means that either the window height has decreased or the screen
@@ -230,17 +265,18 @@ static void refresh_scrollback(Term *term, emacs_env *env) {
     // section of the buffer
     buffer_lnum = env->extract_integer(env, buffer_line_number(env));
 
-    int del_cnt = buffer_lnum - height - (int)term->sb_size + term->sb_pending;
+    int del_cnt =
+        buffer_lnum - term->height - (int)term->sb_size + term->sb_pending;
     if (del_cnt > 0) {
       delete_lines(env, 1, del_cnt, true);
       buffer_lnum = env->extract_integer(env, buffer_line_number(env));
     }
-    int buf_index = buffer_lnum - height + 1;
+    int buf_index = buffer_lnum - term->height + 1;
     goto_line(env, buf_index);
-    refresh_lines(term, env, -term->sb_pending, 0, width);
+    refresh_lines(term, env, -term->sb_pending, 0, term->width);
     term->sb_pending = 0;
   }
-  int max_line_count = (int)term->sb_current + height;
+  int max_line_count = (int)term->sb_current + term->height;
   buffer_lnum = env->extract_integer(env, buffer_line_number(env));
 
   // Remove extra lines at the bottom
@@ -251,9 +287,6 @@ static void refresh_scrollback(Term *term, emacs_env *env) {
 }
 
 static void adjust_topline(Term *term, emacs_env *env, long added) {
-  int height, width;
-  vterm_get_size(term->vt, &height, &width);
-
   int buffer_lnum = env->extract_integer(env, buffer_line_number(env));
   VTermState *state = vterm_obtain_state(term->vt);
   VTermPos pos;
@@ -594,6 +627,9 @@ static emacs_value Fvterm_new(emacs_env *env, ptrdiff_t nargs,
   term->sb_buffer = malloc(sizeof(ScrollbackLine *) * term->sb_size);
   term->invalid_start = 0;
   term->invalid_end = rows;
+  term->width = cols;
+  term->height = rows;
+
   term->cursor.visible = true;
   term->cursor.blinking = false;
   term->title = NULL;
@@ -651,10 +687,7 @@ static emacs_value Fvterm_set_size(emacs_env *env, ptrdiff_t nargs,
   int rows = env->extract_integer(env, args[1]);
   int cols = env->extract_integer(env, args[2]);
 
-  int old_rows, old_cols;
-  vterm_get_size(term->vt, &old_rows, &old_cols);
-
-  if (cols != old_cols || rows != old_rows) {
+  if (cols != term->width || rows != term->height) {
     vterm_set_size(term->vt, rows, cols);
     vterm_screen_flush_damage(term->vts);
 
