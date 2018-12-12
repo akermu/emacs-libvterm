@@ -417,6 +417,9 @@ static int term_settermprop(VTermProp prop, VTermValue *val, void *user_data) {
   case VTERM_PROP_CURSORBLINK:
     term->cursor.blinking = val->boolean;
     break;
+  case VTERM_PROP_ALTSCREEN:
+    invalidate_terminal(term, 0, term->height);
+    break;
   default:
     return 0;
   }
@@ -621,6 +624,7 @@ static emacs_value Fvterm_new(emacs_env *env, ptrdiff_t nargs,
   vterm_screen_reset(term->vts, 1);
   vterm_screen_set_callbacks(term->vts, &vterm_screen_callbacks, term);
   vterm_screen_set_damage_merge(term->vts, VTERM_DAMAGE_SCROLL);
+  vterm_screen_enable_altscreen(term->vts, true);
   term->sb_size = MIN(SB_MAX, sb_size);
   term->sb_current = 0;
   term->sb_pending = 0;
