@@ -12,10 +12,10 @@ report a bug!
 
 First, you need to have `libvterm` installed in your system.
 
-**On Ubuntu:**
+**On Ubuntu / Debian:**
 
 ```
-sudo apt-get install libvterm
+sudo apt-get install libvterm-dev
 ```
 
 **On macOS:**
