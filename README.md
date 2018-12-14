@@ -10,21 +10,7 @@ report a bug!
 
 # Installation
 
-First, you need to have `libvterm` installed in your system.
-
-**On Ubuntu / Debian:**
-
-```
-sudo apt-get install libvterm-dev
-```
-
-**On macOS:**
-
-```
-brew install libvterm
-```
-
-Then clone the repository:
+Clone the repository:
 
 ```
 git clone https://github.com/akermu/emacs-libvterm.git
