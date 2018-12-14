@@ -1,26 +1,7 @@
 cmake_minimum_required(VERSION 3.0.2)
+include(ExternalProject)
 
 project(emacs-libvterm C)
-
-# Look for the header file.
-find_path(LIBVTERM_INCLUDE_DIR NAMES
-  vterm.h
-  )
-
-if(NOT LIBVTERM_INCLUDE_DIR)
-  message(FATAL_ERROR "vterm.h not found")
-endif()
-
-find_library(LIBVTERM_LIBRARY NAMES
-  vterm
-  libvterm
-  )
-
-if(NOT LIBVTERM_LIBRARY)
-  message(FATAL_ERROR "libvterm not found")
-endif()
-
-include_directories(${LIBVTERM_INCLUDE_DIR})
 
 add_library(vterm-module MODULE vterm-module.c utf8.c elisp.c)
 set_target_properties(vterm-module PROPERTIES
@@ -29,6 +10,43 @@ set_target_properties(vterm-module PROPERTIES
   PREFIX ""
   LIBRARY_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}
   )
+
+# Look for the header file.
+option(USE_SYSTEM_LIBVTERM "Use system libvterm instead of the vendored version." OFF)
+
+if(USE_SYSTEM_LIBVTERM)
+  find_path(LIBVTERM_INCLUDE_DIR NAMES
+    vterm.h
+    )
+
+  if(NOT LIBVTERM_INCLUDE_DIR)
+    message(FATAL_ERROR "vterm.h not found")
+  endif()
+
+  find_library(LIBVTERM_LIBRARY NAMES
+    vterm
+    libvterm
+    )
+
+  if(NOT LIBVTERM_LIBRARY)
+    message(FATAL_ERROR "libvterm not found")
+  endif()
+else()
+  ExternalProject_add(libvterm
+    PREFIX ${PROJECT_SOURCE_DIR}/vendor/libvterm
+    SOURCE_DIR ${PROJECT_SOURCE_DIR}/vendor/libvterm
+    CONFIGURE_COMMAND ""
+    BUILD_COMMAND make
+    BUILD_IN_SOURCE ON
+    INSTALL_COMMAND "")
+
+  set(LIBVTERM_INCLUDE_DIR vendor/libvterm/include)
+  set(LIBVTERM_LIBRARY ${PROJECT_SOURCE_DIR}/vendor/libvterm/.libs/libvterm.a)
+
+  add_dependencies(vterm-module libvterm)
+endif()
+
+include_directories(${LIBVTERM_INCLUDE_DIR})
 
 # Link with libvterm
 target_link_libraries(vterm-module ${LIBVTERM_LIBRARY})

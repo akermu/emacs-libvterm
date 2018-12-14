@@ -1,0 +1,3 @@
+[submodule "libvterm"]
+	path = vendor/libvterm
+	url = https://github.com/neovim/libvterm
