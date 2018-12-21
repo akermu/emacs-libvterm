@@ -182,7 +182,9 @@ for different shell. "
 (mapcar (lambda (key)
           (define-key vterm-mode-map (kbd key) #'vterm--self-insert))
         (append (cl-loop for number from 1 to 12
-                         collect (format "<f%i>" number))
+                         for key = (format "<f%i>" number)
+                         unless (member key vterm-keymap-exceptions)
+                         collect key)
                 (cl-loop for prefix in '("C-" "M-")
                          append (cl-loop for char from ?a to ?z
                                          for key = (format "%s%c" prefix char)
