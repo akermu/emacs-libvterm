@@ -87,6 +87,8 @@ static emacs_value Fvterm_new(emacs_env *env, ptrdiff_t nargs,
                               emacs_value args[], void *data);
 static emacs_value Fvterm_update(emacs_env *env, ptrdiff_t nargs,
                                  emacs_value args[], void *data);
+static emacs_value Fvterm_redraw(emacs_env *env, ptrdiff_t nargs,
+                                 emacs_value args[], void *data);
 int emacs_module_init(struct emacs_runtime *ert);
 
 #endif /* VTERM_MODULE_H */

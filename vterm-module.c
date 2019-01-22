@@ -665,12 +665,19 @@ static emacs_value Fvterm_update(emacs_env *env, ptrdiff_t nargs,
 
   // Flush output
   term_flush_output(term, env);
-
-  term_redraw(term, env);
+  if (term->is_invalidated) {
+    vterm_invalidate(env);
+  }
 
   return env->make_integer(env, 0);
 }
 
+static emacs_value Fvterm_redraw(emacs_env *env, ptrdiff_t nargs,
+                                 emacs_value args[], void *data) {
+  Term *term = env->get_user_ptr(env, args[0]);
+  term_redraw(term, env);
+  return env->make_integer(env, 0);
+}
 static emacs_value Fvterm_write_input(emacs_env *env, ptrdiff_t nargs,
                                       emacs_value args[], void *data) {
   Term *term = env->get_user_ptr(env, args[0]);
@@ -749,6 +756,9 @@ int emacs_module_init(struct emacs_runtime *ert) {
 
   Fvterm_set_title =
       env->make_global_ref(env, env->intern(env, "vterm--set-title"));
+  Fvterm_invalidate =
+      env->make_global_ref(env, env->intern(env, "vterm--invalidate"));
+
   // Faces
   Qterm = env->make_global_ref(env, env->intern(env, "vterm"));
   Qterm_color_black =
@@ -777,6 +787,11 @@ int emacs_module_init(struct emacs_runtime *ert) {
   fun = env->make_function(env, 1, 5, Fvterm_update,
                            "Process io and update the screen.", NULL);
   bind_function(env, "vterm--update", fun);
+
+
+  fun =
+      env->make_function(env, 1, 1, Fvterm_redraw, "Redraw the screen.", NULL);
+  bind_function(env, "vterm--redraw", fun);
 
   fun = env->make_function(env, 2, 2, Fvterm_write_input,
                            "Write input to vterm.", NULL);
