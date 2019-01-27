@@ -497,14 +497,6 @@ static emacs_value color_to_face(emacs_env *env, const VTermColor *color, emacs_
   }
 }
 
-
-static void term_setup_colors(Term *term, emacs_env *env) {
-  VTermState *state = vterm_obtain_state(term->vt);
-
-  /* vterm_colo */
-  /* vterm_state_set_default_colors(state, &term->fg, &term->bg); */
-}
-
 static void term_flush_output(Term *term, emacs_env *env) {
   size_t len = vterm_output_get_buffer_current(term->vt);
   if (len) {
@@ -615,8 +607,6 @@ static emacs_value Fvterm_new(emacs_env *env, ptrdiff_t nargs,
 
   term->vt = vterm_new(rows, cols);
   vterm_set_utf8(term->vt, 1);
-
-  term_setup_colors(term, env);
 
   term->vts = vterm_obtain_screen(term->vt);
   vterm_screen_reset(term->vts, 1);
