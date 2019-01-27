@@ -18,6 +18,10 @@ void provide(emacs_env *env, const char *feature) {
   env->funcall(env, Qprovide, 1, (emacs_value[]){Qfeat});
 }
 
+emacs_value symbol_value(emacs_env *env, emacs_value symbol) {
+  env->funcall(env, Fsymbol_value, 1, (emacs_value[]){symbol});
+}
+
 int string_bytes(emacs_env *env, emacs_value string) {
   ptrdiff_t size = 0;
   env->copy_string_contents(env, string, NULL, &size);
@@ -28,8 +32,12 @@ emacs_value string_length(emacs_env *env, emacs_value string) {
   return env->funcall(env, Flength, 1, (emacs_value[]){string});
 }
 
-emacs_value list(emacs_env *env, emacs_value *elements, ptrdiff_t len) {
+emacs_value list(emacs_env *env, emacs_value elements[], ptrdiff_t len) {
   return env->funcall(env, Flist, len, elements);
+}
+
+emacs_value append(emacs_env *env, emacs_value lists[], ptrdiff_t count) {
+  return env->funcall(env, Fappend, count, lists);
 }
 
 void put_text_property(emacs_env *env, emacs_value string, emacs_value property,
@@ -40,40 +48,6 @@ void put_text_property(emacs_env *env, emacs_value string, emacs_value property,
   env->funcall(env, Fput_text_property, 5,
                (emacs_value[]){start, end, property, value, string});
 }
-
-void byte_to_hex(uint8_t byte, char *hex) { snprintf(hex, 3, "%.2X", byte); }
-
-emacs_value color_to_rgb_string(emacs_env *env, VTermColor color) {
-  char buffer[8];
-  buffer[0] = '#';
-  buffer[7] = '\0';
-  byte_to_hex(color.red, buffer + 1);
-  byte_to_hex(color.green, buffer + 3);
-  byte_to_hex(color.blue, buffer + 5);
-
-  return env->make_string(env, buffer, 7);
-};
-
-uint8_t hex_to_byte(char *hex) { return strtoul(hex, NULL, 16); }
-
-VTermColor rgb_string_to_color(emacs_env *env, emacs_value string) {
-  VTermColor color;
-  ptrdiff_t len = 8;
-  char buffer[len];
-  char hex[3];
-  env->copy_string_contents(env, string, buffer, &len);
-  hex[0] = buffer[1];
-  hex[1] = buffer[2];
-  color.red = hex_to_byte(hex);
-  hex[0] = buffer[3];
-  hex[1] = buffer[4];
-  color.green = hex_to_byte(hex);
-  hex[0] = buffer[5];
-  hex[1] = buffer[6];
-  color.blue = hex_to_byte(hex);
-
-  return color;
-};
 
 void erase_buffer(emacs_env *env) { env->funcall(env, Ferase_buffer, 0, NULL); }
 

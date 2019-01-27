@@ -17,14 +17,21 @@ emacs_value Qunderline;
 emacs_value Qslant;
 emacs_value Qreverse;
 emacs_value Qstrike;
+emacs_value Qinherited;
 emacs_value Qface;
 emacs_value Qcursor_type;
+emacs_value Qvterm_color_default_fg;
+emacs_value Qvterm_color_default_bg;
+emacs_value Qvterm_color_palette_fg;
+emacs_value Qvterm_color_palette_bg;
 
 // Emacs functions
+emacs_value Fsymbol_value;
 emacs_value Flength;
 emacs_value Flist;
 emacs_value Ferase_buffer;
 emacs_value Finsert;
+emacs_value Fappend;
 emacs_value Fgoto_char;
 emacs_value Fforward_char;
 emacs_value Fforward_line;
@@ -45,15 +52,13 @@ emacs_value Fvterm_invalidate;
 // Utils
 void bind_function(emacs_env *env, const char *name, emacs_value Sfun);
 void provide(emacs_env *env, const char *feature);
+emacs_value symbol_value(emacs_env *env, emacs_value symbol);
 int string_bytes(emacs_env *env, emacs_value string);
 emacs_value string_length(emacs_env *env, emacs_value string);
-emacs_value list(emacs_env *env, emacs_value *elements, ptrdiff_t len);
+emacs_value list(emacs_env *env, emacs_value elements[], ptrdiff_t len);
+emacs_value append(emacs_env *env, emacs_value lists[], ptrdiff_t count);
 void put_text_property(emacs_env *env, emacs_value string, emacs_value property,
                        emacs_value value);
-void byte_to_hex(uint8_t byte, char *hex);
-emacs_value color_to_rgb_string(emacs_env *env, VTermColor color);
-uint8_t hex_to_byte(char *hex);
-VTermColor rgb_string_to_color(emacs_env *env, emacs_value string);
 void erase_buffer(emacs_env *env);
 void insert(emacs_env *env, emacs_value string);
 void goto_char(emacs_env *env, int pos);

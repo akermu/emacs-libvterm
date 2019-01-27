@@ -54,26 +54,16 @@ typedef struct Term {
   int width, height;
 } Term;
 
-// Faces
-emacs_value Qterm;
-emacs_value Qterm_color_black;
-emacs_value Qterm_color_red;
-emacs_value Qterm_color_green;
-emacs_value Qterm_color_yellow;
-emacs_value Qterm_color_blue;
-emacs_value Qterm_color_magenta;
-emacs_value Qterm_color_cyan;
-emacs_value Qterm_color_white;
-
 static bool compare_cells(VTermScreenCell *a, VTermScreenCell *b);
 static bool is_key(unsigned char *key, size_t len, char *key_description);
 static emacs_value render_text(emacs_env *env, char *string, int len,
                                VTermScreenCell *cell);
+static emacs_value cell_to_face(emacs_env *env, const VTermScreenCell *cell);
+static emacs_value color_to_face(emacs_env *env, const VTermColor *color, emacs_value palette);
 
 static int term_settermprop(VTermProp prop, VTermValue *val, void *user_data);
 
 static void term_redraw(Term *term, emacs_env *env);
-static void term_setup_colors(Term *term, emacs_env *env);
 static void term_flush_output(Term *term, emacs_env *env);
 static void term_process_key(Term *term, unsigned char *key, size_t len,
                              VTermModifier modifier);
