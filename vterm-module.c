@@ -5,6 +5,7 @@
 #include <limits.h>
 #include <string.h>
 #include <unistd.h>
+#include <stdio.h>
 #include <vterm.h>
 
 static int term_sb_push(int cols, const VTermScreenCell *cells, void *data) {
@@ -373,12 +374,8 @@ static VTermScreenCallbacks vterm_screen_callbacks = {
 
 static bool compare_cells(VTermScreenCell *a, VTermScreenCell *b) {
   bool equal = true;
-  equal = equal && (a->fg.red == b->fg.red);
-  equal = equal && (a->fg.green == b->fg.green);
-  equal = equal && (a->fg.blue == b->fg.blue);
-  equal = equal && (a->bg.red == b->bg.red);
-  equal = equal && (a->bg.green == b->bg.green);
-  equal = equal && (a->bg.blue == b->bg.blue);
+  equal = equal && vterm_color_is_equal(&a->fg, &b->fg);
+  equal = equal && vterm_color_is_equal(&a->bg, &b->bg);
   equal = equal && (a->attrs.bold == b->attrs.bold);
   equal = equal && (a->attrs.underline == b->attrs.underline);
   equal = equal && (a->attrs.italic == b->attrs.italic);
@@ -437,8 +434,6 @@ static emacs_value render_text(emacs_env *env, char *buffer, int len,
     text = env->make_string(env, buffer, len);
   }
 
-  emacs_value foreground = color_to_rgb_string(env, cell->fg);
-  emacs_value background = color_to_rgb_string(env, cell->bg);
   emacs_value bold = cell->attrs.bold ? Qbold : Qnormal;
   emacs_value underline = cell->attrs.underline ? Qt : Qnil;
   emacs_value italic = cell->attrs.italic ? Qitalic : Qnormal;
@@ -448,63 +443,66 @@ static emacs_value render_text(emacs_env *env, char *buffer, int len,
   // TODO: Blink, font, dwl, dhl is missing
   emacs_value properties =
       list(env,
-           (emacs_value[]){Qforeground, foreground, Qbackground, background,
-                           Qweight, bold, Qunderline, underline, Qslant, italic,
-                           Qreverse, reverse, Qstrike, strike},
-           14);
+           (emacs_value[]){Qweight, bold,
+                           Qunderline, underline,
+                           Qslant, italic,
+                           Qreverse, reverse,
+                           Qstrike, strike},
+           10);
+
+  properties = append(env, (emacs_value[]){cell_to_face(env, cell), properties}, 2);
 
   put_text_property(env, text, Qface, properties);
 
   return text;
 }
 
+static emacs_value cell_to_face(emacs_env *env, const VTermScreenCell *cell) {
+  bool fg_is_face = VTERM_COLOR_IS_INDEXED(&cell->fg) || VTERM_COLOR_IS_DEFAULT_FG(&cell->fg) || VTERM_COLOR_IS_DEFAULT_BG(&cell->fg);
+  bool bg_is_face = VTERM_COLOR_IS_INDEXED(&cell->bg) || VTERM_COLOR_IS_DEFAULT_FG(&cell->bg) || VTERM_COLOR_IS_DEFAULT_BG(&cell->bg);
+
+
+  emacs_value palette = symbol_value(env, Qvterm_color_palette_fg);
+  emacs_value fg = color_to_face(env, &cell->fg, palette);
+
+  palette = symbol_value(env, Qvterm_color_palette_bg);
+  emacs_value bg = color_to_face(env, &cell->bg, palette);
+
+  if (fg_is_face && bg_is_face) {
+    return list(env, (emacs_value[]){Qinherited, list(env, (emacs_value[]){fg, bg}, 2)}, 2);
+  } else if (fg_is_face && !bg_is_face) {
+    return list(env, (emacs_value[]){Qinherited, fg, Qbackground, bg}, 4);
+  } else if (!fg_is_face && bg_is_face) {
+    return list(env, (emacs_value[]){Qforeground, fg, Qinherited, bg}, 4);
+  } else {
+    return list(env, (emacs_value[]){Qforeground, fg, Qbackground, bg}, 4);
+  }
+}
+
+static emacs_value color_to_face(emacs_env *env, const VTermColor *color, emacs_value palette) {
+  if (VTERM_COLOR_IS_DEFAULT_FG(color)) {
+    return Qvterm_color_default_fg;
+  }
+  if (VTERM_COLOR_IS_DEFAULT_BG(color)) {
+    return Qvterm_color_default_bg;
+  }
+  if (VTERM_COLOR_IS_INDEXED(color)) {
+    return env->vec_get(env, palette, color->indexed.idx);
+
+  }
+  if (VTERM_COLOR_IS_RGB(color)) {
+    char buffer[8];
+    snprintf(buffer, 8, "#%X%X%X", color->rgb.red, color->rgb.green, color->rgb.blue);
+    return env->make_string(env, buffer, 7);
+  }
+}
+
+
 static void term_setup_colors(Term *term, emacs_env *env) {
-  VTermColor fg, bg;
   VTermState *state = vterm_obtain_state(term->vt);
 
-  fg = rgb_string_to_color(env, get_hex_color_fg(env, Qterm));
-  bg = rgb_string_to_color(env, get_hex_color_bg(env, Qterm));
-  vterm_state_set_default_colors(state, &fg, &bg);
-
-  fg = rgb_string_to_color(env, get_hex_color_fg(env, Qterm_color_black));
-  vterm_state_set_palette_color(state, 0, &fg);
-  bg = rgb_string_to_color(env, get_hex_color_bg(env, Qterm_color_black));
-  vterm_state_set_palette_color(state, 8, &bg);
-
-  fg = rgb_string_to_color(env, get_hex_color_fg(env, Qterm_color_red));
-  vterm_state_set_palette_color(state, 1, &fg);
-  bg = rgb_string_to_color(env, get_hex_color_bg(env, Qterm_color_red));
-  vterm_state_set_palette_color(state, 9, &bg);
-
-  fg = rgb_string_to_color(env, get_hex_color_fg(env, Qterm_color_green));
-  vterm_state_set_palette_color(state, 2, &fg);
-  bg = rgb_string_to_color(env, get_hex_color_bg(env, Qterm_color_green));
-  vterm_state_set_palette_color(state, 10, &bg);
-
-  fg = rgb_string_to_color(env, get_hex_color_fg(env, Qterm_color_yellow));
-  vterm_state_set_palette_color(state, 3, &fg);
-  bg = rgb_string_to_color(env, get_hex_color_bg(env, Qterm_color_yellow));
-  vterm_state_set_palette_color(state, 11, &bg);
-
-  fg = rgb_string_to_color(env, get_hex_color_fg(env, Qterm_color_blue));
-  vterm_state_set_palette_color(state, 4, &fg);
-  bg = rgb_string_to_color(env, get_hex_color_bg(env, Qterm_color_blue));
-  vterm_state_set_palette_color(state, 12, &bg);
-
-  fg = rgb_string_to_color(env, get_hex_color_fg(env, Qterm_color_magenta));
-  vterm_state_set_palette_color(state, 5, &fg);
-  bg = rgb_string_to_color(env, get_hex_color_bg(env, Qterm_color_magenta));
-  vterm_state_set_palette_color(state, 13, &bg);
-
-  fg = rgb_string_to_color(env, get_hex_color_fg(env, Qterm_color_cyan));
-  vterm_state_set_palette_color(state, 6, &fg);
-  bg = rgb_string_to_color(env, get_hex_color_bg(env, Qterm_color_cyan));
-  vterm_state_set_palette_color(state, 14, &bg);
-
-  fg = rgb_string_to_color(env, get_hex_color_fg(env, Qterm_color_white));
-  vterm_state_set_palette_color(state, 7, &fg);
-  bg = rgb_string_to_color(env, get_hex_color_bg(env, Qterm_color_white));
-  vterm_state_set_palette_color(state, 15, &bg);
+  /* vterm_colo */
+  /* vterm_state_set_default_colors(state, &term->fg, &term->bg); */
 }
 
 static void term_flush_output(Term *term, emacs_env *env) {
@@ -723,14 +721,21 @@ int emacs_module_init(struct emacs_runtime *ert) {
   Qslant = env->make_global_ref(env, env->intern(env, ":slant"));
   Qreverse = env->make_global_ref(env, env->intern(env, ":inverse-video"));
   Qstrike = env->make_global_ref(env, env->intern(env, ":strike-through"));
+  Qinherited = env->make_global_ref(env, env->intern(env, ":inherit"));
   Qface = env->make_global_ref(env, env->intern(env, "font-lock-face"));
   Qcursor_type = env->make_global_ref(env, env->intern(env, "cursor-type"));
+  Qvterm_color_default_fg = env->make_global_ref(env, env->intern(env, "vterm-color-default-fg"));
+  Qvterm_color_default_bg = env->make_global_ref(env, env->intern(env, "vterm-color-default-bg"));
+  Qvterm_color_palette_fg = env->make_global_ref(env, env->intern(env, "vterm-color-palette-fg"));
+  Qvterm_color_palette_bg = env->make_global_ref(env, env->intern(env, "vterm-color-palette-bg"));
 
   // Functions
+  Fsymbol_value = env->make_global_ref(env, env->intern(env, "symbol-value"));
   Flength = env->make_global_ref(env, env->intern(env, "length"));
   Flist = env->make_global_ref(env, env->intern(env, "list"));
   Ferase_buffer = env->make_global_ref(env, env->intern(env, "erase-buffer"));
   Finsert = env->make_global_ref(env, env->intern(env, "insert"));
+  Fappend = env->make_global_ref(env, env->intern(env, "append"));
   Fgoto_char = env->make_global_ref(env, env->intern(env, "goto-char"));
   Fput_text_property =
       env->make_global_ref(env, env->intern(env, "put-text-property"));
@@ -759,24 +764,6 @@ int emacs_module_init(struct emacs_runtime *ert) {
   Fvterm_invalidate =
       env->make_global_ref(env, env->intern(env, "vterm--invalidate"));
 
-  // Faces
-  Qterm = env->make_global_ref(env, env->intern(env, "vterm"));
-  Qterm_color_black =
-      env->make_global_ref(env, env->intern(env, "vterm-color-black"));
-  Qterm_color_red =
-      env->make_global_ref(env, env->intern(env, "vterm-color-red"));
-  Qterm_color_green =
-      env->make_global_ref(env, env->intern(env, "vterm-color-green"));
-  Qterm_color_yellow =
-      env->make_global_ref(env, env->intern(env, "vterm-color-yellow"));
-  Qterm_color_blue =
-      env->make_global_ref(env, env->intern(env, "vterm-color-blue"));
-  Qterm_color_magenta =
-      env->make_global_ref(env, env->intern(env, "vterm-color-magenta"));
-  Qterm_color_cyan =
-      env->make_global_ref(env, env->intern(env, "vterm-color-cyan"));
-  Qterm_color_white =
-      env->make_global_ref(env, env->intern(env, "vterm-color-white"));
 
   // Exported functions
   emacs_value fun;
@@ -802,5 +789,6 @@ int emacs_module_init(struct emacs_runtime *ert) {
   bind_function(env, "vterm--set-size", fun);
 
   provide(env, "vterm-module");
+
   return 0;
 }
