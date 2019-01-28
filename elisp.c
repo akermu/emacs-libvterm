@@ -19,7 +19,7 @@ void provide(emacs_env *env, const char *feature) {
 }
 
 emacs_value symbol_value(emacs_env *env, emacs_value symbol) {
-  env->funcall(env, Fsymbol_value, 1, (emacs_value[]){symbol});
+  return env->funcall(env, Fsymbol_value, 1, (emacs_value[]){symbol});
 }
 
 int string_bytes(emacs_env *env, emacs_value string) {
