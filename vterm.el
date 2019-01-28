@@ -259,6 +259,8 @@ for different shell. "
 (define-key vterm-mode-map [remap yank]                #'vterm-yank)
 (define-key vterm-mode-map (kbd "C-c C-y")             #'vterm--self-insert)
 (define-key vterm-mode-map (kbd "C-c C-c")             #'vterm-send-ctrl-c)
+(define-key vterm-mode-map (kbd "C-_")                 #'vterm--self-insert)
+(define-key vterm-mode-map (kbd "C-SPC")               #'vterm--self-insert)
 
 ;; Function keys and most of C- and M- bindings
 (mapcar (lambda (key)
