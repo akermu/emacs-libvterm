@@ -147,7 +147,7 @@ for different shell. "
   :group 'vterm)
 
 (defface vterm-color-magenta-bg
-  '((t :foreground "magenta3"))
+  '((t :background "magenta3"))
   "Face used to render magenta color code."
   :group 'vterm)
 
