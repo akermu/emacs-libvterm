@@ -7,6 +7,8 @@
 
 ;;; Code:
 
+(require 'ansi-color)
+
 (defvar vterm-install-buffer-name " *Install vterm"
   "Name of the buffer used for compiling vterm-module.")
 
@@ -82,92 +84,92 @@ for different shell. "
   :group 'vterm)
 
 (defface vterm-color-default-fg
-  '((t :foreground "white"))
+  `((t :foreground ,(aref ansi-color-names-vector 0)))
   "Foreground of the console."
   :group 'vterm)
 
 (defface vterm-color-default-bg
-  '((t :background "black"))
+  `((t :background ,(aref ansi-color-names-vector 7)))
   "Background of the console."
   :group 'vterm)
 
 (defface vterm-color-black-fg
-  '((t :foreground "black"))
+  `((t :foreground ,(aref ansi-color-names-vector 0)))
   "Face used to render black color code."
   :group 'vterm)
 
 (defface vterm-color-black-bg
-  '((t :background "black"))
+  `((t :background ,(aref ansi-color-names-vector 0)))
   "Face used to render black color code."
   :group 'vterm)
 
 (defface vterm-color-red-fg
-  '((t :foreground "red3"))
+  `((t :foreground ,(aref ansi-color-names-vector 1)))
   "Face used to render red color code."
   :group 'vterm)
 
 (defface vterm-color-red-bg
-  '((t :background "red3"))
+  `((t :background ,(aref ansi-color-names-vector 1)))
   "Face used to render red color code."
   :group 'vterm)
 
 (defface vterm-color-green-fg
-  '((t :foreground "green3"))
+  `((t :foreground ,(aref ansi-color-names-vector 2)))
   "Face used to render green color code."
   :group 'vterm)
 
 (defface vterm-color-green-bg
-  '((t :background "green3"))
+  `((t :background ,(aref ansi-color-names-vector 2)))
   "Face used to render green color code."
   :group 'vterm)
 
 (defface vterm-color-yellow-fg
-  '((t :foreground "yellow3"))
+  `((t :foreground ,(aref ansi-color-names-vector 3)))
   "Face used to render yellow color code."
   :group 'vterm)
 
 (defface vterm-color-yellow-bg
-  '((t :background "yellow3"))
+  `((t :background ,(aref ansi-color-names-vector 3)))
   "Face used to render yellow color code."
   :group 'vterm)
 
 (defface vterm-color-blue-fg
-  '((t :foreground "blue2"))
+  `((t :foreground ,(aref ansi-color-names-vector 4)))
   "Face used to render blue color code."
   :group 'vterm)
 
 (defface vterm-color-blue-bg
-  '((t :background "blue2"))
+  `((t :background ,(aref ansi-color-names-vector 4)))
   "Face used to render yellow color code."
   :group 'vterm)
 
 (defface vterm-color-magenta-fg
-  '((t :foreground "magenta3"))
+  `((t :foreground ,(aref ansi-color-names-vector 5)))
   "Face used to render magenta color code."
   :group 'vterm)
 
 (defface vterm-color-magenta-bg
-  '((t :background "magenta3"))
+  `((t :background ,(aref ansi-color-names-vector 5)))
   "Face used to render magenta color code."
   :group 'vterm)
 
 (defface vterm-color-cyan-fg
-  '((t :foreground "cyan3"))
+  `((t :foreground ,(aref ansi-color-names-vector 6)))
   "Face used to render cyan color code."
   :group 'vterm)
 
 (defface vterm-color-cyan-bg
-  '((t :background "cyan3"))
+  `((t :background ,(aref ansi-color-names-vector 6)))
   "Face used to render cyan color code."
   :group 'vterm)
 
 (defface vterm-color-white-fg
-  '((t :foreground "white"))
+  `((t :foreground ,(aref ansi-color-names-vector 7)))
   "Face used to render white color code."
   :group 'vterm)
 
 (defface vterm-color-white-bg
-  '((t :background "white"))
+  `((t :background ,(aref ansi-color-names-vector 7)))
   "Face used to render white color code."
   :group 'vterm)
 

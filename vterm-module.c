@@ -470,8 +470,7 @@ static emacs_value cell_to_face(emacs_env *env, Term *term,
                               : color_to_rgb_string(env, term, &cell->bg);
 
   if (fg_is_face && bg_is_face) {
-    return list(env, (emacs_value[]){Qinherited, fg, Qinherited, bg},
-                4); // list(env, (emacs_value[]){fg, bg}, 2)}, 2);
+    return list(env, (emacs_value[]){Qinherited, list(env, (emacs_value[]){fg, bg}, 2)}, 2);
   } else if (fg_is_face && !bg_is_face) {
     return list(env, (emacs_value[]){Qinherited, fg, Qbackground, bg}, 4);
   } else if (!fg_is_face && bg_is_face) {
