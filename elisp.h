@@ -17,13 +17,9 @@ emacs_value Qunderline;
 emacs_value Qslant;
 emacs_value Qreverse;
 emacs_value Qstrike;
-emacs_value Qinherited;
 emacs_value Qface;
 emacs_value Qcursor_type;
-emacs_value Qvterm_color_default_fg;
-emacs_value Qvterm_color_default_bg;
-emacs_value Qvterm_color_palette_fg;
-emacs_value Qvterm_color_palette_bg;
+emacs_value Qansi_color_names_vector;
 
 // Emacs functions
 emacs_value Fsymbol_value;
@@ -31,7 +27,6 @@ emacs_value Flength;
 emacs_value Flist;
 emacs_value Ferase_buffer;
 emacs_value Finsert;
-emacs_value Fappend;
 emacs_value Fgoto_char;
 emacs_value Fforward_char;
 emacs_value Fforward_line;
@@ -56,7 +51,6 @@ emacs_value symbol_value(emacs_env *env, emacs_value symbol);
 int string_bytes(emacs_env *env, emacs_value string);
 emacs_value string_length(emacs_env *env, emacs_value string);
 emacs_value list(emacs_env *env, emacs_value elements[], ptrdiff_t len);
-emacs_value append(emacs_env *env, emacs_value lists[], ptrdiff_t count);
 void put_text_property(emacs_env *env, emacs_value string, emacs_value property,
                        emacs_value value);
 void erase_buffer(emacs_env *env);

@@ -36,10 +36,6 @@ emacs_value list(emacs_env *env, emacs_value elements[], ptrdiff_t len) {
   return env->funcall(env, Flist, len, elements);
 }
 
-emacs_value append(emacs_env *env, emacs_value lists[], ptrdiff_t count) {
-  return env->funcall(env, Fappend, count, lists);
-}
-
 void put_text_property(emacs_env *env, emacs_value string, emacs_value property,
                        emacs_value value) {
   emacs_value start = env->make_integer(env, 0);
