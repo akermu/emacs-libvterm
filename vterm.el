@@ -215,12 +215,13 @@ If nil, never delay")
     (vterm--delayed-redraw (current-buffer))))
 
 (defun vterm--delayed-redraw(buffer)
-  (with-current-buffer buffer
-    (let ((inhibit-redisplay t)
-          (inhibit-read-only t))
-      (when vterm--term
-        (vterm--redraw vterm--term)))
-    (setq vterm--redraw-timer nil)))
+  (when (buffer-live-p buffer)
+    (with-current-buffer buffer
+      (let ((inhibit-redisplay t)
+            (inhibit-read-only t))
+        (when vterm--term
+          (vterm--redraw vterm--term)))
+      (setq vterm--redraw-timer nil))))
 
 ;;;###autoload
 (defun vterm ()
