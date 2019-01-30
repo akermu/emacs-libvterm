@@ -492,6 +492,10 @@ static void term_process_key(Term *term, unsigned char *key, size_t len,
                              VTermModifier modifier) {
   if (is_key(key, len, "<return>")) {
     vterm_keyboard_key(term->vt, VTERM_KEY_ENTER, modifier);
+  }else if (is_key(key, len, "<start_paste>")) {
+    vterm_keyboard_start_paste(term->vt);
+  }else if (is_key(key, len, "<end_paste>")) {
+    vterm_keyboard_end_paste(term->vt);
   } else if (is_key(key, len, "<tab>")) {
     vterm_keyboard_key(term->vt, VTERM_KEY_TAB, modifier);
   } else if (is_key(key, len, "<backspace>")) {

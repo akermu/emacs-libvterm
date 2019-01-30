@@ -137,6 +137,7 @@ for different shell. "
 (define-key vterm-mode-map (kbd "C-c C-c")             #'vterm-send-ctrl-c)
 (define-key vterm-mode-map (kbd "C-_")                 #'vterm--self-insert)
 (define-key vterm-mode-map (kbd "C-SPC")               #'vterm--self-insert)
+(define-key vterm-mode-map (kbd "C-/")                 #'vterm-undo)
 
 ;; Function keys and most of C- and M- bindings
 (mapcar (lambda (key)
@@ -176,16 +177,26 @@ for different shell. "
   (interactive)
   (vterm-send-key "c" nil nil t))
 
+(defun vterm-undo ()
+  "Sends C-_ to the libvterm"
+  (interactive)
+  (vterm-send-key "_" nil nil t))
+
 (defun vterm-yank ()
   "Implementation of `yank' (paste) in vterm."
   (interactive)
-  (vterm-send-string (current-kill 0)))
+  (vterm-send-string (current-kill 0)
+                     (not current-prefix-arg)))
 
-(defun vterm-send-string (string)
+(defun vterm-send-string (string &optional paste-p)
   "Send the string STRING to vterm."
   (when vterm--term
+    (when paste-p
+      (vterm--update vterm--term "<start_paste>" nil nil nil))
     (dolist (char (string-to-list string))
-      (vterm--update vterm--term (char-to-string char) nil nil nil))))
+      (vterm--update vterm--term (char-to-string char) nil nil nil))
+    (when paste-p
+      (vterm--update vterm--term "<end_paste>" nil nil nil))))
 
 (defvar vterm--redraw-timer nil)
 (make-variable-buffer-local 'vterm--redraw-timer)
