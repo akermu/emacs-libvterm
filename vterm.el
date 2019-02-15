@@ -103,7 +103,11 @@ for different shell. "
   (setq-local scroll-margin 0)
 
   (add-hook 'window-size-change-functions #'vterm--window-size-change t t)
-  (let ((process-environment (append '("TERM=xterm" "INSIDE_EMACS=vterm") process-environment))
+  (let ((process-environment (nconc '("TERM=xterm"
+                                      "INSIDE_EMACS=vterm"
+                                      "LINES"
+                                      "COLUMNS")
+                                    process-environment))
         (process-adaptive-read-buffering nil))
     (setq vterm--process
           (make-process
