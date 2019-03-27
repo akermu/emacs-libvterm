@@ -91,6 +91,8 @@ for different shell. "
   "Shell process of current term.")
 (make-variable-buffer-local 'vterm--process)
 
+(defvar vterm-old-mode-map nil "Saves the old keymap when in char mode.")
+
 (define-derived-mode vterm-mode fundamental-mode "VTerm"
   "Major mode for vterm buffer."
   (buffer-disable-undo)
@@ -101,6 +103,8 @@ for different shell. "
   (setq buffer-read-only t)
   (setq-local scroll-conservatively 101)
   (setq-local scroll-margin 0)
+  (make-local-variable 'vterm-old-mode-map)
+  (vterm-char-mode)
 
   (add-hook 'window-size-change-functions #'vterm--window-size-change t t)
   (let ((process-environment (append '("TERM=xterm"
@@ -122,30 +126,33 @@ for different shell. "
            :connection-type 'pty
            :filter #'vterm--filter
            :sentinel (when vterm-exit-functions #'vterm--sentinel)))))
+(defvar vterm-common-map  (make-sparse-keymap))
+(defvar vterm-raw-map  (make-sparse-keymap))
 
 ;; Keybindings
-(define-key vterm-mode-map [tab]                       #'vterm--self-insert)
-(define-key vterm-mode-map [backspace]                 #'vterm--self-insert)
-(define-key vterm-mode-map [M-backspace]               #'vterm--self-insert)
-(define-key vterm-mode-map [return]                    #'vterm--self-insert)
-(define-key vterm-mode-map [left]                      #'vterm--self-insert)
-(define-key vterm-mode-map [right]                     #'vterm--self-insert)
-(define-key vterm-mode-map [up]                        #'vterm--self-insert)
-(define-key vterm-mode-map [down]                      #'vterm--self-insert)
-(define-key vterm-mode-map [home]                      #'vterm--self-insert)
-(define-key vterm-mode-map [end]                       #'vterm--self-insert)
-(define-key vterm-mode-map [escape]                    #'vterm--self-insert)
-(define-key vterm-mode-map [remap self-insert-command] #'vterm--self-insert)
-(define-key vterm-mode-map [remap yank]                #'vterm-yank)
-(define-key vterm-mode-map (kbd "C-c C-y")             #'vterm--self-insert)
-(define-key vterm-mode-map (kbd "C-c C-c")             #'vterm-send-ctrl-c)
-(define-key vterm-mode-map (kbd "C-_")                 #'vterm--self-insert)
-(define-key vterm-mode-map (kbd "C-SPC")               #'vterm--self-insert)
-(define-key vterm-mode-map (kbd "C-/")                 #'vterm-undo)
+(define-key vterm-raw-map    [tab]                       #'vterm--self-insert)
+(define-key vterm-raw-map    [return]                    #'vterm--self-insert)
+(define-key vterm-raw-map    [left]                      #'vterm--self-insert)
+(define-key vterm-raw-map    [right]                     #'vterm--self-insert)
+(define-key vterm-raw-map    [up]                        #'vterm--self-insert)
+(define-key vterm-raw-map    [down]                      #'vterm--self-insert)
+(define-key vterm-raw-map    [home]                      #'vterm--self-insert)
+(define-key vterm-raw-map    [end]                       #'vterm--self-insert)
+(define-key vterm-raw-map    [escape]                    #'vterm--self-insert)
+(define-key vterm-raw-map    (kbd "C-c C-y")             #'vterm--self-insert)
+(define-key vterm-raw-map    (kbd "C-c C-c")             #'vterm-send-ctrl-c)
+(define-key vterm-raw-map    (kbd "C-SPC")               #'vterm--self-insert)
+
+(define-key vterm-common-map [M-backspace]               #'vterm--self-insert)
+(define-key vterm-common-map [backspace]                 #'vterm--self-insert)
+(define-key vterm-common-map [remap yank]                #'vterm-yank)
+(define-key vterm-common-map (kbd "C-_")                 #'vterm--self-insert)
+(define-key vterm-common-map (kbd "C-/")                 #'vterm-undo)
+(define-key vterm-common-map [remap self-insert-command] #'vterm--self-insert)
 
 ;; Function keys and most of C- and M- bindings
 (mapcar (lambda (key)
-          (define-key vterm-mode-map (kbd key) #'vterm--self-insert))
+          (define-key vterm-raw-map (kbd key) #'vterm--self-insert))
         (append (cl-loop for number from 1 to 12
                          for key = (format "<f%i>" number)
                          unless (member key vterm-keymap-exceptions)
@@ -155,6 +162,45 @@ for different shell. "
                                          for key = (format "%s%c" prefix char)
                                          unless (member key vterm-keymap-exceptions)
                                          collect key))))
+
+(set-keymap-parent vterm-raw-map vterm-common-map)
+(set-keymap-parent vterm-mode-map vterm-common-map)
+
+(defmacro vterm-in-char-mode () '(eq (current-local-map) vterm-raw-map))
+(defmacro vterm-in-line-mode () '(not (vterm-in-char-mode)))
+
+(defun vterm-char-mode()
+  (interactive)
+  (when (vterm-in-line-mode)
+    (setq vterm-old-mode-map (current-local-map))
+    (use-local-map vterm-raw-map))
+  (vterm-update-mode-line))
+
+(defun vterm-line-mode()
+  (interactive)
+  (when (vterm-in-char-mode)
+    (use-local-map vterm-old-mode-map))
+  (vterm-update-mode-line))
+
+(defun vterm-update-mode-line ()
+  (let ((vterm-mode
+         (if (vterm-in-char-mode)
+             (propertize "char"
+                         'help-echo "mouse-1: Switch to line mode"
+                         'mouse-face 'mode-line-highlight
+                         'local-map
+                         '(keymap
+                           (mode-line keymap (down-mouse-1 . vterm-line-mode))))
+           (propertize "line"
+                       'help-echo "mouse-1: Switch to char mode"
+                       'mouse-face 'mode-line-highlight
+                       'local-map
+                       '(keymap
+                         (mode-line keymap (down-mouse-1 . vterm-char-mode)))))))
+
+    (setq mode-line-process
+          (list ": " vterm-mode " %s")))
+  (force-mode-line-update))
 
 (defun vterm--self-insert ()
   "Sends invoking key to libvterm."
