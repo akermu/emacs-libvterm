@@ -149,6 +149,7 @@ for different shell. "
 (define-key vterm-common-map (kbd "C-_")                 #'vterm--self-insert)
 (define-key vterm-common-map (kbd "C-/")                 #'vterm-undo)
 (define-key vterm-common-map [remap self-insert-command] #'vterm--self-insert)
+(define-key vterm-common-map (kbd "C-c C-t") #'vterm-toggle-char-line-mode)
 
 ;; Function keys and most of C- and M- bindings
 (mapcar (lambda (key)
@@ -168,6 +169,12 @@ for different shell. "
 
 (defmacro vterm-in-char-mode () '(eq (current-local-map) vterm-raw-map))
 (defmacro vterm-in-line-mode () '(not (vterm-in-char-mode)))
+
+(defun vterm-toggle-char-line-mode()
+  (interactive)
+  (if (vterm-in-line-mode)
+      (vterm-char-mode)
+    (vterm-line-mode)))
 
 (defun vterm-char-mode()
   (interactive)
