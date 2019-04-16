@@ -123,3 +123,7 @@ void set_title(emacs_env *env, emacs_value string) {
 void vterm_invalidate(emacs_env *env) {
   env->funcall(env, Fvterm_invalidate, 0, NULL);
 }
+bool eq(emacs_env *env, emacs_value e1, emacs_value e2) {
+  emacs_value Qeq = env->funcall(env, Feq, 2, (emacs_value[]){e1, e2});
+  return env->is_not_nil(env, Qeq);
+}

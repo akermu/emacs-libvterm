@@ -43,6 +43,7 @@ emacs_value Fget_buffer_window;
 emacs_value Fselected_window;
 emacs_value Fvterm_set_title;
 emacs_value Fvterm_invalidate;
+emacs_value Feq;
 
 // Utils
 void bind_function(emacs_env *env, const char *name, emacs_value Sfun);
@@ -70,5 +71,6 @@ emacs_value get_buffer_window(emacs_env *env);
 emacs_value selected_window(emacs_env *env);
 void set_title(emacs_env *env, emacs_value string);
 void vterm_invalidate(emacs_env *env);
+bool eq(emacs_env *env, emacs_value e1, emacs_value e2);
 
 #endif /* ELISP_H */
