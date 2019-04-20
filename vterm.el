@@ -1,9 +1,51 @@
-;;; vterm.el --- This package implements a terminal via libvterm
+;;; vterm.el --- This package implements a terminal via libvterm -*- lexical-binding: t; -*-
+
+;; Copyright (C) 2017-2019  by Lukas Fürmetz
+;;
+;; Author: Lukas Fürmetz <fuermetz@mailbox.org>
+;; Version: 0.0.1
+;; URL: https://github.com/akermu/emacs-libvterm
+;; Keywords: terminals
+;; Package-Requires: ((emacs "25.1"))
+
+
+;; This file is not part of GNU Emacs.
+
+;; This file is free software; you can redistribute it and/or modify
+;; it under the terms of the GNU General Public License as published by
+;; the Free Software Foundation; either version 2, or (at your option)
+;; any later version.
+
+;; This file is distributed in the hope that it will be useful,
+;; but WITHOUT ANY WARRANTY; without even the implied warranty of
+;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+;; GNU General Public License for more details.
+
+;; You should have received a copy of the GNU General Public License
+;; along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.
+
 
 ;;; Commentary:
 ;;
 ;; This Emacs module implements a bridge to libvterm to display a terminal in a
 ;; Emacs buffer.
+
+;;; Installation
+
+;; And add this to your `init.el`:
+
+;; ```
+;; (add-to-list 'load-path "path/to/emacs-libvterm")
+;; (require 'vterm)
+;; ```
+
+;; If you want to have the module compiled, wrap the call to `require` as follows:
+
+;; ```
+;; (add-to-list 'load-path "path/to/emacs-libvterm")
+;; (let (vterm-install)
+;;   (require 'vterm))
+;; ```
 
 ;;; Code:
 
@@ -37,7 +79,7 @@
 (require 'cl-lib)
 (require 'color)
 
-(defcustom vterm-shell (getenv "SHELL")
+(defcustom vterm-shell shell-file-name
   "The shell that gets run in the vterm."
   :type 'string
   :group 'vterm)
@@ -74,22 +116,20 @@ those functions are called one by one, with 1 arguments.
 `vterm-set-title-functions' should be a symbol, a hook variable.
 The value of HOOK may be nil, a function, or a list of functions.
 for example
-(defun vterm--rename-buffer-as-title (title)
-  (rename-buffer (format \"vterm %s\" title)))
-(add-hook 'vterm-set-title-functions 'vterm--rename-buffer-as-title)
+    (defun vterm--rename-buffer-as-title (title)
+    (rename-buffer (format \"vterm %s\" title)))
+    (add-hook 'vterm-set-title-functions 'vterm--rename-buffer-as-title)
 
 see http://tldp.org/HOWTO/Xterm-Title-4.html about how to set terminal title
-for different shell. "
+for different shell"
   :type 'hook
   :group 'vterm)
 
-(defvar vterm--term nil
+(defvar-local vterm--term nil
   "Pointer to Term.")
-(make-variable-buffer-local 'vterm--term)
 
-(defvar vterm--process nil
+(defvar-local vterm--process nil
   "Shell process of current term.")
-(make-variable-buffer-local 'vterm--process)
 
 (define-derived-mode vterm-mode fundamental-mode "VTerm"
   "Major mode for vterm buffer."
@@ -144,7 +184,7 @@ for different shell. "
 (define-key vterm-mode-map (kbd "C-/")                 #'vterm-undo)
 
 ;; Function keys and most of C- and M- bindings
-(mapcar (lambda (key)
+(mapc (lambda (key)
           (define-key vterm-mode-map (kbd key) #'vterm--self-insert))
         (append (cl-loop for number from 1 to 12
                          for key = (format "<f%i>" number)
@@ -177,12 +217,12 @@ for different shell. "
       (vterm--update vterm--term key shift meta ctrl))))
 
 (defun vterm-send-ctrl-c ()
-  "Sends C-c to the libvterm."
+  "Sends `C-c' to the libvterm."
   (interactive)
   (vterm-send-key "c" nil nil t))
 
 (defun vterm-undo ()
-  "Sends C-_ to the libvterm"
+  "Sends `C-_' to the libvterm."
   (interactive)
   (vterm-send-key "_" nil nil t))
 
@@ -193,7 +233,8 @@ for different shell. "
                      (not current-prefix-arg)))
 
 (defun vterm-send-string (string &optional paste-p)
-  "Send the string STRING to vterm."
+  "Send the string STRING to vterm.
+Optional argument PASTE-P paste-p."
   (when vterm--term
     (when paste-p
       (vterm--update vterm--term "<start_paste>" nil nil nil))
@@ -202,15 +243,15 @@ for different shell. "
     (when paste-p
       (vterm--update vterm--term "<end_paste>" nil nil nil))))
 
-(defvar vterm--redraw-timer nil)
-(make-variable-buffer-local 'vterm--redraw-timer)
+(defvar-local vterm--redraw-timer nil)
 
 (defvar vterm-timer-delay 0.01
-  "Delay for refreshing the terminal buffer after receiving updates from
-libvterm. Improves performance when receiving large bursts of data.
+  "Delay for refreshing the buffer after receiving updates from libvterm.
+Improves performance when receiving large bursts of data.
 If nil, never delay")
 
 (defun vterm--invalidate()
+  "The terminal buffer is invalidated, the buffer needs redrawing."
   (if vterm-timer-delay
       (unless vterm--redraw-timer
         (setq vterm--redraw-timer
@@ -219,6 +260,8 @@ If nil, never delay")
     (vterm--delayed-redraw (current-buffer))))
 
 (defun vterm--delayed-redraw(buffer)
+  "Redraw the terminal buffer .
+Argument BUFFER the terminal buffer."
   (when (buffer-live-p buffer)
     (with-current-buffer buffer
       (let ((inhibit-redisplay t)
@@ -261,7 +304,8 @@ Then triggers a redraw from the module."
       (vterm--update vterm--term))))
 
 (defun vterm--sentinel (process event)
-  "Sentinel of vterm PROCESS."
+  "Sentinel of vterm PROCESS.
+Argument EVENT process event."
   (let ((buf (process-buffer process)))
     (run-hook-with-args 'vterm-exit-functions
                         (if (buffer-live-p buf) buf nil))))
