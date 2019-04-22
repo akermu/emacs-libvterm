@@ -34,7 +34,7 @@ if(USE_SYSTEM_LIBVTERM)
 else()
   ExternalProject_add(libvterm
     GIT_REPOSITORY https://github.com/neovim/libvterm.git
-    GIT_TAG a6293a0e033e7e86c74889b4527787993656883a
+    GIT_TAG 89675ffdda615ffc3f29d1c47a933f4f44183364
     CONFIGURE_COMMAND ""
     BUILD_COMMAND make "CFLAGS='-fPIC'"
     BUILD_IN_SOURCE ON
