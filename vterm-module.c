@@ -749,8 +749,6 @@ int emacs_module_init(struct emacs_runtime *ert) {
   Fput_text_property =
       env->make_global_ref(env, env->intern(env, "put-text-property"));
   Fset = env->make_global_ref(env, env->intern(env, "set"));
-  Fvterm_face_color_hex =
-      env->make_global_ref(env, env->intern(env, "vterm--face-color-hex"));
   Fvterm_flush_output =
       env->make_global_ref(env, env->intern(env, "vterm--flush-output"));
   Fforward_line = env->make_global_ref(env, env->intern(env, "forward-line"));

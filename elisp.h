@@ -42,7 +42,6 @@ emacs_value Fpoint;
 
 emacs_value Fput_text_property;
 emacs_value Fset;
-emacs_value Fvterm_face_color_hex;
 emacs_value Fvterm_flush_output;
 emacs_value Fget_buffer_window;
 emacs_value Fselected_window;
@@ -66,8 +65,6 @@ void forward_line(emacs_env *env, int n);
 void goto_line(emacs_env *env, int n);
 void set_cursor_type(emacs_env *env, emacs_value cursor_type);
 void delete_lines(emacs_env *env, int linenum, int count, bool del_whole_line);
-emacs_value get_hex_color_fg(emacs_env *env, emacs_value face);
-emacs_value get_hex_color_bg(emacs_env *env, emacs_value face);
 emacs_value buffer_line_number(emacs_env *env);
 void recenter(emacs_env *env, emacs_value pos);
 void set_window_point(emacs_env *env, emacs_value win, emacs_value point);
