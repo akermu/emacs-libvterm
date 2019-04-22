@@ -140,7 +140,7 @@ for different shell"
   (if (version< emacs-version "27")
       (add-hook 'window-size-change-functions #'vterm--window-size-change-26 t t)
     (add-hook 'window-size-change-functions #'vterm--window-size-change t t))
-  (let ((process-environment (append '("TERM=xterm"
+  (let ((process-environment (append '("TERM=xterm-256color"
                                        "INSIDE_EMACS=vterm"
                                        "LINES"
                                        "COLUMNS")

@@ -498,12 +498,15 @@ static emacs_value color_to_rgb_string(emacs_env *env, Term *term,
   if (VTERM_COLOR_IS_DEFAULT_BG(color)) {
     return env->vec_get(env, palette, 0);
   }
-  if (VTERM_COLOR_IS_INDEXED(color) < 16) {
-    return env->vec_get(env, palette, color->indexed.idx % 8);
-  }
-  if (VTERM_COLOR_IS_INDEXED(color) >= 16) {
-    VTermState *state = vterm_obtain_state(term->vt);
-    vterm_state_get_palette_color(state, color->indexed.idx, color);
+  if (VTERM_COLOR_IS_INDEXED(color)) {
+    if (color->indexed.idx < 16) {
+      return env->vec_get(env, palette, color->indexed.idx % 8);
+    } else {
+      VTermState *state = vterm_obtain_state(term->vt);
+      vterm_state_get_palette_color(state, color->indexed.idx, color);
+    }
+  } else if (VTERM_COLOR_IS_RGB(color)) {
+    /* do nothing just use the argument color directly */
   }
 
   char buffer[8];
