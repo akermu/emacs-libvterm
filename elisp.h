@@ -22,7 +22,6 @@ emacs_value Qbox;
 emacs_value Qbar;
 emacs_value Qhbar;
 emacs_value Qcursor_type;
-emacs_value Qansi_color_names_vector;
 
 // Emacs functions
 emacs_value Fsymbol_value;
@@ -48,6 +47,7 @@ emacs_value Fselected_window;
 emacs_value Fvterm_set_title;
 emacs_value Fvterm_invalidate;
 emacs_value Feq;
+emacs_value Fvterm_get_color;
 
 // Utils
 void bind_function(emacs_env *env, const char *name, emacs_value Sfun);
@@ -75,5 +75,6 @@ emacs_value get_buffer_window(emacs_env *env);
 emacs_value selected_window(emacs_env *env);
 void set_title(emacs_env *env, emacs_value string);
 void vterm_invalidate(emacs_env *env);
+emacs_value vterm_get_color(emacs_env *env, int index);
 
 #endif /* ELISP_H */

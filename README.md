@@ -77,22 +77,17 @@ bound to `C-c C-c`.
 Set the `:foreground` and `:background` attributes of the following faces to a
 color you like:
 
-- vterm-color-default-fg
-- vterm-color-default-bg
-- vterm-color-black-fg
-- vterm-color-black-bg
-- vterm-color-red-fg
-- vterm-color-green-bg
-- vterm-color-green-fg
-- vterm-color-yellow-bg
-- vterm-color-blue-fg
-- vterm-color-blue-bg
-- vterm-color-magenta-fg
-- vterm-color-magenta-bg
-- vterm-color-cyan-fg
-- vterm-color-cyan-bg
-- vterm-color-white-fg
-- vterm-color-white-bg
+- vterm-color-default
+- vterm-color-black
+- vterm-color-black
+- vterm-color-red
+- vterm-color-green
+- vterm-color-yellow
+- vterm-color-blue
+- vterm-color-magenta
+- vterm-color-cyan
+- vterm-color-white
+
 
 ## Related packages
 
