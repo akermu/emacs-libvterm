@@ -48,10 +48,12 @@ else()
   add_dependencies(vterm-module libvterm)
 endif()
 
-include_directories(${LIBVTERM_INCLUDE_DIR})
+add_library(vterm STATIC IMPORTED)
+set_target_properties(vterm PROPERTIES IMPORTED_LOCATION ${LIBVTERM_LIBRARY})
+target_include_directories(vterm INTERFACE ${LIBVTERM_INCLUDE_DIR})
 
 # Link with libvterm
-target_link_libraries(vterm-module ${LIBVTERM_LIBRARY})
+target_link_libraries(vterm-module PUBLIC vterm)
 
 # Custom run command for testing
 add_custom_target(run
