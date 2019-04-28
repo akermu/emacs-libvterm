@@ -142,7 +142,9 @@ for different shell"
   (setq-local scroll-conservatively 101)
   (setq-local scroll-margin 0)
 
-  (add-hook 'window-size-change-functions #'vterm--window-size-change t t)
+  (if (version< emacs-version "27")
+      (add-hook 'window-size-change-functions #'vterm--window-size-change-26 t t)
+    (add-hook 'window-size-change-functions #'vterm--window-size-change t t))
   (let ((process-environment (append '("TERM=xterm"
                                        "INSIDE_EMACS=vterm"
                                        "LINES"
@@ -310,19 +312,26 @@ Argument EVENT process event."
     (run-hook-with-args 'vterm-exit-functions
                         (if (buffer-live-p buf) buf nil))))
 
-(defun vterm--window-size-change (frame)
+(defun vterm--window-size-change-26 (frame)
   "Callback triggered by a size change of the FRAME.
 
-Feeds the size change to the virtual terminal."
+This is only used, when variable `emacs-version' < 27. Calls
+`vterm--window-size-change' for every window of FRAME."
   (dolist (window (window-list frame))
-    (with-current-buffer (window-buffer window)
-      (when (and (processp vterm--process)
-                 (process-live-p vterm--process))
-        (let ((height (window-body-height window))
-              (width (window-body-width window))
-              (inhibit-read-only t))
-          (set-process-window-size vterm--process height width)
-          (vterm--set-size vterm--term height width))))))
+    (vterm--window-size-change window)))
+
+(defun vterm--window-size-change (window)
+  "Callback triggered by a size change of the WINDOW.
+
+Feeds the size change to the virtual terminal."
+  (with-current-buffer (window-buffer window)
+    (when (and (processp vterm--process)
+               (process-live-p vterm--process))
+      (let ((height (window-body-height window))
+            (width (window-body-width window))
+            (inhibit-read-only t))
+        (set-process-window-size vterm--process height width)
+        (vterm--set-size vterm--term height width)))))
 
 (defun vterm--delete-lines (line-num count &optional delete-whole-line)
   "Delete COUNT lines from LINE-NUM.
