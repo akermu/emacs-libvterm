@@ -43,6 +43,7 @@ emacs_value Fget_buffer_window;
 emacs_value Fselected_window;
 emacs_value Fvterm_set_title;
 emacs_value Fvterm_invalidate;
+emacs_value Feq;
 
 // Utils
 void bind_function(emacs_env *env, const char *name, emacs_value Sfun);
@@ -65,6 +66,7 @@ emacs_value get_hex_color_fg(emacs_env *env, emacs_value face);
 emacs_value get_hex_color_bg(emacs_env *env, emacs_value face);
 emacs_value buffer_line_number(emacs_env *env);
 void recenter(emacs_env *env, emacs_value pos);
+bool eq(emacs_env *env, emacs_value e1, emacs_value e2);
 void forward_char(emacs_env *env, emacs_value n);
 emacs_value get_buffer_window(emacs_env *env);
 emacs_value selected_window(emacs_env *env);

@@ -77,6 +77,10 @@ void delete_lines(emacs_env *env, int linenum, int count, bool del_whole_line) {
 void recenter(emacs_env *env, emacs_value pos) {
   env->funcall(env, Frecenter, 1, (emacs_value[]){pos});
 }
+bool eq(emacs_env *env, emacs_value e1, emacs_value e2) {
+  emacs_value Qeq = env->funcall(env, Feq, 2, (emacs_value[]){e1, e2});
+  return env->is_not_nil(env, Qeq);
+}
 
 void forward_char(emacs_env *env, emacs_value n) {
   env->funcall(env, Fforward_char, 1, (emacs_value[]){n});
