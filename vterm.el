@@ -39,13 +39,6 @@
 ;; (require 'vterm)
 ;; ```
 
-;; If you want to have the module compiled, wrap the call to `require` as follows:
-
-;; ```
-;; (add-to-list 'load-path "path/to/emacs-libvterm")
-;; (let (vterm-install)
-;;   (require 'vterm))
-;; ```
 
 ;;; Code:
 
@@ -61,20 +54,22 @@
   (let ((default-directory (file-name-directory (locate-library "vterm"))))
     (unless (file-executable-p (concat default-directory "vterm-module.so" ))
       (let* ((buffer (get-buffer-create vterm-install-buffer-name))
-             (status (call-process "sh" nil buffer t "-c"
+             status)
+        (pop-to-buffer vterm-install-buffer-name)
+        (setq status (call-process "sh" nil buffer t "-c"
                                    "mkdir -p build;                             \
                                     cd build;                                   \
                                     cmake -DCMAKE_BUILD_TYPE=RelWithDebInfo ..; \
-                                    make")))
+                                    make") )
         (if (eq status 0)
             (message "Compilation of emacs-libvterm module succeeded")
-          (pop-to-buffer vterm-install-buffer-name)
           (error "Compilation of emacs-libvterm module failed!"))))))
 
-(when (boundp 'vterm-install)
-  (vterm-module-compile))
 
-(require 'vterm-module)
+(unless (require 'vterm-module nil t)
+  (vterm-module-compile)
+  (require 'vterm-module))
+
 (require 'subr-x)
 (require 'cl-lib)
 (require 'color)
