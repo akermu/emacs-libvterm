@@ -345,7 +345,11 @@ static int term_movecursor(VTermPos new, VTermPos old, int visible,
 
 static void term_redraw(Term *term, emacs_env *env) {
   if (term->is_invalidated) {
-    toggle_cursor_blinking(env, term->cursor.blinking);
+    if (term->cursor.blinking_changed) {
+      toggle_cursor_blinking(env, term->cursor.blinking);
+      term->cursor.blinking_changed = false;
+    }
+
     toggle_cursor(env, term->cursor.visible);
     long bufline_before = env->extract_integer(env, buffer_line_number(env));
     refresh_scrollback(term, env);
@@ -412,6 +416,7 @@ static int term_settermprop(VTermProp prop, VTermValue *val, void *user_data) {
     break;
   case VTERM_PROP_CURSORBLINK:
     term->cursor.blinking = val->boolean;
+    term->cursor.blinking_changed = true;
     break;
   case VTERM_PROP_ALTSCREEN:
     invalidate_terminal(term, 0, term->height);
@@ -607,7 +612,7 @@ static emacs_value Fvterm_new(emacs_env *env, ptrdiff_t nargs,
   term->height = rows;
 
   term->cursor.visible = true;
-  term->cursor.blinking = false;
+  term->cursor.blinking = env->is_not_nil(env, Fblink_cursor_mode);
   term->title = NULL;
   term->is_title_changed = false;
 

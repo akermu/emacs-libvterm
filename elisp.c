@@ -104,7 +104,6 @@ void toggle_cursor(emacs_env *env, bool visible) {
 }
 
 void toggle_cursor_blinking(emacs_env *env, bool blinking) {
-  blinking = false;
   emacs_value Qfalse = env->make_integer(env, -1);
   emacs_value Qblinking = blinking ? Qt : Qfalse;
   env->funcall(env, Fblink_cursor_mode, 1, (emacs_value[]){Qblinking});

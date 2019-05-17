@@ -26,6 +26,7 @@ typedef struct ScrollbackLine {
 typedef struct Cursor {
   int row, col;
   bool blinking;
+  bool blinking_changed;
   bool visible;
 } Cursor;
 
