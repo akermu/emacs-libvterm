@@ -1,3 +1,5 @@
+[![MELPA](https://melpa.org/packages/vterm-badge.svg)](https://melpa.org/#/vterm)
+
 # Introduction
 
 This emacs module implements a bridge to libvterm to display a terminal in a
