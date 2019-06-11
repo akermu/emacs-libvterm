@@ -300,10 +300,12 @@ Argument BUFFER the terminal buffer."
 
 Then triggers a redraw from the module."
   (let ((inhibit-redisplay t)
-        (inhibit-read-only t))
-    (with-current-buffer (process-buffer process)
-      (vterm--write-input vterm--term input)
-      (vterm--update vterm--term))))
+        (inhibit-read-only t)
+        (buf (process-buffer process)))
+    (when (buffer-live-p buf)
+      (with-current-buffer  buf
+        (vterm--write-input vterm--term input)
+        (vterm--update vterm--term)))))
 
 (defun vterm--sentinel (process event)
   "Sentinel of vterm PROCESS.
