@@ -23,10 +23,20 @@ typedef struct ScrollbackLine {
   VTermScreenCell cells[];
 } ScrollbackLine;
 
+enum {
+  VTERM_PROP_CURSOR_BLOCK = VTERM_PROP_CURSORSHAPE_BLOCK,
+  VTERM_PROP_CURSOR_UNDERLINE = VTERM_PROP_CURSORSHAPE_UNDERLINE,
+  VTERM_PROP_CURSOR_BAR_LEFT = VTERM_PROP_CURSORSHAPE_BAR_LEFT,
+  VTERM_PROP_CURSOR_VISIBLE = 4,
+  VTERM_PROP_CURSOR_NOT_VISIBLE = 5,
+};
+
 typedef struct Cursor {
   int row, col;
   bool blinking;
-  bool visible;
+  bool blinking_changed;
+  int cursor_type;
+  bool cursor_type_changed;
 } Cursor;
 
 typedef struct Term {

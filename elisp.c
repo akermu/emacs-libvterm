@@ -98,13 +98,11 @@ emacs_value selected_window(emacs_env *env) {
   return env->funcall(env, Fselected_window, 0, (emacs_value[]){});
 }
 
-void toggle_cursor(emacs_env *env, bool visible) {
-  emacs_value Qvisible = visible ? Qt : Qnil;
-  env->funcall(env, Fset, 2, (emacs_value[]){Qcursor_type, Qvisible});
+void set_cursor_type(emacs_env *env, emacs_value QCursorType) {
+  env->funcall(env, Fset, 2, (emacs_value[]){Qcursor_type, QCursorType});
 }
 
 void toggle_cursor_blinking(emacs_env *env, bool blinking) {
-  blinking = false;
   emacs_value Qfalse = env->make_integer(env, -1);
   emacs_value Qblinking = blinking ? Qt : Qfalse;
   env->funcall(env, Fblink_cursor_mode, 1, (emacs_value[]){Qblinking});

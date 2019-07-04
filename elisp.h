@@ -18,6 +18,9 @@ emacs_value Qslant;
 emacs_value Qreverse;
 emacs_value Qstrike;
 emacs_value Qface;
+emacs_value Qbox;
+emacs_value Qbar;
+emacs_value Qhbar;
 emacs_value Qcursor_type;
 emacs_value Qansi_color_names_vector;
 
@@ -59,7 +62,7 @@ void insert(emacs_env *env, emacs_value string);
 void goto_char(emacs_env *env, int pos);
 void forward_line(emacs_env *env, int n);
 void goto_line(emacs_env *env, int n);
-void toggle_cursor(emacs_env *env, bool visible);
+void set_cursor_type(emacs_env *env, emacs_value cursor_type);
 void toggle_cursor_blinking(emacs_env *env, bool visible);
 void delete_lines(emacs_env *env, int linenum, int count, bool del_whole_line);
 emacs_value get_hex_color_fg(emacs_env *env, emacs_value face);
