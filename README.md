@@ -16,6 +16,11 @@ Clone the repository:
 git clone https://github.com/akermu/emacs-libvterm.git
 ```
 
+Before install emacs-libvterm,you need make sure you have 
+installed
+ 1. cmake (>=3.0.2)
+ 2. libtool-bin related issues: [#66](https://github.com/akermu/emacs-libvterm/issues/66) [#85](https://github.com/akermu/emacs-libvterm/issues/85#issuecomment-491845136) 
+ 
 Run the build:
 
 ```
@@ -30,14 +35,6 @@ And add this to your `init.el`:
 ```
 (add-to-list 'load-path "path/to/emacs-libvterm")
 (require 'vterm)
-```
-
-If you want to have the module compiled, wrap the call to `require` as follows:
-
-```
-(add-to-list 'load-path "path/to/emacs-libvterm")
-(let (vterm-install)
-  (require 'vterm))
 ```
 
 # Debugging and testing
