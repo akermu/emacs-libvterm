@@ -42,7 +42,7 @@
 
 ;;; Code:
 
-(require 'ansi-color)
+(require 'term)
 
 (defvar vterm-install-buffer-name " *Install vterm"
   "Name of the buffer used for compiling vterm-module.")
@@ -128,64 +128,56 @@ and background color are used for bright color. "
   :group 'vterm)
 
 (defface vterm-color-black
-  `((t :foreground ,(aref ansi-color-names-vector 0)
-       :background ,(aref ansi-color-names-vector 0)))
+  `((t :inherit term-color-black))
   "Face used to render black color code.
 the foreground color are used for normal color,
 and background color are used for bright color. "
   :group 'vterm)
 
 (defface vterm-color-red
-  `((t :foreground ,(aref ansi-color-names-vector 1)
-       :background ,(aref ansi-color-names-vector 1)))
+  `((t :inherit term-color-red))
   "Face used to render red color code.
 the foreground color are used for normal color,
 and background color are used for bright color. "
   :group 'vterm)
 
 (defface vterm-color-green
-  `((t :foreground ,(aref ansi-color-names-vector 2)
-       :background ,(aref ansi-color-names-vector 2)))
+  `((t :inherit term-color-green))
   "Face used to render green color code.
 the foreground color are used for normal color,
 and background color are used for bright color. "
   :group 'vterm)
 
 (defface vterm-color-yellow
-  `((t :foreground ,(aref ansi-color-names-vector 3)
-       :background ,(aref ansi-color-names-vector 3)))
+  `((t :inherit term-color-yellow))
   "Face used to render yellow color code.
 the foreground color are used for normal color,
 and background color are used for bright color. "
   :group 'vterm)
 
 (defface vterm-color-blue
-  `((t :foreground ,(aref ansi-color-names-vector 4)
-       :background ,(aref ansi-color-names-vector 4)))
+  `((t :inherit term-color-blue))
   "Face used to render blue color code.
 the foreground color are used for normal color,
 and background color are used for bright color. "
   :group 'vterm)
 
 (defface vterm-color-magenta
-  `((t :foreground ,(aref ansi-color-names-vector 5)
-       :background ,(aref ansi-color-names-vector 5)))
+  `((t :inherit term-color-magenta))
   "Face used to render magenta color code.
 the foreground color are used for normal color,
 and background color are used for bright color. "
   :group 'vterm)
 
 (defface vterm-color-cyan
-  `((t :foreground ,(aref ansi-color-names-vector 6)
-       :background ,(aref ansi-color-names-vector 6)))
+  `((t :inherit term-color-cyan))
   "Face used to render cyan color code.
 the foreground color are used for normal color,
 and background color are used for bright color. "
   :group 'vterm)
 
 (defface vterm-color-white
-  `((t :foreground ,(aref ansi-color-names-vector 7)
-       :background ,(aref ansi-color-names-vector 7)))
+  `((t :inherit term-color-white))
   "Face used to render white color code.
 the foreground color are used for normal color,
 and background color are used for bright color. "
@@ -406,7 +398,7 @@ Then triggers a redraw from the module."
         (vterm--write-input vterm--term input)
         (vterm--update vterm--term)))))
 
-(defun vterm--sentinel (process event)
+(defun vterm--sentinel (process _event)
   "Sentinel of vterm PROCESS.
 Argument EVENT process event."
   (let ((buf (process-buffer process)))
