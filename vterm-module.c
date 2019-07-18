@@ -310,6 +310,10 @@ static void adjust_topline(Term *term, emacs_env *env, long added) {
     } else {
       recenter(env, env->make_integer(env, pos.row));
     }
+  }else{
+    if (env->is_not_nil(env, window)) {
+      set_window_point(env, window, point(env));
+    }
   }
 }
 
@@ -763,6 +767,9 @@ int emacs_module_init(struct emacs_runtime *ert) {
   Fdelete_lines =
       env->make_global_ref(env, env->intern(env, "vterm--delete-lines"));
   Frecenter = env->make_global_ref(env, env->intern(env, "recenter"));
+  Fset_window_point =
+      env->make_global_ref(env, env->intern(env, "set-window-point"));
+  Fpoint = env->make_global_ref(env, env->intern(env, "point"));
   Fforward_char = env->make_global_ref(env, env->intern(env, "forward-char"));
   Fblink_cursor_mode =
       env->make_global_ref(env, env->intern(env, "blink-cursor-mode"));
