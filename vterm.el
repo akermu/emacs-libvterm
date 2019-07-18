@@ -182,16 +182,16 @@ for different shell"
 
 ;; Function keys and most of C- and M- bindings
 (mapc (lambda (key)
-          (define-key vterm-mode-map (kbd key) #'vterm--self-insert))
-        (append (cl-loop for number from 1 to 12
-                         for key = (format "<f%i>" number)
-                         unless (member key vterm-keymap-exceptions)
-                         collect key)
-                (cl-loop for prefix in '("C-" "M-")
-                         append (cl-loop for char from ?a to ?z
-                                         for key = (format "%s%c" prefix char)
-                                         unless (member key vterm-keymap-exceptions)
-                                         collect key))))
+        (define-key vterm-mode-map (kbd key) #'vterm--self-insert))
+      (append (cl-loop for number from 1 to 12
+                       for key = (format "<f%i>" number)
+                       unless (member key vterm-keymap-exceptions)
+                       collect key)
+              (cl-loop for prefix in '("C-" "M-")
+                       append (cl-loop for char from ?a to ?z
+                                       for key = (format "%s%c" prefix char)
+                                       unless (member key vterm-keymap-exceptions)
+                                       collect key))))
 
 (defun vterm--self-insert ()
   "Sends invoking key to libvterm."
@@ -226,7 +226,7 @@ for different shell"
 (defun vterm-send-return ()
   "Sends C-m to the libvterm."
   (interactive)
-   (process-send-string vterm--process "\C-m"))
+  (process-send-string vterm--process "\C-m"))
 
 (defun vterm-yank ()
   "Implementation of `yank' (paste) in vterm."
