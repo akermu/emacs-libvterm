@@ -310,7 +310,7 @@ static void adjust_topline(Term *term, emacs_env *env, long added) {
     } else {
       recenter(env, env->make_integer(env, pos.row));
     }
-  }else{
+  } else {
     if (env->is_not_nil(env, window)) {
       set_window_point(env, window, point(env));
     }
@@ -536,9 +536,9 @@ static void term_process_key(Term *term, unsigned char *key, size_t len,
                              VTermModifier modifier) {
   if (is_key(key, len, "<return>")) {
     vterm_keyboard_key(term->vt, VTERM_KEY_ENTER, modifier);
-  }else if (is_key(key, len, "<start_paste>")) {
+  } else if (is_key(key, len, "<start_paste>")) {
     vterm_keyboard_start_paste(term->vt);
-  }else if (is_key(key, len, "<end_paste>")) {
+  } else if (is_key(key, len, "<end_paste>")) {
     vterm_keyboard_end_paste(term->vt);
   } else if (is_key(key, len, "<tab>")) {
     vterm_keyboard_key(term->vt, VTERM_KEY_TAB, modifier);
