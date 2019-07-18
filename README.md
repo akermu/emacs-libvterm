@@ -93,3 +93,8 @@ color you like:
 - vterm-color-cyan-bg
 - vterm-color-white-fg
 - vterm-color-white-bg
+
+## Related packages
+
+- [vterm-toggle](https://github.com/jixiuf/vterm-toggle): Toggles between a vterm and the current buffer
+- [multi-libvterm](https://github.com/suonlight/multi-libvterm): Multiterm for emacs-libvterm
