@@ -23,14 +23,14 @@ before_install:
   - export PATH="$HOME/bin:$PATH"
   - wget 'https://raw.githubusercontent.com/flycheck/emacs-travis/master/emacs-travis.mk'
   - make -f emacs-travis.mk EMACSCONFFLAGS="--with-x-toolkit=no --without-x --without-all --with-xml2 --with-modules CFLAGS='-O2 -march=native' CXXFLAGS='-O2 -march=native'" install_emacs
-    # libvterm
-  - bzr branch lp:libvterm $HOME/libvterm
-  - make -C "$HOME/libvterm" CFLAGS='-O2' PREFIX='/usr'
-  - sudo make -C "$HOME/libvterm" install
+  # cmake
+  - wget 'https://github.com/Kitware/CMake/releases/download/v3.15.0/cmake-3.15.0-Linux-x86_64.tar.gz'
+  - tar -xf cmake-3.15.0-Linux-x86_64.tar.gz
+  - export CMAKE="$(pwd)/cmake-3.15.0-Linux-x86_64/bin/cmake"
 
 script:
   - mkdir build
   - cd build
-  - cmake ..
+  - ${CMAKE} ..
   - make
 
