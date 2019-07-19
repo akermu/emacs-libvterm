@@ -46,6 +46,9 @@ else()
   set(LIBVTERM_LIBRARY ${SOURCE_DIR}/.libs/libvterm.a)
 
   add_dependencies(vterm-module libvterm)
+
+  # Workaround for https://gitlab.kitware.com/cmake/cmake/issues/15052
+  file(MAKE_DIRECTORY ${LIBVTERM_INCLUDE_DIR})
 endif()
 
 add_library(vterm STATIC IMPORTED)
