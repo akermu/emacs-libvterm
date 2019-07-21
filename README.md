@@ -20,7 +20,7 @@ git clone https://github.com/akermu/emacs-libvterm.git
 
 Before install emacs-libvterm,you need make sure you have 
 installed
- 1. cmake (>=3.0.2)
+ 1. cmake (>=3.11)
  2. libtool-bin related issues: [#66](https://github.com/akermu/emacs-libvterm/issues/66) [#85](https://github.com/akermu/emacs-libvterm/issues/85#issuecomment-491845136) 
  
 Run the build:
