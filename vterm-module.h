@@ -33,8 +33,6 @@ enum {
 
 typedef struct Cursor {
   int row, col;
-  bool blinking;
-  bool blinking_changed;
   int cursor_type;
   bool cursor_type_changed;
 } Cursor;
