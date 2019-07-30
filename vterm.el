@@ -194,28 +194,18 @@ and background color are used for bright color. "
    vterm-color-white]
   "Color palette for the foreground and background.")
 
-(defun vterm--get-color(index)
-  "Get color by index from `vterm-color-palette'.
-Argument INDEX index of color."
-  (cond
-   ((and (>= index 0)(< index 8 ))
-    (face-foreground
-     (elt vterm-color-palette index)
-     nil 'default))
-   ((and (>= index 8 )(< index 16 ))
-    (face-background
-     (elt vterm-color-palette (% index 8))
-     nil 'default))
-   ( (= index -1)               ;-1 foreground
-     (face-foreground 'vterm-color-default nil 'default))
-   (t                                   ;-2 background
-    (face-background 'vterm-color-default nil 'default))))
-
 (defvar-local vterm--term nil
   "Pointer to Term.")
 
 (defvar-local vterm--process nil
   "Shell process of current term.")
+
+(defvar-local vterm--redraw-timer nil)
+
+(defvar vterm-timer-delay 0.01
+  "Delay for refreshing the buffer after receiving updates from libvterm.
+Improves performance when receiving large bursts of data.
+If nil, never delay")
 
 (define-derived-mode vterm-mode fundamental-mode "VTerm"
   "Major mode for vterm buffer."
@@ -336,13 +326,6 @@ Optional argument PASTE-P paste-p."
     (when paste-p
       (vterm--update vterm--term "<end_paste>" nil nil nil))))
 
-(defvar-local vterm--redraw-timer nil)
-
-(defvar vterm-timer-delay 0.01
-  "Delay for refreshing the buffer after receiving updates from libvterm.
-Improves performance when receiving large bursts of data.
-If nil, never delay")
-
 (defun vterm--invalidate()
   "The terminal buffer is invalidated, the buffer needs redrawing."
   (if vterm-timer-delay
@@ -452,6 +435,22 @@ Feeds the size change to the virtual terminal."
   "Run the `vterm--set-title-hook' with TITLE as argument."
   (run-hook-with-args 'vterm-set-title-functions title))
 
+(defun vterm--get-color(index)
+  "Get color by index from `vterm-color-palette'.
+Argument INDEX index of color."
+  (cond
+   ((and (>= index 0)(< index 8 ))
+    (face-foreground
+     (elt vterm-color-palette index)
+     nil 'default))
+   ((and (>= index 8 )(< index 16 ))
+    (face-background
+     (elt vterm-color-palette (% index 8))
+     nil 'default))
+   ( (= index -1)               ;-1 foreground
+     (face-foreground 'vterm-color-default nil 'default))
+   (t                                   ;-2 background
+    (face-background 'vterm-color-default nil 'default))))
 
 (provide 'vterm)
 ;;; vterm.el ends here
