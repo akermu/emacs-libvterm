@@ -108,11 +108,6 @@ void set_cursor_type(emacs_env *env, emacs_value QCursorType) {
   env->funcall(env, Fset, 2, (emacs_value[]){Qcursor_type, QCursorType});
 }
 
-void toggle_cursor_blinking(emacs_env *env, bool blinking) {
-  emacs_value Qfalse = env->make_integer(env, -1);
-  emacs_value Qblinking = blinking ? Qt : Qfalse;
-  env->funcall(env, Fblink_cursor_mode, 1, (emacs_value[]){Qblinking});
-}
 
 emacs_value get_hex_color_fg(emacs_env *env, emacs_value face) {
   return env->funcall(env, Fvterm_face_color_hex, 2,

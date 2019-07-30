@@ -375,11 +375,6 @@ static void term_redraw_cursor(Term *term, emacs_env *env) {
 static void term_redraw(Term *term, emacs_env *env) {
   term_redraw_cursor(term, env);
   if (term->is_invalidated) {
-    if (term->cursor.blinking_changed) {
-      toggle_cursor_blinking(env, term->cursor.blinking);
-      term->cursor.blinking_changed = false;
-    }
-
     long bufline_before = env->extract_integer(env, buffer_line_number(env));
     refresh_scrollback(term, env);
     refresh_screen(term, env);
@@ -452,10 +447,6 @@ static int term_settermprop(VTermProp prop, VTermValue *val, void *user_data) {
     break;
   case VTERM_PROP_TITLE:
     term_set_title(term, val->string);
-    break;
-  case VTERM_PROP_CURSORBLINK:
-    term->cursor.blinking = val->boolean;
-    term->cursor.blinking_changed = true;
     break;
   case VTERM_PROP_ALTSCREEN:
     invalidate_terminal(term, 0, term->height);
@@ -650,7 +641,6 @@ static emacs_value Fvterm_new(emacs_env *env, ptrdiff_t nargs,
   term->width = cols;
   term->height = rows;
 
-  term->cursor.blinking = env->is_not_nil(env, Fblink_cursor_mode);
   term->title = NULL;
   term->is_title_changed = false;
 
@@ -771,8 +761,6 @@ int emacs_module_init(struct emacs_runtime *ert) {
       env->make_global_ref(env, env->intern(env, "set-window-point"));
   Fpoint = env->make_global_ref(env, env->intern(env, "point"));
   Fforward_char = env->make_global_ref(env, env->intern(env, "forward-char"));
-  Fblink_cursor_mode =
-      env->make_global_ref(env, env->intern(env, "blink-cursor-mode"));
   Fget_buffer_window =
       env->make_global_ref(env, env->intern(env, "get-buffer-window"));
   Fselected_window =
