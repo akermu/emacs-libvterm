@@ -491,19 +491,21 @@ static emacs_value render_text(emacs_env *env, Term *term, char *buffer,
 
 static emacs_value color_to_rgb_string(emacs_env *env, Term *term,
                                        VTermColor *color) {
-  emacs_value palette = symbol_value(env, Qansi_color_names_vector);
   if (VTERM_COLOR_IS_DEFAULT_FG(color)) {
-    return env->vec_get(env, palette, 7);
+    return vterm_get_color(env, -1);
   }
   if (VTERM_COLOR_IS_DEFAULT_BG(color)) {
-    return env->vec_get(env, palette, 0);
+    return vterm_get_color(env, -2);
   }
-  if (VTERM_COLOR_IS_INDEXED(color) < 16) {
-    return env->vec_get(env, palette, color->indexed.idx % 8);
-  }
-  if (VTERM_COLOR_IS_INDEXED(color) >= 16) {
-    VTermState *state = vterm_obtain_state(term->vt);
-    vterm_state_get_palette_color(state, color->indexed.idx, color);
+  if (VTERM_COLOR_IS_INDEXED(color)) {
+    if (color->indexed.idx < 16) {
+      return vterm_get_color(env, color->indexed.idx);
+    } else {
+      VTermState *state = vterm_obtain_state(term->vt);
+      vterm_state_get_palette_color(state, color->indexed.idx, color);
+    }
+  } else if (VTERM_COLOR_IS_RGB(color)) {
+    /* do nothing just use the argument color directly */
   }
 
   char buffer[8];
@@ -733,8 +735,6 @@ int emacs_module_init(struct emacs_runtime *ert) {
   Qbar = env->make_global_ref(env, env->intern(env, "bar"));
   Qhbar = env->make_global_ref(env, env->intern(env, "hbar"));
   Qcursor_type = env->make_global_ref(env, env->intern(env, "cursor-type"));
-  Qansi_color_names_vector =
-      env->make_global_ref(env, env->intern(env, "ansi-color-names-vector"));
 
   // Functions
   Fsymbol_value = env->make_global_ref(env, env->intern(env, "symbol-value"));
@@ -746,8 +746,6 @@ int emacs_module_init(struct emacs_runtime *ert) {
   Fput_text_property =
       env->make_global_ref(env, env->intern(env, "put-text-property"));
   Fset = env->make_global_ref(env, env->intern(env, "set"));
-  Fvterm_face_color_hex =
-      env->make_global_ref(env, env->intern(env, "vterm--face-color-hex"));
   Fvterm_flush_output =
       env->make_global_ref(env, env->intern(env, "vterm--flush-output"));
   Fforward_line = env->make_global_ref(env, env->intern(env, "forward-line"));
@@ -771,6 +769,8 @@ int emacs_module_init(struct emacs_runtime *ert) {
   Fvterm_invalidate =
       env->make_global_ref(env, env->intern(env, "vterm--invalidate"));
   Feq = env->make_global_ref(env, env->intern(env, "eq"));
+  Fvterm_get_color =
+      env->make_global_ref(env, env->intern(env, "vterm--get-color"));
 
   // Exported functions
   emacs_value fun;

@@ -8,7 +8,6 @@
 
 int plugin_is_GPL_compatible;
 
-
 #define SB_MAX 100000 // Maximum 'scrollback' value.
 
 #ifndef MIN
@@ -64,11 +63,10 @@ typedef struct Term {
 
 static bool compare_cells(VTermScreenCell *a, VTermScreenCell *b);
 static bool is_key(unsigned char *key, size_t len, char *key_description);
-static emacs_value render_text(emacs_env *env, Term *term, char *string, int len,
-                               VTermScreenCell *cell);
-static emacs_value cell_to_face(emacs_env *env, Term *term, VTermScreenCell *cell);
-static emacs_value color_to_face(emacs_env *env, VTermColor *color, emacs_value palette);
-static emacs_value color_to_rgb_string(emacs_env *env, Term *term, VTermColor *color);
+static emacs_value render_text(emacs_env *env, Term *term, char *string,
+                               int len, VTermScreenCell *cell);
+static emacs_value color_to_rgb_string(emacs_env *env, Term *term,
+                                       VTermColor *color);
 
 static int term_settermprop(VTermProp prop, VTermValue *val, void *user_data);
 

@@ -42,7 +42,7 @@
 
 ;;; Code:
 
-(require 'ansi-color)
+(require 'term)
 
 (defvar vterm-install-buffer-name " *Install vterm"
   "Name of the buffer used for compiling vterm-module.")
@@ -120,11 +120,92 @@ for different shell"
   :type 'hook
   :group 'vterm)
 
+(defface vterm-color-default
+  `((t :inherit default))
+  "The default normal color and bright color.
+the foreground color are used for normal color,
+and background color are used for bright color. "
+  :group 'vterm)
+
+(defface vterm-color-black
+  `((t :inherit term-color-black))
+  "Face used to render black color code.
+the foreground color are used for normal color,
+and background color are used for bright color. "
+  :group 'vterm)
+
+(defface vterm-color-red
+  `((t :inherit term-color-red))
+  "Face used to render red color code.
+the foreground color are used for normal color,
+and background color are used for bright color. "
+  :group 'vterm)
+
+(defface vterm-color-green
+  `((t :inherit term-color-green))
+  "Face used to render green color code.
+the foreground color are used for normal color,
+and background color are used for bright color. "
+  :group 'vterm)
+
+(defface vterm-color-yellow
+  `((t :inherit term-color-yellow))
+  "Face used to render yellow color code.
+the foreground color are used for normal color,
+and background color are used for bright color. "
+  :group 'vterm)
+
+(defface vterm-color-blue
+  `((t :inherit term-color-blue))
+  "Face used to render blue color code.
+the foreground color are used for normal color,
+and background color are used for bright color. "
+  :group 'vterm)
+
+(defface vterm-color-magenta
+  `((t :inherit term-color-magenta))
+  "Face used to render magenta color code.
+the foreground color are used for normal color,
+and background color are used for bright color. "
+  :group 'vterm)
+
+(defface vterm-color-cyan
+  `((t :inherit term-color-cyan))
+  "Face used to render cyan color code.
+the foreground color are used for normal color,
+and background color are used for bright color. "
+  :group 'vterm)
+
+(defface vterm-color-white
+  `((t :inherit term-color-white))
+  "Face used to render white color code.
+the foreground color are used for normal color,
+and background color are used for bright color. "
+  :group 'vterm)
+
+(defvar vterm-color-palette
+  [vterm-color-black
+   vterm-color-red
+   vterm-color-green
+   vterm-color-yellow
+   vterm-color-blue
+   vterm-color-magenta
+   vterm-color-cyan
+   vterm-color-white]
+  "Color palette for the foreground and background.")
+
 (defvar-local vterm--term nil
   "Pointer to Term.")
 
 (defvar-local vterm--process nil
   "Shell process of current term.")
+
+(defvar-local vterm--redraw-timer nil)
+
+(defvar vterm-timer-delay 0.01
+  "Delay for refreshing the buffer after receiving updates from libvterm.
+Improves performance when receiving large bursts of data.
+If nil, never delay")
 
 (define-derived-mode vterm-mode fundamental-mode "VTerm"
   "Major mode for vterm buffer."
@@ -140,7 +221,7 @@ for different shell"
   (if (version< emacs-version "27")
       (add-hook 'window-size-change-functions #'vterm--window-size-change-26 t t)
     (add-hook 'window-size-change-functions #'vterm--window-size-change t t))
-  (let ((process-environment (append '("TERM=xterm"
+  (let ((process-environment (append '("TERM=xterm-256color"
                                        "INSIDE_EMACS=vterm"
                                        "LINES"
                                        "COLUMNS")
@@ -245,13 +326,6 @@ Optional argument PASTE-P paste-p."
     (when paste-p
       (vterm--update vterm--term "<end_paste>" nil nil nil))))
 
-(defvar-local vterm--redraw-timer nil)
-
-(defvar vterm-timer-delay 0.01
-  "Delay for refreshing the buffer after receiving updates from libvterm.
-Improves performance when receiving large bursts of data.
-If nil, never delay")
-
 (defun vterm--invalidate()
   "The terminal buffer is invalidated, the buffer needs redrawing."
   (if vterm-timer-delay
@@ -307,7 +381,7 @@ Then triggers a redraw from the module."
         (vterm--write-input vterm--term input)
         (vterm--update vterm--term)))))
 
-(defun vterm--sentinel (process event)
+(defun vterm--sentinel (process _event)
   "Sentinel of vterm PROCESS.
 Argument EVENT process event."
   (let ((buf (process-buffer process)))
@@ -361,6 +435,22 @@ Feeds the size change to the virtual terminal."
   "Run the `vterm--set-title-hook' with TITLE as argument."
   (run-hook-with-args 'vterm-set-title-functions title))
 
+(defun vterm--get-color(index)
+  "Get color by index from `vterm-color-palette'.
+Argument INDEX index of color."
+  (cond
+   ((and (>= index 0)(< index 8 ))
+    (face-foreground
+     (elt vterm-color-palette index)
+     nil 'default))
+   ((and (>= index 8 )(< index 16 ))
+    (face-background
+     (elt vterm-color-palette (% index 8))
+     nil 'default))
+   ( (= index -1)               ;-1 foreground
+     (face-foreground 'vterm-color-default nil 'default))
+   (t                                   ;-2 background
+    (face-background 'vterm-color-default nil 'default))))
 
 (provide 'vterm)
 ;;; vterm.el ends here
