@@ -244,6 +244,7 @@ If nil, never delay")
 
 ;; Keybindings
 (define-key vterm-mode-map [tab]                       #'vterm--self-insert)
+(define-key vterm-mode-map [backtab]                   #'vterm--self-insert)
 (define-key vterm-mode-map [backspace]                 #'vterm--self-insert)
 (define-key vterm-mode-map [M-backspace]               #'vterm--self-insert)
 (define-key vterm-mode-map [return]                    #'vterm--self-insert)
@@ -291,7 +292,7 @@ If nil, never delay")
   (when vterm--term
     (let ((inhibit-redisplay t)
           (inhibit-read-only t))
-      (when (and shift (not meta) (not ctrl))
+      (when (and (not (symbolp last-input-event)) shift (not meta) (not ctrl))
         (setq key (upcase key)))
       (vterm--update vterm--term key shift meta ctrl))))
 

@@ -546,6 +546,8 @@ static void term_process_key(Term *term, unsigned char *key, size_t len,
     vterm_keyboard_end_paste(term->vt);
   } else if (is_key(key, len, "<tab>")) {
     vterm_keyboard_key(term->vt, VTERM_KEY_TAB, modifier);
+  } else if (is_key(key, len, "<backtab>") || is_key(key, len, "<iso-lefttab>")) {
+    vterm_keyboard_key(term->vt, VTERM_KEY_TAB, VTERM_MOD_SHIFT);
   } else if (is_key(key, len, "<backspace>")) {
     vterm_keyboard_key(term->vt, VTERM_KEY_BACKSPACE, modifier);
   } else if (is_key(key, len, "<escape>")) {
