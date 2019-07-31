@@ -151,7 +151,7 @@ for different shell"
            :name "vterm"
            :buffer (current-buffer)
            :command `("/bin/sh" "-c"
-                      ,(format "stty -nl sane iutf8 rows %d columns %d >/dev/null && exec %s"
+                      ,(format "stty -nl sane iutf8 erase ^? rows %d columns %d >/dev/null && exec %s"
                                (window-body-height)
                                (window-body-width)
                                vterm-shell))
