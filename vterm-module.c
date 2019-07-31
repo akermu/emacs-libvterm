@@ -601,7 +601,7 @@ static void term_put_caret(Term *term, emacs_env *env, int row, int col,
   goto_char(env, point);
 }
 
-static void term_finalize(void *object) {
+void term_finalize(void *object) {
   Term *term = (Term *)object;
   for (int i = 0; i < term->sb_current; i++) {
     free(term->sb_buffer[i]);
@@ -616,8 +616,8 @@ static void term_finalize(void *object) {
   free(term);
 }
 
-static emacs_value Fvterm_new(emacs_env *env, ptrdiff_t nargs,
-                              emacs_value args[], void *data) {
+emacs_value Fvterm_new(emacs_env *env, ptrdiff_t nargs, emacs_value args[],
+                       void *data) {
   Term *term = malloc(sizeof(Term));
 
   int rows = env->extract_integer(env, args[0]);
@@ -647,8 +647,8 @@ static emacs_value Fvterm_new(emacs_env *env, ptrdiff_t nargs,
   return env->make_user_ptr(env, term_finalize, term);
 }
 
-static emacs_value Fvterm_update(emacs_env *env, ptrdiff_t nargs,
-                                 emacs_value args[], void *data) {
+emacs_value Fvterm_update(emacs_env *env, ptrdiff_t nargs, emacs_value args[],
+                          void *data) {
   Term *term = env->get_user_ptr(env, args[0]);
 
   // Process keys
@@ -677,14 +677,15 @@ static emacs_value Fvterm_update(emacs_env *env, ptrdiff_t nargs,
   return env->make_integer(env, 0);
 }
 
-static emacs_value Fvterm_redraw(emacs_env *env, ptrdiff_t nargs,
-                                 emacs_value args[], void *data) {
+emacs_value Fvterm_redraw(emacs_env *env, ptrdiff_t nargs, emacs_value args[],
+                          void *data) {
   Term *term = env->get_user_ptr(env, args[0]);
   term_redraw(term, env);
   return env->make_integer(env, 0);
 }
-static emacs_value Fvterm_write_input(emacs_env *env, ptrdiff_t nargs,
-                                      emacs_value args[], void *data) {
+
+emacs_value Fvterm_write_input(emacs_env *env, ptrdiff_t nargs,
+                               emacs_value args[], void *data) {
   Term *term = env->get_user_ptr(env, args[0]);
   ptrdiff_t len = string_bytes(env, args[1]);
   char bytes[len];
@@ -697,8 +698,8 @@ static emacs_value Fvterm_write_input(emacs_env *env, ptrdiff_t nargs,
   return env->make_integer(env, 0);
 }
 
-static emacs_value Fvterm_set_size(emacs_env *env, ptrdiff_t nargs,
-                                   emacs_value args[], void *data) {
+emacs_value Fvterm_set_size(emacs_env *env, ptrdiff_t nargs, emacs_value args[],
+                            void *data) {
   Term *term = env->get_user_ptr(env, args[0]);
   int rows = env->extract_integer(env, args[1]);
   int cols = env->extract_integer(env, args[2]);
