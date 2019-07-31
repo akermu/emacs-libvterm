@@ -59,6 +59,8 @@ typedef struct Term {
   bool is_title_changed;
 
   int width, height;
+
+  int pty_fd;
 } Term;
 
 static bool compare_cells(VTermScreenCell *a, VTermScreenCell *b);
@@ -74,18 +76,23 @@ static void term_redraw(Term *term, emacs_env *env);
 static void term_flush_output(Term *term, emacs_env *env);
 static void term_process_key(Term *term, unsigned char *key, size_t len,
                              VTermModifier modifier);
-static void term_put_caret(Term *term, emacs_env *env, int row, int col,
-                           int offset);
 static void invalidate_terminal(Term *term, int start_row, int end_row);
 static void refresh_size(Term *term);
-static void term_finalize(void *object);
+void term_finalize(void *object);
 
-static emacs_value Fvterm_new(emacs_env *env, ptrdiff_t nargs,
-                              emacs_value args[], void *data);
-static emacs_value Fvterm_update(emacs_env *env, ptrdiff_t nargs,
-                                 emacs_value args[], void *data);
-static emacs_value Fvterm_redraw(emacs_env *env, ptrdiff_t nargs,
-                                 emacs_value args[], void *data);
+emacs_value Fvterm_new(emacs_env *env, ptrdiff_t nargs, emacs_value args[],
+                       void *data);
+emacs_value Fvterm_update(emacs_env *env, ptrdiff_t nargs, emacs_value args[],
+                          void *data);
+emacs_value Fvterm_redraw(emacs_env *env, ptrdiff_t nargs, emacs_value args[],
+                          void *data);
+emacs_value Fvterm_write_input(emacs_env *env, ptrdiff_t nargs,
+                               emacs_value args[], void *data);
+emacs_value Fvterm_set_size(emacs_env *env, ptrdiff_t nargs, emacs_value args[],
+                            void *data);
+emacs_value Fvterm_set_pty_name(emacs_env *env, ptrdiff_t nargs,
+                                emacs_value args[], void *data);
+
 int emacs_module_init(struct emacs_runtime *ert);
 
 #endif /* VTERM_MODULE_H */
