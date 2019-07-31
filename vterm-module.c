@@ -591,16 +591,6 @@ static void term_process_key(Term *term, unsigned char *key, size_t len,
   }
 }
 
-static void term_put_caret(Term *term, emacs_env *env, int row, int col,
-                           int offset) {
-  int rows, cols;
-  vterm_get_size(term->vt, &rows, &cols);
-  // row * (cols + 1) because of newline character
-  // col + 1 because (goto-char 1) sets point to first position
-  int point = ((row + term->sb_current) * (cols + 1)) + col + 1 + offset;
-  goto_char(env, point);
-}
-
 void term_finalize(void *object) {
   Term *term = (Term *)object;
   for (int i = 0; i < term->sb_current; i++) {
