@@ -244,7 +244,6 @@ If nil, never delay")
 
 ;; Keybindings
 (define-key vterm-mode-map [tab]                       #'vterm--self-insert)
-(define-key vterm-mode-map [backtab]                   #'vterm--self-insert)
 (define-key vterm-mode-map [backspace]                 #'vterm--self-insert)
 (define-key vterm-mode-map [M-backspace]               #'vterm--self-insert)
 (define-key vterm-mode-map [return]                    #'vterm--self-insert)
@@ -276,15 +275,6 @@ If nil, never delay")
                                        unless (member key vterm-keymap-exceptions)
                                        collect key))))
 
-(defun vterm-event-basic-type (event)
-  "Same as `event-basic-type', except the downcasing of EVENT."
-  (if (consp event)
-      (setq event (car event)))
-  (if (symbolp event)
-      (car (get event 'event-symbol-elements))
-    (let* ((base (logand event (1- ?\A-\^@))))
-      (if (< base 32) (logior base 64) base))))
-
 (defun vterm--self-insert ()
   "Sends invoking key to libvterm."
   (interactive)
@@ -293,7 +283,7 @@ If nil, never delay")
            (shift (memq 'shift modifiers))
            (meta (memq 'meta modifiers))
            (ctrl (memq 'control modifiers)))
-      (when-let ((key (key-description (vector (vterm-event-basic-type last-input-event)))))
+      (when-let ((key (key-description (vector (event-basic-type last-input-event)))))
         (vterm-send-key key shift meta ctrl)))))
 
 (defun vterm-send-key (key &optional shift meta ctrl)
@@ -301,6 +291,8 @@ If nil, never delay")
   (when vterm--term
     (let ((inhibit-redisplay t)
           (inhibit-read-only t))
+      (when (and shift (not meta) (not ctrl))
+        (setq key (upcase key)))
       (vterm--update vterm--term key shift meta ctrl))))
 
 (defun vterm-send-ctrl-c ()
