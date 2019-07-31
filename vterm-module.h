@@ -60,6 +60,8 @@ typedef struct Term {
   bool is_title_changed;
 
   int width, height;
+
+  int pty_fd;
 } Term;
 
 static bool compare_cells(VTermScreenCell *a, VTermScreenCell *b);
@@ -90,6 +92,9 @@ emacs_value Fvterm_write_input(emacs_env *env, ptrdiff_t nargs,
                                emacs_value args[], void *data);
 emacs_value Fvterm_set_size(emacs_env *env, ptrdiff_t nargs, emacs_value args[],
                             void *data);
+emacs_value Fvterm_set_pty_name(emacs_env *env, ptrdiff_t nargs,
+                                emacs_value args[], void *data);
+
 int emacs_module_init(struct emacs_runtime *ert);
 
 #endif /* VTERM_MODULE_H */

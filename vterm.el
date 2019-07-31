@@ -158,13 +158,14 @@ for different shell"
            :coding 'no-conversion
            :connection-type 'pty
            :filter #'vterm--filter
-           :sentinel (when vterm-exit-functions #'vterm--sentinel)))))
+           :sentinel (when vterm-exit-functions #'vterm--sentinel))))
+  (vterm--set-pty-name vterm--term (process-tty-name vterm--process)))
 
 ;; Keybindings
 (define-key vterm-mode-map [tab]                       #'vterm--self-insert)
 (define-key vterm-mode-map [backspace]                 #'vterm--self-insert)
 (define-key vterm-mode-map [M-backspace]               #'vterm--self-insert)
-(define-key vterm-mode-map [return]                    #'vterm-send-return)
+(define-key vterm-mode-map [return]                    #'vterm--self-insert)
 (define-key vterm-mode-map [left]                      #'vterm--self-insert)
 (define-key vterm-mode-map [right]                     #'vterm--self-insert)
 (define-key vterm-mode-map [up]                        #'vterm--self-insert)
@@ -222,11 +223,6 @@ for different shell"
   "Sends `C-_' to the libvterm."
   (interactive)
   (vterm-send-key "_" nil nil t))
-
-(defun vterm-send-return ()
-  "Sends C-m to the libvterm."
-  (interactive)
-  (process-send-string vterm--process "\C-m"))
 
 (defun vterm-yank ()
   "Implementation of `yank' (paste) in vterm."

@@ -2,9 +2,11 @@
 #include "elisp.h"
 #include "utf8.h"
 #include <assert.h>
+#include <fcntl.h>
 #include <limits.h>
 #include <stdio.h>
 #include <string.h>
+#include <termios.h>
 #include <unistd.h>
 #include <vterm.h>
 
@@ -526,7 +528,16 @@ static void term_flush_output(Term *term, emacs_env *env) {
 static void term_process_key(Term *term, unsigned char *key, size_t len,
                              VTermModifier modifier) {
   if (is_key(key, len, "<return>")) {
-    vterm_keyboard_key(term->vt, VTERM_KEY_ENTER, modifier);
+    if (term->pty_fd > 0) {
+      struct termios keys;
+      tcgetattr(term->pty_fd, &keys);
+      if (keys.c_iflag & ICRNL)
+        vterm_keyboard_unichar(term->vt, 10, modifier);
+      else
+        vterm_keyboard_unichar(term->vt, 13, modifier);
+    } else {
+      vterm_keyboard_key(term->vt, VTERM_KEY_ENTER, modifier);
+    }
   } else if (is_key(key, len, "<start_paste>")) {
     vterm_keyboard_start_paste(term->vt);
   } else if (is_key(key, len, "<end_paste>")) {
@@ -601,6 +612,10 @@ void term_finalize(void *object) {
     term->title = NULL;
   }
 
+  if (term->pty_fd > 0) {
+    close(term->pty_fd);
+  }
+
   free(term->sb_buffer);
   vterm_free(term->vt);
   free(term);
@@ -630,6 +645,7 @@ emacs_value Fvterm_new(emacs_env *env, ptrdiff_t nargs, emacs_value args[],
   term->invalid_end = rows;
   term->width = cols;
   term->height = rows;
+  term->pty_fd = -1;
 
   term->title = NULL;
   term->is_title_changed = false;
@@ -703,6 +719,22 @@ emacs_value Fvterm_set_size(emacs_env *env, ptrdiff_t nargs, emacs_value args[],
 
   return Qnil;
 }
+
+emacs_value Fvterm_set_pty_name(emacs_env *env, ptrdiff_t nargs,
+                                emacs_value args[], void *data) {
+  Term *term = env->get_user_ptr(env, args[0]);
+
+  if (nargs > 1) {
+    ptrdiff_t len = string_bytes(env, args[1]);
+    char filename[len];
+
+    env->copy_string_contents(env, args[1], filename, &len);
+
+    term->pty_fd = open(filename, O_RDONLY);
+  }
+  return Qnil;
+}
+
 int emacs_module_init(struct emacs_runtime *ert) {
   emacs_env *env = ert->get_environment(ert);
 
@@ -784,6 +816,10 @@ int emacs_module_init(struct emacs_runtime *ert) {
   fun = env->make_function(env, 3, 3, Fvterm_set_size,
                            "Sets the size of the terminal.", NULL);
   bind_function(env, "vterm--set-size", fun);
+
+  fun = env->make_function(env, 2, 2, Fvterm_set_pty_name,
+                           "Sets the name of the pty.", NULL);
+  bind_function(env, "vterm--set-pty-name", fun);
 
   provide(env, "vterm-module");
 
