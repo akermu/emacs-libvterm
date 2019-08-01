@@ -540,6 +540,10 @@ static void term_process_key(Term *term, unsigned char *key, size_t len,
     } else {
       vterm_keyboard_key(term->vt, VTERM_KEY_ENTER, modifier);
     }
+  } else if (is_key(key, len, "<start>")) {
+    tcflow(term->pty_fd, TCOON);
+  } else if (is_key(key, len, "<stop>")) {
+    tcflow(term->pty_fd, TCOOFF);
   } else if (is_key(key, len, "<start_paste>")) {
     vterm_keyboard_start_paste(term->vt);
   } else if (is_key(key, len, "<end_paste>")) {

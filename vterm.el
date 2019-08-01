@@ -288,9 +288,9 @@ If nil, never delay")
   (if vterm-copy-mode
       (progn                            ;enable vterm-copy-mode
         (use-local-map nil)
-        (vterm-send-key "s" nil nil t))
+        (vterm-send-stop))
     (use-local-map vterm-mode-map)
-    (vterm-send-key "q" nil nil t)))
+    (vterm-send-start)))
 
 (defun vterm--self-insert ()
   "Sends invoking key to libvterm."
@@ -311,6 +311,17 @@ If nil, never delay")
       (when (and (not (symbolp last-input-event)) shift (not meta) (not ctrl))
         (setq key (upcase key)))
       (vterm--update vterm--term key shift meta ctrl))))
+
+(defun vterm-send-start ()
+  "Output from the system is started when the system receives START."
+  (interactive)
+  (vterm-send-key "<start>"))
+
+(defun vterm-send-stop ()
+  "Output from the system is stopped when the system receives STOP."
+  (interactive)
+  (vterm-send-key "<stop>"))
+
 
 (defun vterm-send-ctrl-c ()
   "Sends `C-c' to the libvterm."
