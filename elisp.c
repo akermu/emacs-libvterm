@@ -108,7 +108,6 @@ void set_cursor_type(emacs_env *env, emacs_value QCursorType) {
   env->funcall(env, Fset, 2, (emacs_value[]){Qcursor_type, QCursorType});
 }
 
-
 emacs_value vterm_get_color(emacs_env *env, int index) {
   emacs_value idx = env->make_integer(env, index);
   return env->funcall(env, Fvterm_get_color, 1, (emacs_value[]){idx});
