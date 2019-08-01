@@ -257,18 +257,23 @@ If nil, never delay")
                                        collect key))))
 
 ;; Keybindings
-(define-key vterm-mode-map [tab]                       #'vterm--self-insert)
+(define-key vterm-mode-map [tab]                       #'vterm-send-tab)
+(define-key vterm-mode-map (kbd "TAB")                 #'vterm-send-tab)
 (define-key vterm-mode-map [backtab]                   #'vterm--self-insert)
-(define-key vterm-mode-map [backspace]                 #'vterm--self-insert)
-(define-key vterm-mode-map [M-backspace]               #'vterm--self-insert)
-(define-key vterm-mode-map [return]                    #'vterm--self-insert)
-(define-key vterm-mode-map [left]                      #'vterm--self-insert)
-(define-key vterm-mode-map [right]                     #'vterm--self-insert)
-(define-key vterm-mode-map [up]                        #'vterm--self-insert)
-(define-key vterm-mode-map [down]                      #'vterm--self-insert)
+(define-key vterm-mode-map [backspace]                 #'vterm-send-backspace)
+(define-key vterm-mode-map (kbd "DEL")                 #'vterm-send-backspace)
+(define-key vterm-mode-map [M-backspace]               #'vterm-send-meta-backspace)
+(define-key vterm-mode-map (kbd "M-DEL")               #'vterm-send-meta-backspace)
+(define-key vterm-mode-map [return]                    #'vterm-send-return)
+(define-key vterm-mode-map (kbd "RET")                 #'vterm-send-return)
+(define-key vterm-mode-map [left]                      #'vterm-send-left)
+(define-key vterm-mode-map [right]                     #'vterm-send-right)
+(define-key vterm-mode-map [up]                        #'vterm-send-up)
+(define-key vterm-mode-map [down]                      #'vterm-send-down)
 (define-key vterm-mode-map [home]                      #'vterm--self-insert)
 (define-key vterm-mode-map [end]                       #'vterm--self-insert)
 (define-key vterm-mode-map [escape]                    #'vterm--self-insert)
+
 (define-key vterm-mode-map [remap self-insert-command] #'vterm--self-insert)
 (define-key vterm-mode-map [remap yank]                #'vterm-yank)
 (define-key vterm-mode-map (kbd "C-c C-y")             #'vterm--self-insert)
@@ -276,6 +281,8 @@ If nil, never delay")
 (define-key vterm-mode-map (kbd "C-_")                 #'vterm--self-insert)
 (define-key vterm-mode-map (kbd "C-SPC")               #'vterm--self-insert)
 (define-key vterm-mode-map (kbd "C-/")                 #'vterm-undo)
+(define-key vterm-mode-map (kbd "M-.")                 #'vterm-send-meta-dot)
+(define-key vterm-mode-map (kbd "M-,")                 #'vterm-send-meta-comma)
 (define-key vterm-mode-map (kbd "C-c C-t")             #'vterm-copy-mode)
 (defvar vterm-copy-map  (make-sparse-keymap))
 (define-key vterm-copy-map (kbd "C-c C-t")             #'vterm-copy-mode)
@@ -322,6 +329,54 @@ If nil, never delay")
   (interactive)
   (vterm-send-key "<stop>"))
 
+(defun vterm-send-return ()
+  "Sends `<return>' to the libvterm."
+  (interactive)
+  (vterm-send-key "<return>"))
+
+(defun vterm-send-tab ()
+  "Sends `<tab>' to the libvterm."
+  (interactive)
+  (vterm-send-key "<tab>"))
+
+(defun vterm-send-backspace ()
+  "Sends `<backspace>' to the libvterm."
+  (interactive)
+  (vterm-send-key "<backspace>"))
+(defun vterm-send-meta-backspace ()
+  "Sends `M-<backspace>' to the libvterm."
+  (interactive)
+  (vterm-send-key "<backspace>" nil t))
+
+(defun vterm-send-up ()
+  "Sends `<up>' to the libvterm."
+  (interactive)
+  (vterm-send-key "<up>"))
+
+(defun vterm-send-down ()
+  "Sends `<down>' to the libvterm."
+  (interactive)
+  (vterm-send-key "<down>"))
+
+(defun vterm-send-left()
+  "Sends `<left>' to the libvterm."
+  (interactive)
+  (vterm-send-key "<left>"))
+
+(defun vterm-send-right()
+  "Sends `<right>' to the libvterm."
+  (interactive)
+  (vterm-send-key "<right>"))
+
+(defun vterm-send-meta-dot()
+  "Sends `M-.' to the libvterm."
+  (interactive)
+  (vterm-send-key "." nil t))
+
+(defun vterm-send-meta-comma()
+  "Sends `M-,' to the libvterm."
+  (interactive)
+  (vterm-send-key "," nil t))
 
 (defun vterm-send-ctrl-c ()
   "Sends `C-c' to the libvterm."
