@@ -242,6 +242,20 @@ If nil, never delay")
            :sentinel (when vterm-exit-functions #'vterm--sentinel))))
   (vterm--set-pty-name vterm--term (process-tty-name vterm--process)))
 
+
+;; Function keys and most of C- and M- bindings
+(mapc (lambda (key)
+        (define-key vterm-mode-map (kbd key) #'vterm--self-insert))
+      (append (cl-loop for number from 1 to 12
+                       for key = (format "<f%i>" number)
+                       unless (member key vterm-keymap-exceptions)
+                       collect key)
+              (cl-loop for prefix in '("C-" "M-")
+                       append (cl-loop for char from ?a to ?z
+                                       for key = (format "%s%c" prefix char)
+                                       unless (member key vterm-keymap-exceptions)
+                                       collect key))))
+
 ;; Keybindings
 (define-key vterm-mode-map [tab]                       #'vterm--self-insert)
 (define-key vterm-mode-map [backtab]                   #'vterm--self-insert)
@@ -263,20 +277,6 @@ If nil, never delay")
 (define-key vterm-mode-map (kbd "C-SPC")               #'vterm--self-insert)
 (define-key vterm-mode-map (kbd "C-/")                 #'vterm-undo)
 (define-key vterm-mode-map (kbd "C-c C-t")             #'vterm-copy-mode)
-
-;; Function keys and most of C- and M- bindings
-(mapc (lambda (key)
-        (define-key vterm-mode-map (kbd key) #'vterm--self-insert))
-      (append (cl-loop for number from 1 to 12
-                       for key = (format "<f%i>" number)
-                       unless (member key vterm-keymap-exceptions)
-                       collect key)
-              (cl-loop for prefix in '("C-" "M-")
-                       append (cl-loop for char from ?a to ?z
-                                       for key = (format "%s%c" prefix char)
-                                       unless (member key vterm-keymap-exceptions)
-                                       collect key))))
-
 (defvar vterm-copy-map  (make-sparse-keymap))
 (define-key vterm-copy-map (kbd "C-c C-t")             #'vterm-copy-mode)
 
