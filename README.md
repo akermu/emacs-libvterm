@@ -57,6 +57,10 @@ Open a terminal in the current window.
 ## `vterm-other-window`
 
 Open a terminal in another window.
+## `vterm-copy-mode`
+When you enable `vterm-copy-mode`,the terminal buffer would behave like a normal `read-only` text buffer.
+Then you can search in the output terminal, copy text, etc.
+the default keybinding is `C-cC-t`.
 
 # Customization
 

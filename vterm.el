@@ -232,7 +232,7 @@ If nil, never delay")
            :name "vterm"
            :buffer (current-buffer)
            :command `("/bin/sh" "-c"
-                      ,(format "stty -nl sane iutf8 erase ^? rows %d columns %d >/dev/null && exec %s"
+                      ,(format "stty -nl sane ixon iutf8 erase ^? rows %d columns %d >/dev/null && exec %s"
                                (window-body-height)
                                (window-body-width)
                                vterm-shell))
@@ -262,6 +262,7 @@ If nil, never delay")
 (define-key vterm-mode-map (kbd "C-_")                 #'vterm--self-insert)
 (define-key vterm-mode-map (kbd "C-SPC")               #'vterm--self-insert)
 (define-key vterm-mode-map (kbd "C-/")                 #'vterm-undo)
+(define-key vterm-mode-map (kbd "C-c C-t")             #'vterm-copy-mode)
 
 ;; Function keys and most of C- and M- bindings
 (mapc (lambda (key)
@@ -275,6 +276,21 @@ If nil, never delay")
                                        for key = (format "%s%c" prefix char)
                                        unless (member key vterm-keymap-exceptions)
                                        collect key))))
+
+(defvar vterm-copy-map  (make-sparse-keymap))
+(define-key vterm-copy-map (kbd "C-c C-t")             #'vterm-copy-mode)
+
+(define-minor-mode vterm-copy-mode
+  "Toggle vterm copy mode."
+  :group 'vterm
+  :lighter " VTermCopy"
+  :keymap vterm-copy-map
+  (if vterm-copy-mode
+      (progn                            ;enable vterm-copy-mode
+        (use-local-map nil)
+        (vterm-send-key "s" nil nil t))
+    (use-local-map vterm-mode-map)
+    (vterm-send-key "q" nil nil t)))
 
 (defun vterm--self-insert ()
   "Sends invoking key to libvterm."
