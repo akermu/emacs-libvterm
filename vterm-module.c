@@ -654,6 +654,7 @@ static int osc_callback(const char *command, size_t cmdlen, void *user)
 
   if (term->directory != NULL) {
     free(term->directory);
+    term->directory = NULL;
   }
 
   if (cmdlen > 3 && buffer[0] == '5' && buffer[1] == '1' && buffer[2] == ';') {
