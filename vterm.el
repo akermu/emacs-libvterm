@@ -232,7 +232,7 @@ If nil, never delay")
            :name "vterm"
            :buffer (current-buffer)
            :command `("/bin/sh" "-c"
-                      ,(format "stty -nl sane ixon iutf8 erase ^? rows %d columns %d >/dev/null && exec %s"
+                      ,(format "stty -nl sane iutf8 erase ^? rows %d columns %d >/dev/null && exec %s"
                                (window-body-height)
                                (window-body-width)
                                vterm-shell))
@@ -273,25 +273,27 @@ If nil, never delay")
 (define-key vterm-mode-map [home]                      #'vterm--self-insert)
 (define-key vterm-mode-map [end]                       #'vterm--self-insert)
 (define-key vterm-mode-map [escape]                    #'vterm--self-insert)
-
-(define-key vterm-mode-map [remap self-insert-command] #'vterm--self-insert)
 (define-key vterm-mode-map [remap yank]                #'vterm-yank)
-(define-key vterm-mode-map (kbd "C-c C-y")             #'vterm--self-insert)
-(define-key vterm-mode-map (kbd "C-c C-c")             #'vterm-send-ctrl-c)
-(define-key vterm-mode-map (kbd "C-_")                 #'vterm--self-insert)
 (define-key vterm-mode-map (kbd "C-SPC")               #'vterm--self-insert)
+(define-key vterm-mode-map (kbd "C-_")                 #'vterm--self-insert)
 (define-key vterm-mode-map (kbd "C-/")                 #'vterm-undo)
 (define-key vterm-mode-map (kbd "M-.")                 #'vterm-send-meta-dot)
 (define-key vterm-mode-map (kbd "M-,")                 #'vterm-send-meta-comma)
+(define-key vterm-mode-map (kbd "C-c C-y")             #'vterm--self-insert)
+(define-key vterm-mode-map (kbd "C-c C-c")             #'vterm-send-ctrl-c)
+(define-key vterm-mode-map [remap self-insert-command] #'vterm--self-insert)
+
 (define-key vterm-mode-map (kbd "C-c C-t")             #'vterm-copy-mode)
-(defvar vterm-copy-map  (make-sparse-keymap))
-(define-key vterm-copy-map (kbd "C-c C-t")             #'vterm-copy-mode)
+
+(defvar vterm-copy-mode-map (make-sparse-keymap)
+  "Minor mode map for `vterm-copy-mode'.")
+(define-key vterm-copy-mode-map (kbd "C-c C-t")        #'vterm-copy-mode)
 
 (define-minor-mode vterm-copy-mode
   "Toggle vterm copy mode."
   :group 'vterm
   :lighter " VTermCopy"
-  :keymap vterm-copy-map
+  :keymap vterm-copy-mode-map
   (if vterm-copy-mode
       (progn                            ;enable vterm-copy-mode
         (use-local-map nil)
@@ -343,6 +345,7 @@ If nil, never delay")
   "Sends `<backspace>' to the libvterm."
   (interactive)
   (vterm-send-key "<backspace>"))
+
 (defun vterm-send-meta-backspace ()
   "Sends `M-<backspace>' to the libvterm."
   (interactive)
