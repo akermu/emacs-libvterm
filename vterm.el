@@ -531,8 +531,19 @@ Feeds the size change to the virtual terminal."
 
 (defun vterm--set-directory (path)
   "Set `default-directory' to PATH."
-  (when (file-directory-p path)
-    (setq default-directory path)))
+  (if (string-match "^\\(.*?\\)@\\(.*?\\):\\(.*?\\)$" path)
+      (progn
+        (let ((user (match-string 1 path))
+              (host (match-string 2 path))
+              (dir (match-string 3 path)))
+          (if (and (string-equal user user-login-name)
+                   (string-equal host (system-name)))
+              (progn
+                (when (file-directory-p dir)
+                  (setq default-directory dir)))
+            (setq default-directory (concat "/-:" path)))))
+    (when (file-directory-p path)
+      (setq default-directory path))))
 
 (defun vterm--get-color(index)
   "Get color by index from `vterm-color-palette'.
