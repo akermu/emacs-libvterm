@@ -2,12 +2,12 @@
 
 # Introduction
 
-This emacs module implements a bridge to libvterm to display a terminal in a
+This emacs module implements a bridge to libvterm to display a terminal in an
 emacs buffer.
 
 ## Warning
 
-This is a **alpha-release**, so it will crash your emacs. If it does, please
+This is an **alpha release**, so it will crash your emacs. If it does, please
 report a bug!
 
 # Installation
@@ -18,11 +18,11 @@ Clone the repository:
 git clone https://github.com/akermu/emacs-libvterm.git
 ```
 
-Before install emacs-libvterm,you need make sure you have 
+Before installing emacs-libvterm, you need to make sure you have
 installed
  1. cmake (>=3.11)
- 2. libtool-bin related issues: [#66](https://github.com/akermu/emacs-libvterm/issues/66) [#85](https://github.com/akermu/emacs-libvterm/issues/85#issuecomment-491845136) 
- 
+ 2. libtool-bin (related issues: [#66](https://github.com/akermu/emacs-libvterm/issues/66) [#85](https://github.com/akermu/emacs-libvterm/issues/85#issuecomment-491845136))
+
 Run the build:
 
 ```
@@ -34,15 +34,15 @@ make
 
 And add this to your `init.el`:
 
-```
+``` elisp
 (add-to-list 'load-path "path/to/emacs-libvterm")
 (require 'vterm)
 ```
 
 # Debugging and testing
 
-If you have successfully build the module, you can test the module by executing
-the following command in the `build` directory:
+If you have successfully built the module, you can test it by executing the
+following command in the `build` directory:
 
 ```
 make run
@@ -59,23 +59,24 @@ Open a terminal in the current window.
 Open a terminal in another window.
 
 ## `vterm-copy-mode`
-When you enable `vterm-copy-mode`,the terminal buffer would behave like a normal
-`read-only` text buffer. Then you can search in the output terminal, copy text,
-etc. the default keybinding is `C-c C-t`.
+
+When you enable `vterm-copy-mode`, the terminal buffer behaves like a normal
+`read-only` text buffer: you can search, copy text, etc. The default keybinding
+is `C-c C-t`.
 
 # Customization
 
 ## `vterm-shell`
 
-Shell to run in a new vterm. Defaults to `$SHELL`.
+Shell to run in a new vterm. It defaults to `$SHELL`.
 
 ## Keybindings
 
-If you want a key to be send to the terminal bind it to `vterm--self-insert`,
-otherwise remove it from `vterm-mode-map`. By default vterm.el binds most of the
+If you want a key to be sent to the terminal, bind it to `vterm--self-insert`,
+or remove it from `vterm-mode-map`. By default, `vterm.el` binds most of the
 `C-<char>` and `M-<char>` keys, `<f1>` through `<f12>` and some special keys
-like `<backspace>` and `<return>`. Sending a keyboard interrupt is by default
-bound to `C-c C-c`.
+like `<backspace>` and `<return>`. Sending a keyboard interrupt is bound to `C-c
+C-c`.
 
 ## Colors
 
