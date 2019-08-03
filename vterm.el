@@ -529,20 +529,25 @@ Feeds the size change to the virtual terminal."
   "Run the `vterm--set-title-hook' with TITLE as argument."
   (run-hook-with-args 'vterm-set-title-functions title))
 
+(defun vterm--set-directory (path)
+  "Set `default-directory' to PATH."
+  (when (file-directory-p path)
+    (setq default-directory path)))
+
 (defun vterm--get-color(index)
   "Get color by index from `vterm-color-palette'.
 Argument INDEX index of color."
   (cond
-   ((and (>= index 0)(< index 8 ))
+   ((and (>= index 0)(< index 8))
     (face-foreground
      (elt vterm-color-palette index)
      nil 'default))
-   ((and (>= index 8 )(< index 16 ))
+   ((and (>= index 8 )(< index 16))
     (face-background
      (elt vterm-color-palette (% index 8))
      nil 'default))
-   ( (= index -1)               ;-1 foreground
-     (face-foreground 'vterm-color-default nil 'default))
+   ((= index -1)               ;-1 foreground
+    (face-foreground 'vterm-color-default nil 'default))
    (t                                   ;-2 background
     (face-background 'vterm-color-default nil 'default))))
 

@@ -112,8 +112,13 @@ emacs_value vterm_get_color(emacs_env *env, int index) {
   emacs_value idx = env->make_integer(env, index);
   return env->funcall(env, Fvterm_get_color, 1, (emacs_value[]){idx});
 }
+
 void set_title(emacs_env *env, emacs_value string) {
   env->funcall(env, Fvterm_set_title, 1, (emacs_value[]){string});
+}
+
+void set_directory(emacs_env *env, emacs_value string) {
+  env->funcall(env, Fvterm_set_directory, 1, (emacs_value[]){string});
 }
 
 void vterm_invalidate(emacs_env *env) {

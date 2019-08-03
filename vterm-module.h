@@ -56,7 +56,10 @@ typedef struct Term {
 
   Cursor cursor;
   char *title;
-  bool is_title_changed;
+  bool title_changed;
+
+  char *directory;
+  bool directory_changed;
 
   int width, height;
 

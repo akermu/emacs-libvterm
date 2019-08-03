@@ -93,6 +93,25 @@ color you like:
 - vterm-color-cyan
 - vterm-color-white
 
+## Directory tracking
+
+For `zsh` put this in your `.zshrc`:
+
+```zsh
+function chpwd() {
+    echo -e "\e]51;$(pwd)\e\\"
+}
+```
+
+For bash there's no real change directory hook, so you have to rewrite the cd
+command (please als have a look the answers [here](https://unix.stackexchange.com/q/170279)):
+
+```bash
+cd() {
+  builtin cd "$@" || return
+  [ "$OLDPWD" = "$PWD" ] || echo -e "\e]51;$(pwd)\e\\"
+}
+```
 
 ## Related packages
 

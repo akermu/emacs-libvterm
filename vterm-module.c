@@ -376,6 +376,7 @@ static void term_redraw_cursor(Term *term, emacs_env *env) {
 
 static void term_redraw(Term *term, emacs_env *env) {
   term_redraw_cursor(term, env);
+
   if (term->is_invalidated) {
     long bufline_before = env->extract_integer(env, buffer_line_number(env));
     refresh_scrollback(term, env);
@@ -384,10 +385,17 @@ static void term_redraw(Term *term, emacs_env *env) {
         env->extract_integer(env, buffer_line_number(env)) - bufline_before;
     adjust_topline(term, env, line_added);
   }
-  if (term->is_title_changed) {
+
+  if (term->title_changed) {
     set_title(env, env->make_string(env, term->title, strlen(term->title)));
-    term->is_title_changed = false;
+    term->title_changed = false;
   }
+
+  if (term->directory_changed) {
+    set_directory(env, env->make_string(env, term->directory, strlen(term->directory)));
+    term->directory_changed = false;
+  }
+
   term->is_invalidated = false;
 }
 
@@ -417,6 +425,7 @@ static bool is_key(unsigned char *key, size_t len, char *key_description) {
   return (len == strlen(key_description) &&
           memcmp(key, key_description, len) == 0);
 }
+
 static void term_set_title(Term *term, char *title) {
   size_t len = strlen(title);
   if (term->title) {
@@ -425,7 +434,7 @@ static void term_set_title(Term *term, char *title) {
   term->title = malloc(sizeof(char) * (len + 1));
   strncpy(term->title, title, len);
   term->title[len] = 0;
-  term->is_title_changed = true;
+  term->title_changed = true;
   return;
 }
 
@@ -621,6 +630,11 @@ void term_finalize(void *object) {
     term->title = NULL;
   }
 
+  if (term->directory) {
+    free(term->directory);
+    term->directory = NULL;
+  }
+
   if (term->pty_fd > 0) {
     close(term->pty_fd);
   }
@@ -629,6 +643,36 @@ void term_finalize(void *object) {
   vterm_free(term->vt);
   free(term);
 }
+
+static int osc_callback(const char *command, size_t cmdlen, void *user)
+{
+  Term *term = (Term *) user;
+  char buffer[cmdlen + 1];
+
+  buffer[cmdlen] = '\0';
+  memcpy(buffer, command, cmdlen);
+
+  if (term->directory != NULL) {
+    free(term->directory);
+  }
+
+  if (cmdlen > 3 && buffer[0] == '5' && buffer[1] == '1' && buffer[2] == ';') {
+    term->directory = malloc(cmdlen - 3 + 1);
+    strcpy(term->directory, &buffer[3]);
+    term->directory_changed = true;
+    return 1;
+  }
+  return 0;
+}
+
+static VTermParserCallbacks parser_callbacks = {
+  .text    = NULL,
+  .control = NULL,
+  .escape  = NULL,
+  .csi     = NULL,
+  .osc     = &osc_callback,
+  .dcs     = NULL,
+};
 
 emacs_value Fvterm_new(emacs_env *env, ptrdiff_t nargs, emacs_value args[],
                        void *data) {
@@ -642,6 +686,10 @@ emacs_value Fvterm_new(emacs_env *env, ptrdiff_t nargs, emacs_value args[],
   vterm_set_utf8(term->vt, 1);
 
   term->vts = vterm_obtain_screen(term->vt);
+
+  VTermState *state = vterm_obtain_state(term->vt);
+  vterm_state_set_unrecognised_fallbacks(state, &parser_callbacks, term);
+
   vterm_screen_reset(term->vts, 1);
   vterm_screen_set_callbacks(term->vts, &vterm_screen_callbacks, term);
   vterm_screen_set_damage_merge(term->vts, VTERM_DAMAGE_SCROLL);
@@ -657,7 +705,10 @@ emacs_value Fvterm_new(emacs_env *env, ptrdiff_t nargs, emacs_value args[],
   term->pty_fd = -1;
 
   term->title = NULL;
-  term->is_title_changed = false;
+  term->title_changed = false;
+
+  term->directory = NULL;
+  term->directory_changed = false;
 
   return env->make_user_ptr(env, term_finalize, term);
 }
@@ -796,6 +847,8 @@ int emacs_module_init(struct emacs_runtime *ert) {
 
   Fvterm_set_title =
       env->make_global_ref(env, env->intern(env, "vterm--set-title"));
+  Fvterm_set_directory =
+      env->make_global_ref(env, env->intern(env, "vterm--set-directory"));
   Fvterm_invalidate =
       env->make_global_ref(env, env->intern(env, "vterm--invalidate"));
   Feq = env->make_global_ref(env, env->intern(env, "eq"));

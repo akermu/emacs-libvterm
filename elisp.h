@@ -45,6 +45,7 @@ emacs_value Fvterm_flush_output;
 emacs_value Fget_buffer_window;
 emacs_value Fselected_window;
 emacs_value Fvterm_set_title;
+emacs_value Fvterm_set_directory;
 emacs_value Fvterm_invalidate;
 emacs_value Feq;
 emacs_value Fvterm_get_color;
@@ -74,6 +75,7 @@ void forward_char(emacs_env *env, emacs_value n);
 emacs_value get_buffer_window(emacs_env *env);
 emacs_value selected_window(emacs_env *env);
 void set_title(emacs_env *env, emacs_value string);
+void set_directory(emacs_env *env, emacs_value string);
 void vterm_invalidate(emacs_env *env);
 emacs_value vterm_get_color(emacs_env *env, int index);
 
