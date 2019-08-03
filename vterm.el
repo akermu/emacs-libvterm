@@ -84,7 +84,7 @@
   :type 'number
   :group 'vterm)
 
-(defcustom vterm-keymap-exceptions '("C-c" "C-x" "C-u" "C-g" "C-h" "M-x" "M-o" "C-v" "M-v" "C-y")
+(defcustom vterm-keymap-exceptions '("C-c" "C-x" "C-u" "C-g" "C-h" "M-x" "M-o" "C-v" "M-v" "C-y" "M-y")
   "Exceptions for vterm-keymap.
 
 If you use a keybinding with a prefix-key, add that prefix-key to
@@ -274,6 +274,7 @@ If nil, never delay")
 (define-key vterm-mode-map [end]                       #'vterm--self-insert)
 (define-key vterm-mode-map [escape]                    #'vterm--self-insert)
 (define-key vterm-mode-map [remap yank]                #'vterm-yank)
+(define-key vterm-mode-map [remap yank-pop]            #'vterm-yank-pop)
 (define-key vterm-mode-map (kbd "C-SPC")               #'vterm--self-insert)
 (define-key vterm-mode-map (kbd "C-_")                 #'vterm--self-insert)
 (define-key vterm-mode-map (kbd "C-/")                 #'vterm-undo)
@@ -391,11 +392,22 @@ If nil, never delay")
   (interactive)
   (vterm-send-key "_" nil nil t))
 
-(defun vterm-yank ()
+(defun vterm-yank (&optional arg)
   "Implementation of `yank' (paste) in vterm."
-  (interactive)
-  (vterm-send-string (current-kill 0)
-                     (not current-prefix-arg)))
+  (interactive "P")
+  (let ((inhibit-read-only t))
+    (cl-letf (((symbol-function 'insert-for-yank)
+               #'(lambda(str) (vterm-send-string str t))))
+      (yank arg))))
+
+(defun vterm-yank-pop(&optional arg)
+  "Implementation of `yank-pop' in vterm."
+  (interactive "p")
+  (let ((inhibit-read-only t)
+        (yank-undo-function #'(lambda(_start _end) (vterm-undo))))
+    (cl-letf (((symbol-function 'insert-for-yank)
+               #'(lambda(str) (vterm-send-string str t))))
+      (yank-pop arg))))
 
 (defun vterm-send-string (string &optional paste-p)
   "Send the string STRING to vterm.
