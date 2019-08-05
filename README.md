@@ -100,7 +100,7 @@ For `zsh` put this in your `.zshrc`:
 
 ```zsh
 function chpwd() {
-    echo -e "\e]51;$(pwd)\e\\"
+    print -Pn "\e]51;$(pwd)\e\\";
 }
 ```
 
