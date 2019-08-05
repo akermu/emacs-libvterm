@@ -392,7 +392,8 @@ static void term_redraw(Term *term, emacs_env *env) {
   }
 
   if (term->directory_changed) {
-    set_directory(env, env->make_string(env, term->directory, strlen(term->directory)));
+    set_directory(
+        env, env->make_string(env, term->directory, strlen(term->directory)));
     term->directory_changed = false;
   }
 
@@ -644,9 +645,8 @@ void term_finalize(void *object) {
   free(term);
 }
 
-static int osc_callback(const char *command, size_t cmdlen, void *user)
-{
-  Term *term = (Term *) user;
+static int osc_callback(const char *command, size_t cmdlen, void *user) {
+  Term *term = (Term *)user;
   char buffer[cmdlen + 1];
 
   buffer[cmdlen] = '\0';
@@ -666,12 +666,12 @@ static int osc_callback(const char *command, size_t cmdlen, void *user)
 }
 
 static VTermParserCallbacks parser_callbacks = {
-  .text    = NULL,
-  .control = NULL,
-  .escape  = NULL,
-  .csi     = NULL,
-  .osc     = &osc_callback,
-  .dcs     = NULL,
+    .text = NULL,
+    .control = NULL,
+    .escape = NULL,
+    .csi = NULL,
+    .osc = &osc_callback,
+    .dcs = NULL,
 };
 
 emacs_value Fvterm_new(emacs_env *env, ptrdiff_t nargs, emacs_value args[],
