@@ -114,6 +114,16 @@ cd() {
 }
 ```
 
+## Remote directory tracking
+
+Put this in your *remote* .zshrc:
+
+```zsh
+function chpwd() {
+    print -Pn "\e]51;$(whoami)@$(hostname):$(pwd)\e\\"
+}
+```
+
 ## Related packages
 
 - [vterm-toggle](https://github.com/jixiuf/vterm-toggle): Toggles between a vterm and the current buffer
