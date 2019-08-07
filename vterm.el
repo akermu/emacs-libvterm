@@ -298,7 +298,10 @@ If nil, never delay")
   (if vterm-copy-mode
       (progn                            ;enable vterm-copy-mode
         (use-local-map nil)
-        (vterm-send-stop))
+        (vterm-send-stop)
+        (set (make-local-variable 'vterm-copy-saved-point) (point)))
+    (if vterm-copy-saved-point
+        (goto-char vterm-copy-saved-point))
     (use-local-map vterm-mode-map)
     (vterm-send-start)))
 
