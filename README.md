@@ -20,8 +20,11 @@ git clone https://github.com/akermu/emacs-libvterm.git
 
 Before installing emacs-libvterm, you need to make sure you have
 installed
- 1. cmake (>=3.11)
- 2. libtool-bin (related issues: [#66](https://github.com/akermu/emacs-libvterm/issues/66) [#85](https://github.com/akermu/emacs-libvterm/issues/85#issuecomment-491845136))
+ 1. Emacs with [module
+    support](https://www.gnu.org/software/emacs/manual/html_node/elisp/Dynamic-Modules.html).
+    You can check that, by verifying that `module-file-suffix` is not `nil`.
+ 2. cmake (>=3.11)
+ 3. libtool-bin (related issues: [#66](https://github.com/akermu/emacs-libvterm/issues/66) [#85](https://github.com/akermu/emacs-libvterm/issues/85#issuecomment-491845136))
 
 Run the build:
 

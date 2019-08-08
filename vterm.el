@@ -42,6 +42,9 @@
 
 ;;; Code:
 
+(unless module-file-suffix
+  (error "VTerm needs module support. Please compile your Emacs with the --with-modules option!"))
+
 (require 'term)
 
 (defvar vterm-install-buffer-name " *Install vterm"
