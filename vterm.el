@@ -293,6 +293,8 @@ If nil, never delay")
   "Minor mode map for `vterm-copy-mode'.")
 (define-key vterm-copy-mode-map (kbd "C-c C-t")        #'vterm-copy-mode)
 
+(defvar-local vterm--copy-saved-point nil)
+
 (define-minor-mode vterm-copy-mode
   "Toggle vterm copy mode."
   :group 'vterm
@@ -301,7 +303,10 @@ If nil, never delay")
   (if vterm-copy-mode
       (progn                            ;enable vterm-copy-mode
         (use-local-map nil)
-        (vterm-send-stop))
+        (vterm-send-stop)
+        (setq vterm--copy-saved-point (point)))
+    (if vterm--copy-saved-point
+        (goto-char vterm--copy-saved-point))
     (use-local-map vterm-mode-map)
     (vterm-send-start)))
 
