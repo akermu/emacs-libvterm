@@ -103,7 +103,7 @@ For `zsh` put this in your `.zshrc`:
 
 ```zsh
 function chpwd() {
-    print -Pn "\e]51;$(pwd)\e\\";
+    print -Pn "\e]51;A$(pwd)\e\\";
 }
 ```
 
@@ -113,7 +113,7 @@ command (please als have a look the answers [here](https://unix.stackexchange.co
 ```bash
 cd() {
   builtin cd "$@" || return
-  [ "$OLDPWD" = "$PWD" ] || echo -e "\e]51;$(pwd)\e\\"
+  [ "$OLDPWD" = "$PWD" ] || echo -e "\e]51;A$(pwd)\e\\"
 }
 ```
 
@@ -123,7 +123,7 @@ Put this in your *remote* .zshrc:
 
 ```zsh
 function chpwd() {
-    print -Pn "\e]51;$(whoami)@$(hostname):$(pwd)\e\\"
+    print -Pn "\e]51A;$(whoami)@$(hostname):$(pwd)\e\\"
 }
 ```
 
