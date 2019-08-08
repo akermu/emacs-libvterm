@@ -585,6 +585,8 @@ static void term_process_key(Term *term, unsigned char *key, size_t len,
     vterm_keyboard_key(term->vt, VTERM_KEY_END, modifier);
   } else if (is_key(key, len, "<prior>")) {
     vterm_keyboard_key(term->vt, VTERM_KEY_PAGEUP, modifier);
+  } else if (is_key(key, len, "<next>")) {
+    vterm_keyboard_key(term->vt, VTERM_KEY_PAGEDOWN, modifier);
   } else if (is_key(key, len, "<f0>")) {
     vterm_keyboard_key(term->vt, VTERM_KEY_FUNCTION(0), modifier);
   } else if (is_key(key, len, "<f1>")) {
