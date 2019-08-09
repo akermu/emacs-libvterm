@@ -54,7 +54,7 @@
 (defun vterm-module-compile ()
   "This function compiles the vterm-module."
   (interactive)
-  (let ((default-directory (file-name-directory (locate-library "vterm"))))
+  (let ((default-directory (file-name-directory (file-truename (locate-library "vterm")))))
     (unless (file-executable-p (concat default-directory "vterm-module.so" ))
       (let* ((buffer (get-buffer-create vterm-install-buffer-name))
              status)
