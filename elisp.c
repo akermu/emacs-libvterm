@@ -28,7 +28,7 @@ int string_bytes(emacs_env *env, emacs_value string) {
   return size;
 }
 
-emacs_value string_length(emacs_env *env, emacs_value string) {
+emacs_value length(emacs_env *env, emacs_value string) {
   return env->funcall(env, Flength, 1, (emacs_value[]){string});
 }
 
@@ -39,7 +39,7 @@ emacs_value list(emacs_env *env, emacs_value elements[], ptrdiff_t len) {
 void put_text_property(emacs_env *env, emacs_value string, emacs_value property,
                        emacs_value value) {
   emacs_value start = env->make_integer(env, 0);
-  emacs_value end = string_length(env, string);
+  emacs_value end = length(env, string);
 
   env->funcall(env, Fput_text_property, 5,
                (emacs_value[]){start, end, property, value, string});
