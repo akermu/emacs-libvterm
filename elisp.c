@@ -100,8 +100,9 @@ emacs_value buffer_line_number(emacs_env *env) {
   return env->funcall(env, Fbuffer_line_number, 0, (emacs_value[]){});
 }
 
-emacs_value get_buffer_window(emacs_env *env) {
-  return env->funcall(env, Fget_buffer_window, 0, (emacs_value[]){});
+emacs_value get_buffer_window_list(emacs_env *env) {
+  return env->funcall(env, Fget_buffer_window_list, 3,
+                      (emacs_value[]){Qnil, Qnil, Qt});
 }
 
 emacs_value selected_window(emacs_env *env) {
