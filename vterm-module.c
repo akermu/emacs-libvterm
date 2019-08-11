@@ -823,6 +823,7 @@ int emacs_module_init(struct emacs_runtime *ert) {
   Fsymbol_value = env->make_global_ref(env, env->intern(env, "symbol-value"));
   Flength = env->make_global_ref(env, env->intern(env, "length"));
   Flist = env->make_global_ref(env, env->intern(env, "list"));
+  Fnth = env->make_global_ref(env, env->intern(env, "nth"));
   Ferase_buffer = env->make_global_ref(env, env->intern(env, "erase-buffer"));
   Finsert = env->make_global_ref(env, env->intern(env, "insert"));
   Fgoto_char = env->make_global_ref(env, env->intern(env, "goto-char"));

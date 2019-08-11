@@ -35,6 +35,10 @@ emacs_value length(emacs_env *env, emacs_value string) {
 emacs_value list(emacs_env *env, emacs_value elements[], ptrdiff_t len) {
   return env->funcall(env, Flist, len, elements);
 }
+emacs_value nth(emacs_env *env, int idx, emacs_value list) {
+  emacs_value eidx = env->make_integer(env, idx);
+  return env->funcall(env, Fnth, 2, (emacs_value[]){eidx, list});
+}
 
 void put_text_property(emacs_env *env, emacs_value string, emacs_value property,
                        emacs_value value) {

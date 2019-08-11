@@ -27,6 +27,7 @@ emacs_value Qcursor_type;
 emacs_value Fsymbol_value;
 emacs_value Flength;
 emacs_value Flist;
+emacs_value Fnth;
 emacs_value Ferase_buffer;
 emacs_value Finsert;
 emacs_value Fgoto_char;
@@ -57,6 +58,7 @@ emacs_value symbol_value(emacs_env *env, emacs_value symbol);
 int string_bytes(emacs_env *env, emacs_value string);
 emacs_value length(emacs_env *env, emacs_value string);
 emacs_value list(emacs_env *env, emacs_value elements[], ptrdiff_t len);
+emacs_value nth(emacs_env *env, int idx, emacs_value list);
 void put_text_property(emacs_env *env, emacs_value string, emacs_value property,
                        emacs_value value);
 void erase_buffer(emacs_env *env);
