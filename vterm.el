@@ -449,10 +449,10 @@ Argument BUFFER the terminal buffer."
       (setq vterm--redraw-timer nil))))
 
 ;;;###autoload
-(defun vterm ()
+(defun vterm (&optional buffer-name)
   "Create a new vterm."
   (interactive)
-  (let ((buffer (generate-new-buffer "vterm")))
+  (let ((buffer (generate-new-buffer (or buffer-name "vterm"))))
     (with-current-buffer buffer
       (vterm-mode))
     (switch-to-buffer buffer)))
