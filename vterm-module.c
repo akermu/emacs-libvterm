@@ -301,20 +301,24 @@ static void adjust_topline(Term *term, emacs_env *env, long added) {
 
   bool following = buffer_lnum == cursor_lnum + added; // cursor at end?
 
-  emacs_value window = get_buffer_window(env);
+  emacs_value windows = get_buffer_window_list(env);
   emacs_value swindow = selected_window(env);
-
-  if (eq(env, window, swindow)) {
-    if (following) {
-      // "Follow" the terminal output
-      recenter(env, env->make_integer(
-                        env, -1)); /* make current line at the screen bottom */
+  int winnum = env->extract_integer(env, length(env, windows));
+  for (int i = 0; i < winnum; i++) {
+    emacs_value window = nth(env, i, windows);
+    if (eq(env, window, swindow)) {
+      if (following) {
+        // "Follow" the terminal output
+        recenter(env,
+                 env->make_integer(
+                     env, -1)); /* make current line at the screen bottom */
+      } else {
+        recenter(env, env->make_integer(env, pos.row));
+      }
     } else {
-      recenter(env, env->make_integer(env, pos.row));
-    }
-  } else {
-    if (env->is_not_nil(env, window)) {
-      set_window_point(env, window, point(env));
+      if (env->is_not_nil(env, window)) {
+        set_window_point(env, window, point(env));
+      }
     }
   }
 }
@@ -823,6 +827,7 @@ int emacs_module_init(struct emacs_runtime *ert) {
   Fsymbol_value = env->make_global_ref(env, env->intern(env, "symbol-value"));
   Flength = env->make_global_ref(env, env->intern(env, "length"));
   Flist = env->make_global_ref(env, env->intern(env, "list"));
+  Fnth = env->make_global_ref(env, env->intern(env, "nth"));
   Ferase_buffer = env->make_global_ref(env, env->intern(env, "erase-buffer"));
   Finsert = env->make_global_ref(env, env->intern(env, "insert"));
   Fgoto_char = env->make_global_ref(env, env->intern(env, "goto-char"));
@@ -842,8 +847,8 @@ int emacs_module_init(struct emacs_runtime *ert) {
       env->make_global_ref(env, env->intern(env, "set-window-point"));
   Fpoint = env->make_global_ref(env, env->intern(env, "point"));
   Fforward_char = env->make_global_ref(env, env->intern(env, "forward-char"));
-  Fget_buffer_window =
-      env->make_global_ref(env, env->intern(env, "get-buffer-window"));
+  Fget_buffer_window_list =
+      env->make_global_ref(env, env->intern(env, "get-buffer-window-list"));
   Fselected_window =
       env->make_global_ref(env, env->intern(env, "selected-window"));
 
