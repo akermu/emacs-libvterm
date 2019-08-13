@@ -529,10 +529,6 @@ Feeds the size change to the virtual terminal."
   (let ((succ (eq 0 (forward-line (1- n)))))
     succ))
 
-(defun vterm--buffer-line-num()
-  "Return the maximum line number."
-  (count-lines (point-min) (point-max)))
-
 (defun vterm--set-title (title)
   "Run the `vterm--set-title-hook' with TITLE as argument."
   (run-hook-with-args 'vterm-set-title-functions title))

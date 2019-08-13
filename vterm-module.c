@@ -236,6 +236,10 @@ static void refresh_screen(Term *term, emacs_env *env) {
                  true);
     refresh_lines(term, env, term->invalid_start, term->invalid_end,
                   term->width);
+
+    /* term->linenum_added is lines added  by window height increased */
+    term->linenum += term->linenum_added;
+    term->linenum_added = 0;
   }
 
   term->invalid_start = INT_MAX;
@@ -244,7 +248,7 @@ static void refresh_screen(Term *term, emacs_env *env) {
 
 static int term_resize(int rows, int cols, void *user_data) {
   /* can not use invalidate_terminal here */
-  /* when the window heigh decreased, */
+  /* when the window height decreased, */
   /*  the value of term->invalid_end can't bigger than window height */
   Term *term = (Term *)user_data;
   term->invalid_start = 0;
@@ -258,48 +262,48 @@ static int term_resize(int rows, int cols, void *user_data) {
 
 // Refresh the scrollback of an invalidated terminal.
 static void refresh_scrollback(Term *term, emacs_env *env) {
-  int buffer_lnum;
 
   if (term->sb_pending > 0) {
     // This means that either the window height has decreased or the screen
     // became full and libvterm had to push all rows up. Convert the first
     // pending scrollback row into a string and append it just above the visible
     // section of the buffer
-    buffer_lnum = env->extract_integer(env, buffer_line_number(env));
 
     int del_cnt =
-        buffer_lnum - term->height - (int)term->sb_size + term->sb_pending;
+        term->linenum - term->height - (int)term->sb_size + term->sb_pending;
     if (del_cnt > 0) {
       delete_lines(env, 1, del_cnt, true);
-      buffer_lnum = env->extract_integer(env, buffer_line_number(env));
+      term->linenum -= del_cnt;
     }
-    int buf_index = buffer_lnum - term->height + 1;
+    int buf_index = term->linenum - term->height + 1;
     goto_line(env, buf_index);
     refresh_lines(term, env, -term->sb_pending, 0, term->width);
+    term->linenum += term->sb_pending;
+
     term->sb_pending = 0;
   }
   int max_line_count = (int)term->sb_current + term->height;
-  buffer_lnum = env->extract_integer(env, buffer_line_number(env));
 
   // Remove extra lines at the bottom
-  if (buffer_lnum > max_line_count) {
-    delete_lines(env, max_line_count + 1, buffer_lnum - max_line_count + 1,
-                 true);
+  if (term->linenum > max_line_count) {
+    int del_cnt = term->linenum - max_line_count;
+    term->linenum -= del_cnt;
+    delete_lines(env, max_line_count + 1, del_cnt, true);
   }
 }
 
-static void adjust_topline(Term *term, emacs_env *env, long added) {
-  int buffer_lnum = env->extract_integer(env, buffer_line_number(env));
+static void adjust_topline(Term *term, emacs_env *env) {
   VTermState *state = vterm_obtain_state(term->vt);
   VTermPos pos;
   vterm_state_get_cursorpos(state, &pos);
   int cursor_lnum = row_to_linenr(term, pos.row);
 
-  goto_line(env, MIN(cursor_lnum, buffer_lnum));
+  goto_line(env, MIN(cursor_lnum, term->linenum));
   size_t offset = get_col_offset(term, pos.row, pos.col);
   forward_char(env, env->make_integer(env, pos.col - offset));
 
-  bool following = buffer_lnum == cursor_lnum + added; // cursor at end?
+  bool following =
+      term->height == 1 + pos.row + term->linenum_added; // cursor at end?
 
   emacs_value windows = get_buffer_window_list(env);
   emacs_value swindow = selected_window(env);
@@ -382,12 +386,12 @@ static void term_redraw(Term *term, emacs_env *env) {
   term_redraw_cursor(term, env);
 
   if (term->is_invalidated) {
-    long bufline_before = env->extract_integer(env, buffer_line_number(env));
+    int oldlinenum = term->linenum;
     refresh_scrollback(term, env);
     refresh_screen(term, env);
-    long line_added =
-        env->extract_integer(env, buffer_line_number(env)) - bufline_before;
-    adjust_topline(term, env, line_added);
+    term->linenum_added = term->linenum - oldlinenum;
+    adjust_topline(term, env);
+    term->linenum_added = 0;
   }
 
   if (term->title_changed) {
@@ -708,6 +712,13 @@ emacs_value Fvterm_new(emacs_env *env, ptrdiff_t nargs, emacs_value args[],
   term->invalid_end = rows;
   term->width = cols;
   term->height = rows;
+  emacs_value newline = env->make_string(env, "\n", 1);
+  for (int i = 0; i < term->height; i++) {
+    insert(env, newline);
+  }
+  term->linenum = term->height;
+  term->linenum_added = 0;
+
   term->pty_fd = -1;
 
   term->title = NULL;
@@ -777,6 +788,11 @@ emacs_value Fvterm_set_size(emacs_env *env, ptrdiff_t nargs, emacs_value args[],
   int cols = env->extract_integer(env, args[2]);
 
   if (cols != term->width || rows != term->height) {
+    if (rows > term->height) {
+      if (rows - term->height > term->sb_current) {
+        term->linenum_added = rows - term->height - term->sb_current;
+      }
+    }
     vterm_set_size(term->vt, rows, cols);
     vterm_screen_flush_damage(term->vts);
 
@@ -838,8 +854,6 @@ int emacs_module_init(struct emacs_runtime *ert) {
       env->make_global_ref(env, env->intern(env, "vterm--flush-output"));
   Fforward_line = env->make_global_ref(env, env->intern(env, "forward-line"));
   Fgoto_line = env->make_global_ref(env, env->intern(env, "vterm--goto-line"));
-  Fbuffer_line_number =
-      env->make_global_ref(env, env->intern(env, "vterm--buffer-line-num"));
   Fdelete_lines =
       env->make_global_ref(env, env->intern(env, "vterm--delete-lines"));
   Frecenter = env->make_global_ref(env, env->intern(env, "recenter"));

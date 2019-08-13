@@ -50,6 +50,8 @@ typedef struct Term {
   // it actually points to entries that are no longer in sb_buffer (because the
   // window height has increased) and must be deleted from the terminal buffer
   int sb_pending;
+  long linenum;
+  long linenum_added;
 
   int invalid_start, invalid_end; // invalid rows in libvterm screen
   bool is_invalidated;
