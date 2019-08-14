@@ -51,6 +51,11 @@ static int term_sb_push(int cols, const VTermScreenCell *cells, void *data) {
 
   if (term->sb_pending < term->sb_size) {
     term->sb_pending++;
+    /* when window height decreased */
+    if (term->height_resize < 0 &&
+        term->sb_pending_by_height_decr < -term->height_resize) {
+      term->sb_pending_by_height_decr++;
+    }
   }
 
   memcpy(sbrow->cells, cells, c * sizeof(cells[0]));
@@ -269,8 +274,8 @@ static void refresh_scrollback(Term *term, emacs_env *env) {
     // pending scrollback row into a string and append it just above the visible
     // section of the buffer
 
-    int del_cnt =
-        term->linenum - term->height - (int)term->sb_size + term->sb_pending;
+    int del_cnt = term->linenum - term->height - (int)term->sb_size +
+                  term->sb_pending - term->sb_pending_by_height_decr;
     if (del_cnt > 0) {
       delete_lines(env, 1, del_cnt, true);
       term->linenum -= del_cnt;
@@ -282,14 +287,17 @@ static void refresh_scrollback(Term *term, emacs_env *env) {
 
     term->sb_pending = 0;
   }
-  int max_line_count = (int)term->sb_current + term->height;
 
   // Remove extra lines at the bottom
+  int max_line_count = (int)term->sb_current + term->height;
   if (term->linenum > max_line_count) {
     int del_cnt = term->linenum - max_line_count;
     term->linenum -= del_cnt;
     delete_lines(env, max_line_count + 1, del_cnt, true);
   }
+
+  term->sb_pending_by_height_decr = 0;
+  term->height_resize = 0;
 }
 
 static void adjust_topline(Term *term, emacs_env *env) {
@@ -707,11 +715,13 @@ emacs_value Fvterm_new(emacs_env *env, ptrdiff_t nargs, emacs_value args[],
   term->sb_size = MIN(SB_MAX, sb_size);
   term->sb_current = 0;
   term->sb_pending = 0;
+  term->sb_pending_by_height_decr = 0;
   term->sb_buffer = malloc(sizeof(ScrollbackLine *) * term->sb_size);
   term->invalid_start = 0;
   term->invalid_end = rows;
   term->width = cols;
   term->height = rows;
+  term->height_resize = 0;
   emacs_value newline = env->make_string(env, "\n", 1);
   for (int i = 0; i < term->height; i++) {
     insert(env, newline);
@@ -788,6 +798,7 @@ emacs_value Fvterm_set_size(emacs_env *env, ptrdiff_t nargs, emacs_value args[],
   int cols = env->extract_integer(env, args[2]);
 
   if (cols != term->width || rows != term->height) {
+    term->height_resize = rows - term->height;
     if (rows > term->height) {
       if (rows - term->height > term->sb_current) {
         term->linenum_added = rows - term->height - term->sb_current;
