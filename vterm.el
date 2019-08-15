@@ -513,7 +513,7 @@ Feeds the size change to the virtual terminal."
 
 (defun vterm--delete-lines (line-num count &optional delete-whole-line)
   "Delete COUNT lines from LINE-NUM.
-
+if LINE-NUM is negative backward-line from end of buffer.
  If option DELETE-WHOLE-LINE is non-nil, then this command kills
  the whole line including its terminating newline"
   (save-excursion
@@ -524,10 +524,15 @@ Feeds the size change to the virtual terminal."
         (delete-char 1)))))
 
 (defun vterm--goto-line(n)
-  "Go to line N and return true on success."
-  (goto-char (point-min))
-  (let ((succ (eq 0 (forward-line (1- n)))))
-    succ))
+  "Go to line N and return true on success.
+if N is negative backward-line from end of buffer."
+  (cond
+   ((> n 0)
+    (goto-char (point-min))
+    (eq 0 (forward-line (1- n))))
+   (t
+    (goto-char (point-max))
+    (eq 0 (forward-line n)))))
 
 (defun vterm--set-title (title)
   "Run the `vterm--set-title-hook' with TITLE as argument."

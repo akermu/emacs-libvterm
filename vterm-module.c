@@ -235,10 +235,12 @@ static void refresh_screen(Term *term, emacs_env *env) {
   term->invalid_end = MIN(term->invalid_end, term->height);
 
   if (term->invalid_end >= term->invalid_start) {
-    int line_start = row_to_linenr(term, term->invalid_start);
-    goto_line(env, line_start);
-    delete_lines(env, line_start, term->invalid_end - term->invalid_start,
-                 true);
+    int startrow = -(term->height - term->invalid_start - term->linenum_added);
+    /* startrow is negative,so we backward  -startrow lines from end of buffer
+       then delete lines there.
+     */
+    goto_line(env, startrow);
+    delete_lines(env, startrow, term->invalid_end - term->invalid_start, true);
     refresh_lines(term, env, term->invalid_start, term->invalid_end,
                   term->width);
 
@@ -267,33 +269,42 @@ static int term_resize(int rows, int cols, void *user_data) {
 
 // Refresh the scrollback of an invalidated terminal.
 static void refresh_scrollback(Term *term, emacs_env *env) {
-
+  int max_line_count = (int)term->sb_current + term->height;
+  int del_cnt = 0;
   if (term->sb_pending > 0) {
     // This means that either the window height has decreased or the screen
     // became full and libvterm had to push all rows up. Convert the first
     // pending scrollback row into a string and append it just above the visible
     // section of the buffer
 
-    int del_cnt = term->linenum - term->height - (int)term->sb_size +
-                  term->sb_pending - term->sb_pending_by_height_decr;
+    del_cnt = term->linenum - term->height - (int)term->sb_size +
+              term->sb_pending - term->sb_pending_by_height_decr;
     if (del_cnt > 0) {
       delete_lines(env, 1, del_cnt, true);
       term->linenum -= del_cnt;
     }
-    int buf_index = term->linenum - term->height + 1;
+
+    term->linenum += term->sb_pending;
+    del_cnt = term->linenum - max_line_count; /* extra lines at the bottom */
+    /* buf_index is negative,so we move to end of buffer,then backward
+       -buf_index lines. goto lines backward is effectively when
+       vterm-max-scrollback is a large number.
+     */
+    int buf_index = -(term->height + del_cnt);
     goto_line(env, buf_index);
     refresh_lines(term, env, -term->sb_pending, 0, term->width);
-    term->linenum += term->sb_pending;
 
     term->sb_pending = 0;
   }
 
   // Remove extra lines at the bottom
-  int max_line_count = (int)term->sb_current + term->height;
-  if (term->linenum > max_line_count) {
-    int del_cnt = term->linenum - max_line_count;
+  del_cnt = term->linenum - max_line_count;
+  if (del_cnt > 0) {
     term->linenum -= del_cnt;
-    delete_lines(env, max_line_count + 1, del_cnt, true);
+    /* -del_cnt is negative,so we delete_lines from end of buffer.
+       this line means: delete del_cnt count of lines at end of buffer.
+     */
+    delete_lines(env, -del_cnt, del_cnt, true);
   }
 
   term->sb_pending_by_height_decr = 0;
@@ -304,9 +315,12 @@ static void adjust_topline(Term *term, emacs_env *env) {
   VTermState *state = vterm_obtain_state(term->vt);
   VTermPos pos;
   vterm_state_get_cursorpos(state, &pos);
-  int cursor_lnum = row_to_linenr(term, pos.row);
 
-  goto_line(env, MIN(cursor_lnum, term->linenum));
+  /* pos.row-term->height is negative,so we backward term->height-pos.row
+   * lines from end of buffer
+   */
+
+  goto_line(env, pos.row - term->height);
   size_t offset = get_col_offset(term, pos.row, pos.col);
   forward_char(env, env->make_integer(env, pos.col - offset));
 
