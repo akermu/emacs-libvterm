@@ -684,7 +684,8 @@ static int osc_callback(const char *command, size_t cmdlen, void *user) {
   buffer[cmdlen] = '\0';
   memcpy(buffer, command, cmdlen);
 
-  if (cmdlen > 4 && buffer[0] == '5' && buffer[1] == '1' && buffer[2] == ';'&& buffer[3] == 'A') {
+  if (cmdlen > 4 && buffer[0] == '5' && buffer[1] == '1' && buffer[2] == ';' &&
+      buffer[3] == 'A') {
     if (term->directory != NULL) {
       free(term->directory);
       term->directory = NULL;
