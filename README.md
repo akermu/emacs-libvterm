@@ -25,6 +25,8 @@ installed
     You can check that, by verifying that `module-file-suffix` is not `nil`.
  2. cmake (>=3.11)
  3. libtool-bin (related issues: [#66](https://github.com/akermu/emacs-libvterm/issues/66) [#85](https://github.com/akermu/emacs-libvterm/issues/85#issuecomment-491845136))
+ 4. If you compile vterm with `-DUSE_SYSTEM_LIBVTERM` make sure you have the
+    library from https://github.com/neovim/libvterm
 
 Run the build:
 
@@ -84,7 +86,8 @@ C-c`.
 ## Colors
 
 Set the `:foreground` and `:background` attributes of the following faces to a
-color you like:
+color you like. The `:foreground` is ansi color 0-7, the `:background` attribute
+is ansi color 8-15.
 
 - vterm-color-default
 - vterm-color-black
