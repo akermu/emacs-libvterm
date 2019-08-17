@@ -292,6 +292,8 @@ If nil, never delay")
 (defvar vterm-copy-mode-map (make-sparse-keymap)
   "Minor mode map for `vterm-copy-mode'.")
 (define-key vterm-copy-mode-map (kbd "C-c C-t")        #'vterm-copy-mode)
+(define-key vterm-copy-mode-map [return]               #'vterm-copy-mode-done)
+(define-key vterm-copy-mode-map (kbd "RET")            #'vterm-copy-mode-done)
 
 (defvar-local vterm--copy-saved-point nil)
 
@@ -309,6 +311,16 @@ If nil, never delay")
         (goto-char vterm--copy-saved-point))
     (use-local-map vterm-mode-map)
     (vterm-send-start)))
+
+(defun vterm-copy-mode-done ()
+  "Save the active region to the kill ring and save `vterm-copy-mode'."
+  (interactive)
+  (unless vterm-copy-mode
+    (user-error "This command is effective only in vterm-copy-mode"))
+  (unless (region-active-p)
+    (user-error "No region is active"))
+  (kill-ring-save (region-beginning) (region-end))
+  (vterm-copy-mode -1))
 
 (defun vterm--self-insert ()
   "Sends invoking key to libvterm."
