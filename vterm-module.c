@@ -643,6 +643,8 @@ static void term_process_key(Term *term, unsigned char *key, size_t len,
     vterm_keyboard_key(term->vt, VTERM_KEY_FUNCTION(11), modifier);
   } else if (is_key(key, len, "<f12>")) {
     vterm_keyboard_key(term->vt, VTERM_KEY_FUNCTION(12), modifier);
+  } else if (is_key(key, len, "j") && (modifier == VTERM_MOD_CTRL)) {
+    vterm_keyboard_unichar(term->vt, '\n', 0);
   } else if (is_key(key, len, "SPC")) {
     vterm_keyboard_unichar(term->vt, ' ', modifier);
   } else if (len <= 4) {
