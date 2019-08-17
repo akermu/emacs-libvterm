@@ -94,6 +94,10 @@ If you use a keybinding with a prefix-key, add that prefix-key to
 this list. Note that after doing so that prefix-key cannot be sent
 to the terminal anymore."
   :type '(repeat string)
+  :set (lambda (sym val)
+         (set sym val)
+         (when (fboundp 'vterm--exclude-keys)
+           (vterm--exclude-keys val)))
   :group 'vterm)
 
 (defcustom vterm-exit-functions nil
@@ -247,17 +251,23 @@ If nil, never delay")
 
 
 ;; Function keys and most of C- and M- bindings
-(mapc (lambda (key)
-        (define-key vterm-mode-map (kbd key) #'vterm--self-insert))
-      (append (cl-loop for number from 1 to 12
-                       for key = (format "<f%i>" number)
-                       unless (member key vterm-keymap-exceptions)
-                       collect key)
-              (cl-loop for prefix in '("C-" "M-")
-                       append (cl-loop for char from ?a to ?z
-                                       for key = (format "%s%c" prefix char)
-                                       unless (member key vterm-keymap-exceptions)
-                                       collect key))))
+(defun vterm--exclude-keys (exceptions)
+  (mapc (lambda (key)
+          (define-key vterm-mode-map (kbd key) nil))
+        exceptions)
+  (mapc (lambda (key)
+          (define-key vterm-mode-map (kbd key) #'vterm--self-insert))
+        (append (cl-loop for number from 1 to 12
+                         for key = (format "<f%i>" number)
+                         unless (member key exceptions)
+                         collect key)
+                (cl-loop for prefix in '("C-" "M-")
+                         append (cl-loop for char from ?a to ?z
+                                         for key = (format "%s%c" prefix char)
+                                         unless (member key exceptions)
+                                         collect key)))))
+
+(vterm--exclude-keys vterm-keymap-exceptions)
 
 ;; Keybindings
 (define-key vterm-mode-map [tab]                       #'vterm-send-tab)
