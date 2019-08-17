@@ -483,12 +483,13 @@ Then triggers a redraw from the module."
         (vterm--write-input vterm--term input)
         (vterm--update vterm--term)))))
 
-(defun vterm--sentinel (process _event)
+(defun vterm--sentinel (process event)
   "Sentinel of vterm PROCESS.
 Argument EVENT process event."
   (let ((buf (process-buffer process)))
     (run-hook-with-args 'vterm-exit-functions
-                        (if (buffer-live-p buf) buf nil))))
+                        (if (buffer-live-p buf) buf nil)
+                        event)))
 
 (defun vterm--window-size-change-26 (frame)
   "Callback triggered by a size change of the FRAME.
