@@ -313,7 +313,7 @@ If nil, never delay")
     (vterm-send-start)))
 
 (defun vterm-copy-mode-done ()
-  "Save the active region to the kill ring and save `vterm-copy-mode'."
+  "Save the active region to the kill ring and exit `vterm-copy-mode'."
   (interactive)
   (unless vterm-copy-mode
     (user-error "This command is effective only in vterm-copy-mode"))
