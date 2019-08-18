@@ -344,6 +344,9 @@ This is the value of `next-error-function' in Compilation buffers."
 (define-key vterm-mode-map (kbd "C-c C-l")             #'vterm-clear-scrollback)
 (define-key vterm-mode-map [remap self-insert-command] #'vterm--self-insert)
 
+(define-key vterm-mode-map (kbd "C-c C-n")             #'vterm-next-prompt)
+(define-key vterm-mode-map (kbd "C-c C-p")             #'vterm-previous-prompt)
+
 (define-key vterm-mode-map (kbd "C-c C-t")             #'vterm-copy-mode)
 
 (defvar vterm-copy-mode-map (make-sparse-keymap)
@@ -706,6 +709,70 @@ the called functions."
     (if f
         (apply (cadr f) args)
       (message "Failed to find command: %s" command))))
+
+(defun vterm-previous-prompt ()
+  (interactive)
+  (vterm--previous-prompt
+   vterm--term (line-number-at-pos)))
+
+(defun vterm-next-prompt ()
+  (interactive)
+  (vterm--next-prompt
+   vterm--term (line-number-at-pos)))
+
+
+(defun vterm-get-prompt-point ()
+  "Get the position of the end of current prompt."
+  (let (pt)
+    (save-excursion
+      (setq pt (vterm--get-prompt-point-internal
+                vterm--term (line-number-at-pos))))
+    pt))
+
+(defun vterm--get-cmd-end-point (&optional guess-cmd-end-pt-p)
+  "Get the position of the end of current command."
+  (let (pt)
+    (save-excursion
+      (setq pt (vterm--get-cmd-end-point-internal
+                vterm--term (line-number-at-pos))))
+    (unless pt
+      (when guess-cmd-end-pt-p
+        (save-excursion
+          (goto-char (point-max))
+          (skip-chars-backward " \n")
+          (setq pt (point)))))
+    pt))
+
+
+(defun vterm-get-input-after-point ()
+  "Get the content between current position and the end of current command."
+  (interactive)
+  (let ( (pt (point))
+         (cmd-point (vterm--get-cmd-end-point t))
+         text)
+    (when (> pt cmd-point)
+      (user-error "current position is not before the end of current command."))
+    (setq text (buffer-substring-no-properties pt cmd-point ))
+    (replace-regexp-in-string "\n" "" text)))
+
+(defun vterm-reset-cursor-point ()
+  "Make sure the cursor at the right postion."
+  (vterm--reset-point vterm--term))
+
+(defun vterm--get-cursor-point ()
+  "Get term cursor position."
+  (save-excursion
+    (vterm-reset-cursor-point)))
+
+(defun vterm-kill-line ()
+  "Save the killed line to kill ring."
+  (interactive)
+  (let ((cursor-point (vterm--get-cursor-point))
+        (pt (point)))
+    (kill-new (vterm-get-input-after-point))
+    (message "%d %d" pt cursor-point)
+    (when (eq pt cursor-point)
+      (vterm--self-insert))))
 
 (provide 'vterm)
 ;;; vterm.el ends here
