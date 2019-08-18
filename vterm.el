@@ -97,7 +97,11 @@ to the terminal anymore."
   :group 'vterm)
 
 (defcustom vterm-exit-functions nil
-  "Shell exit hook.
+  "List of functions called when a vterm process exits.
+
+Each function is called with two arguments: the vterm buffer of
+the process if any, and a string describing the event passed from
+the sentinel.
 
 This hook applies only to new vterms, created after setting this
 value with `add-hook'.
