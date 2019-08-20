@@ -592,18 +592,7 @@ static void term_clear_scrollback(Term *term, emacs_env *env) {
 }
 static void term_process_key(Term *term, emacs_env *env, unsigned char *key,
                              size_t len, VTermModifier modifier) {
-  if (is_key(key, len, "<return>")) {
-    if (term->pty_fd > 0) {
-      struct termios keys;
-      tcgetattr(term->pty_fd, &keys);
-      if (keys.c_iflag & ICRNL)
-        vterm_keyboard_unichar(term->vt, 10, modifier);
-      else
-        vterm_keyboard_unichar(term->vt, 13, modifier);
-    } else {
-      vterm_keyboard_key(term->vt, VTERM_KEY_ENTER, modifier);
-    }
-  } else if (is_key(key, len, "<clear_scrollback>")) {
+    if (is_key(key, len, "<clear_scrollback>")) {
     term_clear_scrollback(term, env);
   } else if (is_key(key, len, "<start>")) {
     tcflow(term->pty_fd, TCOON);

@@ -445,6 +445,11 @@ If nil, never delay")
   (interactive)
   (vterm-send-key "_" nil nil t))
 
+(defun vterm-send-return ()
+  "Sends C-m to the libvterm."
+  (interactive)
+  (process-send-string vterm--process "\C-m"))
+
 (defun vterm-yank (&optional arg)
   "Implementation of `yank' (paste) in vterm."
   (interactive "P")
