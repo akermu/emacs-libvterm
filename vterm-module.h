@@ -102,6 +102,8 @@ emacs_value Fvterm_set_size(emacs_env *env, ptrdiff_t nargs, emacs_value args[],
                             void *data);
 emacs_value Fvterm_set_pty_name(emacs_env *env, ptrdiff_t nargs,
                                 emacs_value args[], void *data);
+emacs_value Fvterm_get_icrnl(emacs_env *env, ptrdiff_t nargs,
+                              emacs_value args[], void *data);
 
 int emacs_module_init(struct emacs_runtime *ert);
 
