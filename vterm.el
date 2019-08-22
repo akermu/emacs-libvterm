@@ -283,6 +283,8 @@ If nil, never delay")
 (define-key vterm-mode-map [right]                     #'vterm-send-right)
 (define-key vterm-mode-map [up]                        #'vterm-send-up)
 (define-key vterm-mode-map [down]                      #'vterm-send-down)
+(define-key vterm-mode-map [prior]                     #'vterm-send-prior)
+(define-key vterm-mode-map [next]                      #'vterm-send-next)
 (define-key vterm-mode-map [home]                      #'vterm--self-insert)
 (define-key vterm-mode-map [end]                       #'vterm--self-insert)
 (define-key vterm-mode-map [escape]                    #'vterm--self-insert)
@@ -401,6 +403,16 @@ If nil, never delay")
   "Sends `<right>' to the libvterm."
   (interactive)
   (vterm-send-key "<right>"))
+
+(defun vterm-send-prior()
+  "Sends `<prior>' to the libvterm."
+  (interactive)
+  (vterm-send-key "<prior>"))
+
+(defun vterm-send-next()
+  "Sends `<next>' to the libvterm."
+  (interactive)
+  (vterm-send-key "<next>"))
 
 (defun vterm-send-meta-dot()
   "Sends `M-.' to the libvterm."
