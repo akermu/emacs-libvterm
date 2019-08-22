@@ -94,6 +94,10 @@ If you use a keybinding with a prefix-key, add that prefix-key to
 this list. Note that after doing so that prefix-key cannot be sent
 to the terminal anymore."
   :type '(repeat string)
+  :set (lambda (sym val)
+         (set sym val)
+         (when (fboundp 'vterm--exclude-keys)
+           (vterm--exclude-keys val)))
   :group 'vterm)
 
 (defcustom vterm-exit-functions nil
@@ -126,64 +130,64 @@ for different shell"
 (defface vterm-color-default
   `((t :inherit default))
   "The default normal color and bright color.
-the foreground color are used for normal color,
-and background color are used for bright color. "
+The foreground color is used as ANSI color 0 and the background
+color is used as ANSI color 7."
   :group 'vterm)
 
 (defface vterm-color-black
   `((t :inherit term-color-black))
   "Face used to render black color code.
-the foreground color are used for normal color,
-and background color are used for bright color. "
+The foreground color is used as ANSI color 0 and the background
+color is used as ANSI color 8."
   :group 'vterm)
 
 (defface vterm-color-red
   `((t :inherit term-color-red))
   "Face used to render red color code.
-the foreground color are used for normal color,
-and background color are used for bright color. "
+The foreground color is used as ANSI color 1 and the background
+color is used as ANSI color 9."
   :group 'vterm)
 
 (defface vterm-color-green
   `((t :inherit term-color-green))
   "Face used to render green color code.
-the foreground color are used for normal color,
-and background color are used for bright color. "
+The foreground color is used as ANSI color 2 and the background
+color is used as ANSI color 10."
   :group 'vterm)
 
 (defface vterm-color-yellow
   `((t :inherit term-color-yellow))
   "Face used to render yellow color code.
-the foreground color are used for normal color,
-and background color are used for bright color. "
+The foreground color is used as ANSI color 3 and the background
+color is used as ANSI color 11."
   :group 'vterm)
 
 (defface vterm-color-blue
   `((t :inherit term-color-blue))
   "Face used to render blue color code.
-the foreground color are used for normal color,
-and background color are used for bright color. "
+The foreground color is used as ANSI color 4 and the background
+color is used as ANSI color 12."
   :group 'vterm)
 
 (defface vterm-color-magenta
   `((t :inherit term-color-magenta))
   "Face used to render magenta color code.
-the foreground color are used for normal color,
-and background color are used for bright color. "
+The foreground color is used as ansi color 5 and the background
+color is used as ansi color 13."
   :group 'vterm)
 
 (defface vterm-color-cyan
   `((t :inherit term-color-cyan))
   "Face used to render cyan color code.
-the foreground color are used for normal color,
-and background color are used for bright color. "
+The foreground color is used as ansi color 6 and the background
+color is used as ansi color 14."
   :group 'vterm)
 
 (defface vterm-color-white
   `((t :inherit term-color-white))
   "Face used to render white color code.
-the foreground color are used for normal color,
-and background color are used for bright color. "
+The foreground color is used as ansi color 7 and the background
+color is used as ansi color 15."
   :group 'vterm)
 
 (defvar vterm-color-palette
@@ -247,17 +251,23 @@ If nil, never delay")
 
 
 ;; Function keys and most of C- and M- bindings
-(mapc (lambda (key)
-        (define-key vterm-mode-map (kbd key) #'vterm--self-insert))
-      (append (cl-loop for number from 1 to 12
-                       for key = (format "<f%i>" number)
-                       unless (member key vterm-keymap-exceptions)
-                       collect key)
-              (cl-loop for prefix in '("C-" "M-")
-                       append (cl-loop for char from ?a to ?z
-                                       for key = (format "%s%c" prefix char)
-                                       unless (member key vterm-keymap-exceptions)
-                                       collect key))))
+(defun vterm--exclude-keys (exceptions)
+  (mapc (lambda (key)
+          (define-key vterm-mode-map (kbd key) nil))
+        exceptions)
+  (mapc (lambda (key)
+          (define-key vterm-mode-map (kbd key) #'vterm--self-insert))
+        (append (cl-loop for number from 1 to 12
+                         for key = (format "<f%i>" number)
+                         unless (member key exceptions)
+                         collect key)
+                (cl-loop for prefix in '("C-" "M-")
+                         append (cl-loop for char from ?a to ?z
+                                         for key = (format "%s%c" prefix char)
+                                         unless (member key exceptions)
+                                         collect key)))))
+
+(vterm--exclude-keys vterm-keymap-exceptions)
 
 ;; Keybindings
 (define-key vterm-mode-map [tab]                       #'vterm-send-tab)
@@ -294,6 +304,8 @@ If nil, never delay")
 (defvar vterm-copy-mode-map (make-sparse-keymap)
   "Minor mode map for `vterm-copy-mode'.")
 (define-key vterm-copy-mode-map (kbd "C-c C-t")        #'vterm-copy-mode)
+(define-key vterm-copy-mode-map [return]               #'vterm-copy-mode-done)
+(define-key vterm-copy-mode-map (kbd "RET")            #'vterm-copy-mode-done)
 
 (defvar-local vterm--copy-saved-point nil)
 
@@ -311,6 +323,16 @@ If nil, never delay")
         (goto-char vterm--copy-saved-point))
     (use-local-map vterm-mode-map)
     (vterm-send-start)))
+
+(defun vterm-copy-mode-done ()
+  "Save the active region to the kill ring and exit `vterm-copy-mode'."
+  (interactive)
+  (unless vterm-copy-mode
+    (user-error "This command is effective only in vterm-copy-mode"))
+  (unless (region-active-p)
+    (user-error "No region is active"))
+  (kill-ring-save (region-beginning) (region-end))
+  (vterm-copy-mode -1))
 
 (defun vterm--self-insert ()
   "Sends invoking key to libvterm."
@@ -525,7 +547,7 @@ Feeds the size change to the virtual terminal."
 
 (defun vterm--delete-lines (line-num count &optional delete-whole-line)
   "Delete COUNT lines from LINE-NUM.
-
+if LINE-NUM is negative backward-line from end of buffer.
  If option DELETE-WHOLE-LINE is non-nil, then this command kills
  the whole line including its terminating newline"
   (save-excursion
@@ -536,14 +558,15 @@ Feeds the size change to the virtual terminal."
         (delete-char 1)))))
 
 (defun vterm--goto-line(n)
-  "Go to line N and return true on success."
-  (goto-char (point-min))
-  (let ((succ (eq 0 (forward-line (1- n)))))
-    succ))
-
-(defun vterm--buffer-line-num()
-  "Return the maximum line number."
-  (count-lines (point-min) (point-max)))
+  "Go to line N and return true on success.
+if N is negative backward-line from end of buffer."
+  (cond
+   ((> n 0)
+    (goto-char (point-min))
+    (eq 0 (forward-line (1- n))))
+   (t
+    (goto-char (point-max))
+    (eq 0 (forward-line n)))))
 
 (defun vterm--set-title (title)
   "Run the `vterm--set-title-hook' with TITLE as argument."

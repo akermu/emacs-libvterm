@@ -28,18 +28,22 @@ int string_bytes(emacs_env *env, emacs_value string) {
   return size;
 }
 
-emacs_value string_length(emacs_env *env, emacs_value string) {
+emacs_value length(emacs_env *env, emacs_value string) {
   return env->funcall(env, Flength, 1, (emacs_value[]){string});
 }
 
 emacs_value list(emacs_env *env, emacs_value elements[], ptrdiff_t len) {
   return env->funcall(env, Flist, len, elements);
 }
+emacs_value nth(emacs_env *env, int idx, emacs_value list) {
+  emacs_value eidx = env->make_integer(env, idx);
+  return env->funcall(env, Fnth, 2, (emacs_value[]){eidx, list});
+}
 
 void put_text_property(emacs_env *env, emacs_value string, emacs_value property,
                        emacs_value value) {
   emacs_value start = env->make_integer(env, 0);
-  emacs_value end = string_length(env, string);
+  emacs_value end = length(env, string);
 
   env->funcall(env, Fput_text_property, 5,
                (emacs_value[]){start, end, property, value, string});
@@ -92,12 +96,10 @@ void forward_char(emacs_env *env, emacs_value n) {
   env->funcall(env, Fforward_char, 1, (emacs_value[]){n});
 }
 
-emacs_value buffer_line_number(emacs_env *env) {
-  return env->funcall(env, Fbuffer_line_number, 0, (emacs_value[]){});
-}
 
-emacs_value get_buffer_window(emacs_env *env) {
-  return env->funcall(env, Fget_buffer_window, 0, (emacs_value[]){});
+emacs_value get_buffer_window_list(emacs_env *env) {
+  return env->funcall(env, Fget_buffer_window_list, 3,
+                      (emacs_value[]){Qnil, Qnil, Qt});
 }
 
 emacs_value selected_window(emacs_env *env) {
