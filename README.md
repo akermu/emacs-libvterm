@@ -105,9 +105,11 @@ is ansi color 8-15.
 For `zsh` put this in your `.zshrc`:
 
 ```zsh
-function chpwd() {
-    print -Pn "\e]51;A$(pwd)\e\\";
-}
+if [[ $INSIDE_EMACS = "vterm" ]]; then
+    function chpwd() {
+        print -Pn "\e]51;A$(pwd)/\e\\";
+    }
+fi
 ```
 
 For bash there's no real change directory hook, so you have to rewrite the cd
