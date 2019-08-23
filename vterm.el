@@ -127,6 +127,12 @@ for different shell"
   :type 'hook
   :group 'vterm)
 
+(defcustom vterm-term-environment-variable "xterm-256color"
+  "TERM value for terminal."
+  :type 'string
+  :group 'vterm)
+
+
 (defface vterm-color-default
   `((t :inherit default))
   "The default normal color and bright color.
@@ -228,7 +234,8 @@ If nil, never delay")
   (if (version< emacs-version "27")
       (add-hook 'window-size-change-functions #'vterm--window-size-change-26 t t)
     (add-hook 'window-size-change-functions #'vterm--window-size-change t t))
-  (let ((process-environment (append '("TERM=xterm-256color"
+  (let ((process-environment (append `(,(concat "TERM="
+						vterm-term-environment-variable)
                                        "INSIDE_EMACS=vterm"
                                        "LINES"
                                        "COLUMNS")
@@ -240,9 +247,9 @@ If nil, never delay")
            :buffer (current-buffer)
            :command `("/bin/sh" "-c"
                       ,(format "stty -nl sane iutf8 erase ^? rows %d columns %d >/dev/null && exec %s"
-                               (window-body-height)
-                               (window-body-width)
-                               vterm-shell))
+			  (window-body-height)
+			  (window-body-width)
+			  vterm-shell))
            :coding 'no-conversion
            :connection-type 'pty
            :filter #'vterm--filter
