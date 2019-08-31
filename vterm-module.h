@@ -19,8 +19,9 @@ int plugin_is_GPL_compatible;
 
 typedef struct LineInfo {
   char *directory; /* working directory */
-
   int prompt_col; /* end column of the prompt,if current line contains prompt */
+  int prompt_begin_col; /* begining column of the prompt,if current line contains prompt */
+  int cmd_col; /* end column of the command,if current line contains the cmd */
 } LineInfo;
 
 typedef struct ScrollbackLine {
@@ -83,6 +84,9 @@ typedef struct Term {
   bool resizing;
 
   int pty_fd;
+
+  int shell_integration;
+
 } Term;
 
 static bool compare_cells(VTermScreenCell *a, VTermScreenCell *b);
@@ -128,6 +132,10 @@ emacs_value Fvterm_next_prompt(emacs_env *env, ptrdiff_t nargs,
 
 emacs_value Fvterm_get_prompt_point(emacs_env *env, ptrdiff_t nargs,
                                     emacs_value args[], void *data);
+emacs_value Fvterm_get_cmd_end_point(emacs_env *env, ptrdiff_t nargs,
+                                     emacs_value args[], void *data);
+emacs_value Fvterm_reset_cursor_point(emacs_env *env, ptrdiff_t nargs,
+                                      emacs_value args[], void *data);
 
 int emacs_module_init(struct emacs_runtime *ert);
 

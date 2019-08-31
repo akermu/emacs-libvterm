@@ -14,6 +14,8 @@ static LineInfo *alloc_lineinfo() {
   LineInfo *info = malloc(sizeof(LineInfo));
   info->directory = NULL;
   info->prompt_col = -1;
+  info->prompt_begin_col = -1;
+  info->cmd_col = -1;
   return info;
 }
 void free_lineinfo(LineInfo *line) {
@@ -821,8 +823,12 @@ static int osc_callback(const char *command, size_t cmdlen, void *user) {
   buffer[cmdlen] = '\0';
   memcpy(buffer, command, cmdlen);
 
+  /* mark the end of prompt and Directory tracking  */
   if (cmdlen > 4 && buffer[0] == '5' && buffer[1] == '1' && buffer[2] == ';' &&
       buffer[3] == 'A') {
+    if (term->shell_integration < 2) {
+      term->shell_integration = 2;
+    }
     if (term->directory != NULL) {
       free(term->directory);
       term->directory = NULL;
@@ -845,6 +851,40 @@ static int osc_callback(const char *command, size_t cmdlen, void *user) {
         term->lines[i]->prompt_col = term->cursor.col;
       } else {
         term->lines[i]->prompt_col = -1;
+      }
+      term->lines[i]->cmd_col = -1;
+    }
+    return 1;
+  } else if (cmdlen >= 4 && buffer[0] == '5' && buffer[1] == '1' &&
+             buffer[2] == ';' && buffer[3] == 'B') { /* mark end of command */
+    if (term->shell_integration < 3) {
+      term->shell_integration = 3;
+    }
+    for (int i = term->cursor.row; i < term->lines_len; i++) {
+      if (term->lines[i] == NULL) {
+        term->lines[i] = alloc_lineinfo();
+      }
+      if (i == term->cursor.row) {
+        term->lines[i]->cmd_col = term->cursor.col;
+      } else {
+        term->lines[i]->cmd_col = -1;
+      }
+    }
+    return 1;
+  } else if (cmdlen >= 4 && buffer[0] == '5' && buffer[1] == '1' &&
+             buffer[2] == ';' &&
+             buffer[3] == 'C') { /* mark begining of prompt */
+    if (term->shell_integration == 0) {
+      term->shell_integration = 1;
+    }
+    for (int i = term->cursor.row; i < term->lines_len; i++) {
+      if (term->lines[i] == NULL) {
+        term->lines[i] = alloc_lineinfo();
+      }
+      if (i == term->cursor.row) {
+        term->lines[i]->prompt_begin_col = term->cursor.col;
+      } else {
+        term->lines[i]->prompt_begin_col = -1;
       }
     }
     return 1;
@@ -922,6 +962,7 @@ emacs_value Fvterm_new(emacs_env *env, ptrdiff_t nargs, emacs_value args[],
   for (int i = 0; i < rows; i++) {
     term->lines[i] = NULL;
   }
+  term->shell_integration = 0;
 
   return env->make_user_ptr(env, term_finalize, term);
 }
@@ -1070,6 +1111,9 @@ emacs_value Fvterm_next_prompt(emacs_env *env, ptrdiff_t nargs,
   if (linenum >= term->linenum) {
     return Qnil;
   }
+  if (term->shell_integration < 2) {
+    return Qnil;
+  }
   for (int l = linenum + 1; l <= term->linenum; l++) {
     int cur_row = linenr_to_row(term, l);
     LineInfo *info = get_lineinfo(term, cur_row);
@@ -1090,6 +1134,9 @@ emacs_value Fvterm_get_prompt_point(emacs_env *env, ptrdiff_t nargs,
   if (linenum >= term->linenum) {
     linenum = term->linenum;
   }
+  if (term->shell_integration < 2) {
+    return Qnil;
+  }
   for (int l = linenum; l >= 1; l--) {
     int cur_row = linenr_to_row(term, l);
     LineInfo *info = get_lineinfo(term, cur_row);
@@ -1102,6 +1149,55 @@ emacs_value Fvterm_get_prompt_point(emacs_env *env, ptrdiff_t nargs,
     }
   }
   return Qnil;
+}
+emacs_value Fvterm_get_cmd_end_point(emacs_env *env, ptrdiff_t nargs,
+                                     emacs_value args[], void *data) {
+  Term *term = env->get_user_ptr(env, args[0]);
+  int linenum = env->extract_integer(env, args[1]);
+  if (term->shell_integration < 3) {
+    return Qnil;
+  }
+
+  if (linenum >= term->linenum) {
+    linenum = term->linenum;
+  }
+  int cur_row = linenr_to_row(term, linenum);
+  LineInfo *info = get_lineinfo(term, cur_row);
+  if (info != NULL && info->cmd_col >= 0) {
+    goto_line(env, linenum); /* goto the point-at-bol */
+    size_t offset = get_col_offset(term, cur_row, info->cmd_col);
+    forward_char(env, env->make_integer(env, info->cmd_col - offset));
+    return point(env);
+  }
+  for (int l = linenum + 1; l <= term->linenum; l++) {
+    int cur_row = linenr_to_row(term, l);
+    LineInfo *info = get_lineinfo(term, cur_row);
+    if (info != NULL && info->cmd_col >= 0) {
+      goto_line(env, l);
+      size_t offset = get_col_offset(term, cur_row, info->cmd_col);
+      forward_char(env, env->make_integer(env, info->cmd_col - offset));
+
+      return point(env);
+    }
+    if (info != NULL && info->prompt_begin_col >= 0) {
+      goto_line(env, l);
+      size_t offset = get_col_offset(term, cur_row, info->prompt_begin_col);
+      forward_char(env,
+                   env->make_integer(env, info->prompt_begin_col - offset));
+      /* should return the point at the start of the prompt. */
+      return point(env);
+    }
+  }
+  return Qnil;
+}
+emacs_value Fvterm_reset_cursor_point(emacs_env *env, ptrdiff_t nargs,
+                                      emacs_value args[], void *data) {
+  Term *term = env->get_user_ptr(env, args[0]);
+  int line = row_to_linenr(term, term->cursor.row);
+  goto_line(env, line);
+  size_t offset = get_col_offset(term, term->cursor.row, term->cursor.col);
+  forward_char(env, env->make_integer(env, term->cursor.col - offset));
+  return point(env);
 }
 
 int emacs_module_init(struct emacs_runtime *ert) {
@@ -1202,6 +1298,12 @@ int emacs_module_init(struct emacs_runtime *ert) {
   fun = env->make_function(env, 2, 2, Fvterm_get_prompt_point,
                            "Get the end postion of current prompt.", NULL);
   bind_function(env, "vterm--get-prompt-point-internal", fun);
+  fun = env->make_function(env, 2, 2, Fvterm_get_cmd_end_point,
+                           "Get the end postion of current command.", NULL);
+  bind_function(env, "vterm--get-cmd-end-point-internal", fun);
+  fun = env->make_function(env, 1, 1, Fvterm_reset_cursor_point,
+                           "Reset cursor postion.", NULL);
+  bind_function(env, "vterm--reset-point", fun);
 
   fun = env->make_function(env, 1, 1, Fvterm_get_icrnl,
                            "Gets the icrnl state of the pty", NULL);
