@@ -347,6 +347,7 @@ This is the value of `next-error-function' in Compilation buffers."
 
 (define-key vterm-mode-map (kbd "C-c C-n")             #'vterm-next-prompt)
 (define-key vterm-mode-map (kbd "C-c C-p")             #'vterm-previous-prompt)
+(define-key vterm-mode-map (kbd "C-c C-r")             #'vterm-reset-cursor-point)
 
 (define-key vterm-mode-map (kbd "C-c C-t")             #'vterm-copy-mode)
 
@@ -355,6 +356,7 @@ This is the value of `next-error-function' in Compilation buffers."
 (define-key vterm-copy-mode-map (kbd "C-c C-t")        #'vterm-copy-mode)
 (define-key vterm-copy-mode-map [return]               #'vterm-copy-mode-done)
 (define-key vterm-copy-mode-map (kbd "RET")            #'vterm-copy-mode-done)
+(define-key vterm-copy-mode-map (kbd "C-c C-r")        #'vterm-reset-cursor-point)
 
 (defvar-local vterm--copy-saved-point nil)
 
@@ -758,6 +760,7 @@ the called functions."
 
 (defun vterm-reset-cursor-point ()
   "Make sure the cursor at the right postion."
+  (interactive)
   (vterm--reset-point vterm--term))
 
 (defun vterm--get-cursor-point ()
