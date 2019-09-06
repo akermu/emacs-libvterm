@@ -778,5 +778,12 @@ the called functions."
     (when (eq pt cursor-point)
       (vterm--self-insert))))
 
+(defun vterm--at-prompt-p ()
+  "Check whether the cursor postion is at shell prompt or not."
+  (let ((pt (point))
+        (term-cursor-pt (vterm--get-cursor-point))
+        (prompt-pt (vterm--get-prompt-point)))
+    (= pt  term-cursor-pt prompt-pt)))
+
 (provide 'vterm)
 ;;; vterm.el ends here
