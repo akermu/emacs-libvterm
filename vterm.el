@@ -494,8 +494,8 @@ Argument BUFFER the terminal buffer."
             (inhibit-read-only t))
         (when vterm--term
           (when (and (require 'display-line-numbers nil 'noerror)
-                     (get-buffer-window)
-                     (display-line-numbers-update-width))
+                     (get-buffer-window buffer t)
+                     (ignore-errors (display-line-numbers-update-width)))
             (window--adjust-process-windows))
           (vterm--redraw vterm--term)))
       (setq vterm--redraw-timer nil))))
