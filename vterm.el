@@ -583,10 +583,10 @@ if N is negative backward-line from end of buffer."
                    (string-equal host (system-name)))
               (progn
                 (when (file-directory-p dir)
-                  (setq default-directory dir)))
-            (setq default-directory (concat "/-:" path)))))
+                  (setq default-directory (file-name-as-directory dir))))
+            (setq default-directory (file-name-as-directory (concat "/-:" path))))))
     (when (file-directory-p path)
-      (setq default-directory path))))
+      (setq default-directory (file-name-as-directory path)))))
 
 (defun vterm--get-color(index)
   "Get color by index from `vterm-color-palette'.
