@@ -2,19 +2,20 @@
 
 # Introduction
 
-This emacs module implements a bridge to libvterm to display a terminal in an
-emacs buffer.
+This emacs module implements a bridge to
+[libvterm](https://github.com/neovim/libvterm) to display a terminal in an emacs
+buffer.
 
 ## Warning
 
 This is an **alpha release**, so it will crash your emacs. If it does, please
-report a bug!
+[report a bug](https://github.com/akermu/emacs-libvterm/issues/new)!
 
 # Installation
 
 Clone the repository:
 
-```
+```sh
 git clone https://github.com/akermu/emacs-libvterm.git
 ```
 
@@ -24,13 +25,15 @@ installed
     support](https://www.gnu.org/software/emacs/manual/html_node/elisp/Dynamic-Modules.html).
     You can check that, by verifying that `module-file-suffix` is not `nil`.
  2. cmake (>=3.11)
- 3. libtool-bin (related issues: [#66](https://github.com/akermu/emacs-libvterm/issues/66) [#85](https://github.com/akermu/emacs-libvterm/issues/85#issuecomment-491845136))
+ 3. libtool-bin (related issues:
+    [#66](https://github.com/akermu/emacs-libvterm/issues/66)
+    [#85](https://github.com/akermu/emacs-libvterm/issues/85#issuecomment-491845136))
  4. If you compile vterm with `-DUSE_SYSTEM_LIBVTERM` make sure you have the
     library from https://github.com/neovim/libvterm
 
 Run the build:
 
-```
+``` sh
 mkdir -p build
 cd build
 cmake ..
@@ -49,7 +52,7 @@ And add this to your `init.el`:
 If you have successfully built the module, you can test it by executing the
 following command in the `build` directory:
 
-```
+```sh
 make run
 ```
 
@@ -67,7 +70,8 @@ Open a terminal in another window.
 
 When you enable `vterm-copy-mode`, the terminal buffer behaves like a normal
 `read-only` text buffer: you can search, copy text, etc. The default keybinding
-is `C-c C-t`.
+to toggle `vterm-copy-mode` is `C-c C-t`. When a region is selected, it is
+possible to copy the text and leave `vterm-copy-mode` with the enter key.
 
 # Customization
 
@@ -109,8 +113,9 @@ function chpwd() {
 }
 ```
 
-For bash there's no real change directory hook, so you have to rewrite the cd
-command (please als have a look the answers [here](https://unix.stackexchange.com/q/170279)):
+For bash there's no real change directory hook, so you have to rewrite the `cd`
+command (please have a look at the answers
+[here](https://unix.stackexchange.com/q/170279)):
 
 ```bash
 cd() {
@@ -121,7 +126,7 @@ cd() {
 
 ## Remote directory tracking
 
-Put this in your *remote* .zshrc:
+Put this in your *remote* `.zshrc`:
 
 ```zsh
 function chpwd() {
