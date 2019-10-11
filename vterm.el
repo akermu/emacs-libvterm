@@ -297,6 +297,7 @@ If nil, never delay")
 (define-key vterm-mode-map [escape]                    #'vterm--self-insert)
 (define-key vterm-mode-map [remap yank]                #'vterm-yank)
 (define-key vterm-mode-map [remap yank-pop]            #'vterm-yank-pop)
+(define-key vterm-mode-map [remap mouse-yank-primary]  #'vterm-yank-primary)
 (define-key vterm-mode-map (kbd "C-SPC")               #'vterm--self-insert)
 (define-key vterm-mode-map (kbd "C-_")                 #'vterm--self-insert)
 (define-key vterm-mode-map (kbd "C-/")                 #'vterm-undo)
@@ -448,6 +449,15 @@ If nil, never delay")
     (cl-letf (((symbol-function 'insert-for-yank)
                #'(lambda(str) (vterm-send-string str t))))
       (yank arg))))
+
+(defun vterm-yank-primary ()
+  "Implementation of `mouse-yank-primary' in vterm."
+  (interactive)
+  (let ((inhibit-read-only t)
+        (primary (gui-get-primary-selection)))
+    (cl-letf (((symbol-function 'insert-for-yank)
+               #'(lambda(str) (vterm-send-string str t))))
+      (insert-for-yank primary))))
 
 (defun vterm-yank-pop(&optional arg)
   "Implementation of `yank-pop' in vterm."
