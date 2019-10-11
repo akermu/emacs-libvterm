@@ -91,7 +91,6 @@ is ansi color 8-15.
 
 - vterm-color-default
 - vterm-color-black
-- vterm-color-black
 - vterm-color-red
 - vterm-color-green
 - vterm-color-yellow
