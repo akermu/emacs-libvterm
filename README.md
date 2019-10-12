@@ -13,6 +13,8 @@ This is an **alpha release**, so it will crash your emacs. If it does, please
 
 # Installation
 
+## Manual
+
 Clone the repository:
 
 ```sh
@@ -47,6 +49,30 @@ And add this to your `init.el`:
 (require 'vterm)
 ```
 
+Or, with `use-package`:
+
+```elisp
+(use-package vterm
+  :load-path  "path/to/emacs-libvterm/"
+)
+```
+
+## From MELPA
+
+`vterm` is available on [MELPA](https://melpa.org/), and it can be installed as
+a normal package. If the requirements are satisfied (mainly, Emacs was built
+with support for modules), `vterm` will take care of the compilation of all its
+components.
+
+`vterm` can be install with MELPA with `use-package` by adding the following
+lines to your `init.el`:
+
+```elisp
+(use-package vterm
+    :ensure t
+)
+```
+
 # Debugging and testing
 
 If you have successfully built the module, you can test it by executing the
@@ -78,6 +104,13 @@ possible to copy the text and leave `vterm-copy-mode` with the enter key.
 ## `vterm-shell`
 
 Shell to run in a new vterm. It defaults to `$SHELL`.
+
+## `vterm-term-environment-variable`
+
+Value for the `TERM` environment variable. It defaults to `xterm-256color`. If
+[eterm-256color](https://github.com/dieggsy/eterm-256color) is installed,
+setting `vterm-term-environment-variable` to `eterm-color` improves the
+rendering of colors in some systems.
 
 ## Keybindings
 
