@@ -168,14 +168,28 @@ function chpwd() {
 ```
 
 ## Send Elisp Command 
-```sh
+If you want to  clear scrollback and the screen after call to `clear`,
+you can do it like this:
+
+For `zsh` put this in your `.zshrc`:
+```zsh
 if [[ "$INSIDE_EMACS" = 'vterm' ]]; then
-    function vi(){
-        echo -n  "\e]51;E(find-file \"$@\")\e\\"
+    alias clear='echo -n  "\e]51;E(vterm-clear-scrollback)\e\\";tput clear'
+fi
+```
+
+For `bash` put this in your `.bashrc`:
+```bash
+if [[ "$INSIDE_EMACS" = 'vterm' ]]; then
+    function clear(){
+        printf  "\e]51;E(vterm-clear-scrollback)\e\\";
+        tput clear;
     }
 fi
-
 ```
+
+By the way `vterm-clear-scrollback` is bind on `C-c C-l`.
+
 ## Related packages
 
 - [vterm-toggle](https://github.com/jixiuf/vterm-toggle): Toggles between a vterm and the current buffer

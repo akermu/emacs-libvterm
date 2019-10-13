@@ -84,8 +84,8 @@ static int term_settermprop(VTermProp prop, VTermValue *val, void *user_data);
 
 static void term_redraw(Term *term, emacs_env *env);
 static void term_flush_output(Term *term, emacs_env *env);
-static void term_process_key(Term *term, unsigned char *key, size_t len,
-                             VTermModifier modifier);
+static void term_process_key(Term *term, emacs_env *env, unsigned char *key,
+                             size_t len, VTermModifier modifier);
 static void invalidate_terminal(Term *term, int start_row, int end_row);
 static void refresh_size(Term *term);
 void term_finalize(void *object);
