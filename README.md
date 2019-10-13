@@ -107,7 +107,7 @@ For `zsh` put this in your `.zshrc`:
 ```zsh
 if [[ $INSIDE_EMACS = "vterm" ]]; then
     function chpwd() {
-        print -Pn "\e]51;A$(pwd)/\e\\";
+        print -Pn "\e]51;A$(pwd)\e\\";
     }
 fi
 ```
