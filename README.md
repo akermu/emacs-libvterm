@@ -163,7 +163,7 @@ Put this in your *remote* `.zshrc`:
 
 ```zsh
 function chpwd() {
-    print -Pn "\e]51A;$(whoami)@$(hostname):$(pwd)\e\\"
+    print -Pn "\e]51;A$(whoami)@$(hostname):$(pwd)\e\\"
 }
 ```
 
