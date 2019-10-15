@@ -64,6 +64,9 @@ typedef struct Term {
   char *directory;
   bool directory_changed;
 
+  char *elisp_code;
+  bool elisp_code_changed;
+
   int width, height;
   int height_resize;
 

@@ -623,5 +623,12 @@ Argument INDEX index of color."
    (t                                   ;-2 background
     (face-background 'vterm-color-default nil 'default))))
 
+(defun vterm--eval(str)
+  "evaluate Elisp code contained in a string.
+Argument STR Elisp code."
+  (eval (car (read-from-string
+              (format "(progn %s)" str)))))
+
+
 (provide 'vterm)
 ;;; vterm.el ends here

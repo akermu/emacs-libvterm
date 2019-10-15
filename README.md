@@ -167,6 +167,15 @@ function chpwd() {
 }
 ```
 
+## Send Elisp Command 
+```sh
+if [[ "$INSIDE_EMACS" = 'vterm' ]]; then
+    function vi(){
+        echo -n  "\e]51;E(find-file \"$@\")\e\\"
+    }
+fi
+
+```
 ## Related packages
 
 - [vterm-toggle](https://github.com/jixiuf/vterm-toggle): Toggles between a vterm and the current buffer

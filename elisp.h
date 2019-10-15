@@ -49,6 +49,7 @@ emacs_value Fvterm_set_directory;
 emacs_value Fvterm_invalidate;
 emacs_value Feq;
 emacs_value Fvterm_get_color;
+emacs_value Fvterm_eval;
 
 // Utils
 void bind_function(emacs_env *env, const char *name, emacs_value Sfun);
@@ -78,5 +79,6 @@ void set_title(emacs_env *env, emacs_value string);
 void set_directory(emacs_env *env, emacs_value string);
 void vterm_invalidate(emacs_env *env);
 emacs_value vterm_get_color(emacs_env *env, int index);
+emacs_value vterm_eval(emacs_env *env, emacs_value string);
 
 #endif /* ELISP_H */
