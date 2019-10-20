@@ -492,13 +492,13 @@ Argument BUFFER the terminal buffer."
     (with-current-buffer buffer
       (let ((inhibit-redisplay t)
             (inhibit-read-only t))
+        (setq vterm--redraw-timer nil)
         (when vterm--term
           (when (and (require 'display-line-numbers nil 'noerror)
                      (get-buffer-window buffer t)
                      (ignore-errors (display-line-numbers-update-width)))
             (window--adjust-process-windows))
-          (vterm--redraw vterm--term)))
-      (setq vterm--redraw-timer nil))))
+          (vterm--redraw vterm--term))))))
 
 ;;;###autoload
 (defun vterm (&optional buffer-name)
