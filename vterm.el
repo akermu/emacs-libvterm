@@ -302,6 +302,7 @@ If nil, never delay")
 (define-key vterm-mode-map (kbd "M-,")                 #'vterm-send-meta-comma)
 (define-key vterm-mode-map (kbd "C-c C-y")             #'vterm--self-insert)
 (define-key vterm-mode-map (kbd "C-c C-c")             #'vterm-send-ctrl-c)
+(define-key vterm-mode-map (kbd "C-c C-l")             #'vterm-clear-scrollback)
 (define-key vterm-mode-map [remap self-insert-command] #'vterm--self-insert)
 
 (define-key vterm-mode-map (kbd "C-c C-t")             #'vterm-copy-mode)
@@ -433,6 +434,11 @@ If nil, never delay")
   "Sends `C-c' to the libvterm."
   (interactive)
   (vterm-send-key "c" nil nil t))
+
+(defun vterm-clear-scrollback ()
+  "Sends `<clear-scrollback>' to the libvterm."
+  (interactive)
+  (vterm-send-key "<clear_scrollback>"))
 
 (defun vterm-undo ()
   "Sends `C-_' to the libvterm."

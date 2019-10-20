@@ -575,8 +575,23 @@ static void term_flush_output(Term *term, emacs_env *env) {
   }
 }
 
-static void term_process_key(Term *term, unsigned char *key, size_t len,
-                             VTermModifier modifier) {
+static void term_clear_scrollback(Term *term, emacs_env *env) {
+  vterm_screen_flush_damage(term->vts);
+  term_redraw(term, env);
+  if (term->sb_pending > 0) { // Pending rows must be processed first.
+    return;
+  }
+  for (int i = 0; i < term->sb_current; i++) {
+    free(term->sb_buffer[i]);
+  }
+  free(term->sb_buffer);
+  term->sb_buffer = malloc(sizeof(ScrollbackLine *) * term->sb_size);
+  delete_lines(env, 1, term->sb_current, true);
+  term->linenum -= term->sb_current;
+  term->sb_current = 0;
+}
+static void term_process_key(Term *term, emacs_env *env, unsigned char *key,
+                             size_t len, VTermModifier modifier) {
   if (is_key(key, len, "<return>")) {
     if (term->pty_fd > 0) {
       struct termios keys;
@@ -588,6 +603,8 @@ static void term_process_key(Term *term, unsigned char *key, size_t len,
     } else {
       vterm_keyboard_key(term->vt, VTERM_KEY_ENTER, modifier);
     }
+  } else if (is_key(key, len, "<clear_scrollback>")) {
+    term_clear_scrollback(term, env);
   } else if (is_key(key, len, "<start>")) {
     tcflow(term->pty_fd, TCOON);
   } else if (is_key(key, len, "<stop>")) {
@@ -795,7 +812,7 @@ emacs_value Fvterm_update(emacs_env *env, ptrdiff_t nargs, emacs_value args[],
       modifier = modifier | VTERM_MOD_CTRL;
 
     // Ignore the final zero byte
-    term_process_key(term, key, len - 1, modifier);
+    term_process_key(term, env,key, len - 1, modifier);
   }
 
   // Flush output
