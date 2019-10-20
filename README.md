@@ -194,7 +194,7 @@ function chpwd() {
 }
 ```
 
-## Send Elisp Command
+## Send Elisp Commands
 
 `vterm` can read and execute `elisp` commands. At the moment, a command is
 passed by providing a specific escape sequence. For example, to evaluate
