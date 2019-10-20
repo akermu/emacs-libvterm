@@ -76,6 +76,7 @@
 (require 'subr-x)
 (require 'cl-lib)
 (require 'color)
+(require 'compile)
 
 (defcustom vterm-shell shell-file-name
   "The shell that gets run in the vterm."
@@ -261,7 +262,35 @@ If nil, never delay")
            :sentinel (when vterm-exit-functions #'vterm--sentinel))))
   (vterm--set-pty-name vterm--term (process-tty-name vterm--process))
   (process-put vterm--process 'adjust-window-size-function
-               #'vterm--window-adjust-process-window-size))
+               #'vterm--window-adjust-process-window-size)
+  (setq next-error-function 'vterm-next-error-function))
+
+(defun vterm--compilation-setup ()
+  "function to setup `compilation-shell-minor-mode' for vterm.
+`'compilation-shell-minor-mode' would change the value of
+local variable `next-error-function',so we should call this function in
+`compilation-shell-minor-mode-hook'."
+  (when (eq major-mode 'vterm-mode)
+    (setq next-error-function 'vterm-next-error-function)))
+
+(add-hook 'compilation-shell-minor-mode-hook #'vterm--compilation-setup)
+
+;;;###autoload
+(defun vterm-next-error-function (n &optional reset)
+  "Advance to the next error message and visit the file where the error was.
+This is the value of `next-error-function' in Compilation buffers."
+  (interactive "p")
+  (let* ((pt (point))
+         (msg (compilation-next-error (or n 1) nil
+				                      (or compilation-current-error
+					                      compilation-messages-start
+					                      (point-min))))
+         (default-directory default-directory)
+         (pwd (vterm--get-pwd)))
+    (when pwd
+      (setq default-directory pwd))
+    (goto-char pt)
+    (compilation-next-error-function n reset)))
 
 ;; Function keys and most of C- and M- bindings
 (defun vterm--exclude-keys (exceptions)
@@ -618,19 +647,35 @@ if N is negative backward-line from end of buffer."
 
 (defun vterm--set-directory (path)
   "Set `default-directory' to PATH."
-  (if (string-match "^\\(.*?\\)@\\(.*?\\):\\(.*?\\)$" path)
-      (progn
-        (let ((user (match-string 1 path))
-              (host (match-string 2 path))
-              (dir (match-string 3 path)))
-          (if (and (string-equal user user-login-name)
-                   (string-equal host (system-name)))
-              (progn
-                (when (file-directory-p dir)
-                  (setq default-directory (file-name-as-directory dir))))
-            (setq default-directory (file-name-as-directory (concat "/-:" path))))))
-    (when (file-directory-p path)
-      (setq default-directory (file-name-as-directory path)))))
+  (let ((dir (vterm--get-directory path)))
+    (when dir (setq default-directory dir))))
+
+(defun vterm--get-directory (path)
+  "Get  normalized directory to PATH."
+  (when path
+    (let (directory)
+      (if (string-match "^\\(.*?\\)@\\(.*?\\):\\(.*?\\)$" path)
+          (progn
+            (let ((user (match-string 1 path))
+                  (host (match-string 2 path))
+                  (dir (match-string 3 path)))
+              (if (and (string-equal user user-login-name)
+                       (string-equal host (system-name)))
+                  (progn
+                    (when (file-directory-p dir)
+                      (setq directory (file-name-as-directory dir))))
+                (setq directory (file-name-as-directory (concat "/-:" path))))))
+        (when (file-directory-p path)
+          (setq directory (file-name-as-directory path))))
+      directory)))
+
+(defun vterm--get-pwd (&optional linenum)
+  "Get working directory at LINENUM."
+  (let ((raw-pwd (vterm--get-pwd-raw
+                  vterm--term
+                  (or linenum (line-number-at-pos)))))
+    (when raw-pwd
+      (vterm--get-directory raw-pwd))))
 
 (defun vterm--get-color(index)
   "Get color by index from `vterm-color-palette'.

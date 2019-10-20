@@ -10,6 +10,21 @@
 #include <unistd.h>
 #include <vterm.h>
 
+static LineInfo *alloc_lineinfo() {
+  LineInfo *info = malloc(sizeof(LineInfo));
+  info->directory = NULL;
+  return info;
+}
+void free_lineinfo(LineInfo *line) {
+  if (line == NULL) {
+    return;
+  }
+  if (line->directory != NULL) {
+    free(line->directory);
+    line->directory = NULL;
+  }
+  free(line);
+}
 static int term_sb_push(int cols, const VTermScreenCell *cells, void *data) {
   Term *term = (Term *)data;
 
@@ -25,6 +40,10 @@ static int term_sb_push(int cols, const VTermScreenCell *cells, void *data) {
       // Recycle old row if it's the right size
       sbrow = term->sb_buffer[term->sb_current - 1];
     } else {
+      if (term->sb_buffer[term->sb_current - 1]->info != NULL) {
+        free_lineinfo(term->sb_buffer[term->sb_current - 1]->info);
+        term->sb_buffer[term->sb_current - 1]->info = NULL;
+      }
       free(term->sb_buffer[term->sb_current - 1]);
     }
 
@@ -41,6 +60,31 @@ static int term_sb_push(int cols, const VTermScreenCell *cells, void *data) {
   if (!sbrow) {
     sbrow = malloc(sizeof(ScrollbackLine) + c * sizeof(sbrow->cells[0]));
     sbrow->cols = c;
+    sbrow->info = NULL;
+  }
+  if (sbrow->info != NULL) {
+    free_lineinfo(sbrow->info);
+  }
+  sbrow->info = term->lines[0];
+  memmove(term->lines, term->lines + 1,
+          sizeof(term->lines[0]) * (term->lines_len - 1));
+  if (term->resizing) {
+    /* pushed by window height decr */
+    if (term->lines[term->lines_len - 1] != NULL) {
+      /* do not need free here ,it is reused ,we just need set null */
+      term->lines[term->lines_len - 1] = NULL;
+    }
+    term->lines_len--;
+  } else {
+    LineInfo *lastline = term->lines[term->lines_len - 1];
+    if (lastline != NULL) {
+      LineInfo *line = alloc_lineinfo();
+      if (lastline->directory != NULL) {
+        line->directory = malloc(1 + strlen(lastline->directory));
+        strcpy(line->directory, lastline->directory);
+      }
+      term->lines[term->lines_len - 1] = line;
+    }
   }
 
   // New row is added at the start of the storage buffer.
@@ -97,7 +141,14 @@ static int term_sb_pop(int cols, VTermScreenCell *cells, void *data) {
     cells[col].width = 1;
   }
 
+  LineInfo **lines = malloc(sizeof(LineInfo *) * (term->lines_len + 1));
+
+  memmove(lines + 1, term->lines, sizeof(term->lines[0]) * term->lines_len);
+  lines[0] = sbrow->info;
   free(sbrow);
+  term->lines_len += 1;
+  free(term->lines);
+  term->lines = lines;
 
   return 1;
 }
@@ -128,6 +179,24 @@ static void fetch_cell(Term *term, int row, int col, VTermScreenCell *cell) {
   }
 }
 
+static char *get_row_directory(Term *term, int row) {
+  if (row < 0) {
+    ScrollbackLine *sbrow = term->sb_buffer[-row - 1];
+    return sbrow->info->directory;
+    /* return term->dirs[0]; */
+  } else {
+    return term->lines[row]->directory;
+  }
+}
+static LineInfo *get_lineinfo(Term *term, int row) {
+  if (row < 0) {
+    ScrollbackLine *sbrow = term->sb_buffer[-row - 1];
+    return sbrow->info;
+    /* return term->dirs[0]; */
+  } else {
+    return term->lines[row];
+  }
+}
 static bool is_eol(Term *term, int end_col, int row, int col) {
   /* This cell is EOL if this and every cell to the right is black */
   if (row >= 0) {
@@ -227,7 +296,6 @@ static void refresh_lines(Term *term, emacs_env *env, int start_row,
 
   return;
 }
-
 // Refresh the screen (visible part of the buffer when the terminal is
 // focused) of a invalidated terminal
 static void refresh_screen(Term *term, emacs_env *env) {
@@ -260,9 +328,43 @@ static int term_resize(int rows, int cols, void *user_data) {
   Term *term = (Term *)user_data;
   term->invalid_start = 0;
   term->invalid_end = rows;
+
+  /* if rows=term->lines_len, that means term_sb_pop already resize term->lines
+   */
+  /* if rows<term->lines_len, term_sb_push would resize term->lines there */
+  /* we noly need to take care of rows>term->height */
+
+  if (rows > term->height) {
+    if (rows > term->lines_len) {
+      LineInfo **infos = term->lines;
+      term->lines = malloc(sizeof(LineInfo *) * rows);
+      memmove(term->lines, infos, sizeof(infos[0]) * term->lines_len);
+
+      LineInfo *lastline = term->lines[term->lines_len - 1];
+      for (int i = term->lines_len; i < rows; i++) {
+        if (lastline != NULL) {
+          LineInfo *line = alloc_lineinfo();
+          if (lastline->directory != NULL) {
+            line->directory =
+                malloc(1 + strlen(term->lines[term->lines_len - 1]->directory));
+            strcpy(line->directory,
+                   term->lines[term->lines_len - 1]->directory);
+          }
+          term->lines[i] = line;
+        } else {
+          term->lines[i] = NULL;
+        }
+      }
+      term->lines_len = rows;
+      free(infos);
+    }
+  }
+
   term->width = cols;
   term->height = rows;
+
   invalidate_terminal(term, -1, -1);
+  term->resizing = false;
 
   return 1;
 }
@@ -582,6 +684,10 @@ static void term_clear_scrollback(Term *term, emacs_env *env) {
     return;
   }
   for (int i = 0; i < term->sb_current; i++) {
+    if (term->sb_buffer[i]->info != NULL) {
+      free_lineinfo(term->sb_buffer[i]->info);
+      term->sb_buffer[i]->info = NULL;
+    }
     free(term->sb_buffer[i]);
   }
   free(term->sb_buffer);
@@ -672,6 +778,10 @@ static void term_process_key(Term *term, emacs_env *env, unsigned char *key,
 void term_finalize(void *object) {
   Term *term = (Term *)object;
   for (int i = 0; i < term->sb_current; i++) {
+    if (term->sb_buffer[i]->info != NULL) {
+      free_lineinfo(term->sb_buffer[i]->info);
+      term->sb_buffer[i]->info = NULL;
+    }
     free(term->sb_buffer[i]);
   }
   if (term->title) {
@@ -686,6 +796,12 @@ void term_finalize(void *object) {
   if (term->elisp_code) {
     free(term->elisp_code);
     term->elisp_code = NULL;
+  }
+  for (int i = 0; i < term->lines_len; i++) {
+    if (term->lines[i] != NULL) {
+      free_lineinfo(term->lines[i]);
+      term->lines[i] = NULL;
+    }
   }
 
   if (term->pty_fd > 0) {
@@ -713,6 +829,18 @@ static int osc_callback(const char *command, size_t cmdlen, void *user) {
     term->directory = malloc(cmdlen - 4 + 1);
     strcpy(term->directory, &buffer[4]);
     term->directory_changed = true;
+
+    for (int i = term->cursor.row; i < term->lines_len; i++) {
+      if (term->lines[i] == NULL) {
+        term->lines[i] = alloc_lineinfo();
+      }
+
+      if (term->lines[i]->directory != NULL) {
+        free(term->lines[i]->directory);
+      }
+      term->lines[i]->directory = malloc(cmdlen - 4 + 1);
+      strcpy(term->lines[i]->directory, &buffer[4]);
+    }
     return 1;
   } else if (cmdlen > 4 && buffer[0] == '5' && buffer[1] == '1' &&
              buffer[2] == ';' && buffer[3] == 'E') {
@@ -769,16 +897,25 @@ emacs_value Fvterm_new(emacs_env *env, ptrdiff_t nargs, emacs_value args[],
   }
   term->linenum = term->height;
   term->linenum_added = 0;
+  term->resizing = false;
 
   term->pty_fd = -1;
 
   term->title = NULL;
   term->title_changed = false;
 
+  term->cursor.row = 0;
+  term->cursor.col = 0;
   term->directory = NULL;
   term->directory_changed = false;
   term->elisp_code = NULL;
   term->elisp_code_changed = false;
+
+  term->lines = malloc(sizeof(LineInfo *) * rows);
+  term->lines_len = rows;
+  for (int i = 0; i < rows; i++) {
+    term->lines[i] = NULL;
+  }
 
   return env->make_user_ptr(env, term_finalize, term);
 }
@@ -847,6 +984,7 @@ emacs_value Fvterm_set_size(emacs_env *env, ptrdiff_t nargs, emacs_value args[],
         term->linenum_added = rows - term->height - term->sb_current;
       }
     }
+    term->resizing = true;
     vterm_set_size(term->vt, rows, cols);
     vterm_screen_flush_damage(term->vts);
 
@@ -869,6 +1007,15 @@ emacs_value Fvterm_set_pty_name(emacs_env *env, ptrdiff_t nargs,
     term->pty_fd = open(filename, O_RDONLY);
   }
   return Qnil;
+}
+emacs_value Fvterm_get_pwd(emacs_env *env, ptrdiff_t nargs, emacs_value args[],
+                           void *data) {
+  Term *term = env->get_user_ptr(env, args[0]);
+  int linenum = env->extract_integer(env, args[1]);
+  int row = linenr_to_row(term, linenum);
+  char *dir = get_row_directory(term, row);
+
+  return env->make_string(env, dir, strlen(dir));
 }
 
 emacs_value Fvterm_get_icrnl(emacs_env *env, ptrdiff_t nargs,
@@ -973,6 +1120,9 @@ int emacs_module_init(struct emacs_runtime *ert) {
   fun = env->make_function(env, 2, 2, Fvterm_set_pty_name,
                            "Sets the name of the pty.", NULL);
   bind_function(env, "vterm--set-pty-name", fun);
+  fun = env->make_function(env, 2, 2, Fvterm_get_pwd,
+                           "Get the working directory of at line n.", NULL);
+  bind_function(env, "vterm--get-pwd-raw", fun);
 
   fun = env->make_function(env, 1, 1, Fvterm_get_icrnl,
                            "Gets the icrnl state of the pty", NULL);
