@@ -126,3 +126,7 @@ void set_directory(emacs_env *env, emacs_value string) {
 void vterm_invalidate(emacs_env *env) {
   env->funcall(env, Fvterm_invalidate, 0, NULL);
 }
+emacs_value vterm_eval(emacs_env *env, emacs_value string){
+  return env->funcall(env, Fvterm_eval, 1, (emacs_value[]){string});
+
+}

@@ -426,6 +426,14 @@ static void term_redraw(Term *term, emacs_env *env) {
         env, env->make_string(env, term->directory, strlen(term->directory)));
     term->directory_changed = false;
   }
+  if (term->elisp_code_changed) {
+    term->elisp_code_changed = false;
+    emacs_value elisp_code =
+        env->make_string(env, term->elisp_code, strlen(term->elisp_code));
+    vterm_eval(env, elisp_code);
+    free(term->elisp_code);
+    term->elisp_code = NULL;
+  }
 
   term->is_invalidated = false;
 }
@@ -669,6 +677,10 @@ void term_finalize(void *object) {
     free(term->directory);
     term->directory = NULL;
   }
+  if (term->elisp_code) {
+    free(term->elisp_code);
+    term->elisp_code = NULL;
+  }
 
   if (term->pty_fd > 0) {
     close(term->pty_fd);
@@ -695,6 +707,12 @@ static int osc_callback(const char *command, size_t cmdlen, void *user) {
     term->directory = malloc(cmdlen - 4 + 1);
     strcpy(term->directory, &buffer[4]);
     term->directory_changed = true;
+    return 1;
+  } else if (cmdlen > 4 && buffer[0] == '5' && buffer[1] == '1' &&
+             buffer[2] == ';' && buffer[3] == 'E') {
+    term->elisp_code = malloc(cmdlen - 4 + 1);
+    strcpy(term->elisp_code, &buffer[4]);
+    term->elisp_code_changed = true;
     return 1;
   }
   return 0;
@@ -753,6 +771,8 @@ emacs_value Fvterm_new(emacs_env *env, ptrdiff_t nargs, emacs_value args[],
 
   term->directory = NULL;
   term->directory_changed = false;
+  term->elisp_code = NULL;
+  term->elisp_code_changed = false;
 
   return env->make_user_ptr(env, term_finalize, term);
 }
@@ -903,6 +923,8 @@ int emacs_module_init(struct emacs_runtime *ert) {
   Feq = env->make_global_ref(env, env->intern(env, "eq"));
   Fvterm_get_color =
       env->make_global_ref(env, env->intern(env, "vterm--get-color"));
+  Fvterm_eval =
+      env->make_global_ref(env, env->intern(env, "vterm--eval"));
 
   // Exported functions
   emacs_value fun;

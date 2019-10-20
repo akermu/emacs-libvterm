@@ -492,13 +492,13 @@ Argument BUFFER the terminal buffer."
     (with-current-buffer buffer
       (let ((inhibit-redisplay t)
             (inhibit-read-only t))
+        (setq vterm--redraw-timer nil)
         (when vterm--term
           (when (and (require 'display-line-numbers nil 'noerror)
                      (get-buffer-window buffer t)
                      (ignore-errors (display-line-numbers-update-width)))
             (window--adjust-process-windows))
-          (vterm--redraw vterm--term)))
-      (setq vterm--redraw-timer nil))))
+          (vterm--redraw vterm--term))))))
 
 ;;;###autoload
 (defun vterm (&optional buffer-name)
@@ -622,6 +622,13 @@ Argument INDEX index of color."
     (face-foreground 'vterm-color-default nil 'default))
    (t                                   ;-2 background
     (face-background 'vterm-color-default nil 'default))))
+
+(defun vterm--eval(str)
+  "evaluate Elisp code contained in a string.
+Argument STR Elisp code."
+  (eval (car (read-from-string
+              (format "(progn %s)" str)))))
+
 
 (provide 'vterm)
 ;;; vterm.el ends here
