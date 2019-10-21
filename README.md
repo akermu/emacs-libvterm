@@ -99,6 +99,33 @@ When you enable `vterm-copy-mode`, the terminal buffer behaves like a normal
 to toggle `vterm-copy-mode` is `C-c C-t`. When a region is selected, it is
 possible to copy the text and leave `vterm-copy-mode` with the enter key.
 
+## `vterm-clear-scrollback`
+
+`vterm-clear-scrollback` does exactly what the name suggests: it clears the
+current buffer from the data that it is not currently visible.
+`vterm-clear-scrollback` is bound to `C-c C-l`. This function is typically used
+with the `clear` function provided by the shell to clear both screen and
+scrollback. In order to achieve this behavior, you need to add a new shell alias.
+
+For `zsh`, put this in your `.zshrc`:
+```zsh
+if [[ "$INSIDE_EMACS" = 'vterm' ]]; then
+    alias clear='echo -n  "\e]51;E(vterm-clear-scrollback)\e\\";tput clear'
+fi
+```
+For `bash`, put this in your `.bashrc`:
+```bash
+if [[ "$INSIDE_EMACS" = 'vterm' ]]; then
+    function clear(){
+        printf  "\e]51;E(vterm-clear-scrollback)\e\\";
+        tput clear;
+    }
+fi
+```
+
+These aliases take advantage of the fact that `vterm` can execute `elisp`
+commands, as explained below.
+
 # Customization
 
 ## `vterm-shell`
@@ -167,28 +194,31 @@ function chpwd() {
 }
 ```
 
-## Send Elisp Command 
-If you want to  clear scrollback and the screen after call to `clear`,
-you can do it like this:
+## Send Elisp Commands
 
-For `zsh` put this in your `.zshrc`:
-```zsh
-if [[ "$INSIDE_EMACS" = 'vterm' ]]; then
-    alias clear='echo -n  "\e]51;E(vterm-clear-scrollback)\e\\";tput clear'
-fi
+`vterm` can read and execute `elisp` commands. At the moment, a command is
+passed by providing a specific escape sequence. For example, to evaluate
+``` elisp
+(message (buffer-name))
+```
+use
+``` sh
+echo -n  "\e]51;E(message (buffer-name))\e\\"
 ```
 
-For `bash` put this in your `.bashrc`:
-```bash
+An example of implementation of a shell function that uses this feature to open
+a file is
+```sh
 if [[ "$INSIDE_EMACS" = 'vterm' ]]; then
-    function clear(){
-        printf  "\e]51;E(vterm-clear-scrollback)\e\\";
-        tput clear;
+    function find-file(){
+        echo -n  "\e]51;E(find-file \"$@\")\e\\"
     }
 fi
 ```
-
-By the way `vterm-clear-scrollback` is bind on `C-c C-l`.
+This can be used inside `vterm` as
+```sh
+find-file name_of_file_in_local_directory
+```
 
 ## Related packages
 
