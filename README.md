@@ -165,34 +165,34 @@ is ansi color 8-15.
 
 ## Directory tracking
 
-For `zsh` put this in your `.zshrc`:
+For `zsh` put this at the end of your `.zshrc`:
 
 ```zsh
-function chpwd() {
-    print -Pn "\e]51;A$(pwd)\e\\";
+
+vterm_prompt_end() {
+    print -Pn "\e]51;A$(whoami)@$(hostname):$(pwd)\e\\";
 }
+PROMPT=$PROMPT'%{$(vterm_prompt_end)%}'
 ```
 
-For bash there's no real change directory hook, so you have to rewrite the `cd`
-command (please have a look at the answers
-[here](https://unix.stackexchange.com/q/170279)):
+For `bash` put this at the end of your `.bashrc`:
 
 ```bash
-cd() {
-  builtin cd "$@" || return
-  [ "$OLDPWD" = "$PWD" ] || echo -e "\e]51;A$(pwd)\e\\"
+vterm_prompt_end(){
+    printf "\e]51;A$(whoami)@$(hostname):$(pwd)\e\\"
 }
+PS1=$PS1'$(vterm_prompt_end)'
 ```
 
-## Remote directory tracking
+For `fish` put this in your `~/.config/fish/config.fish`:
 
-Put this in your *remote* `.zshrc`:
-
-```zsh
-function chpwd() {
-    print -Pn "\e]51;A$(whoami)@$(hostname):$(pwd)\e\\"
-}
+```fish
+function fish_vterm_prompt_end;
+    printf '\e]51;A'(whoami)'@'(hostname)':'(pwd)'\e\\';
+end
+function track_directories --on-event fish_prompt; fish_vterm_prompt_end; end
 ```
+
 
 ## Send Elisp Commands
 
