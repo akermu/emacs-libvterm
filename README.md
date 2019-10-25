@@ -163,7 +163,12 @@ is ansi color 8-15.
 - vterm-color-cyan
 - vterm-color-white
 
-## Directory tracking
+## Shell Integration & Directory tracking
+
+Vterm Shell Integration feature is made possible by proprietary escape sequences.
+The goal of the proprietary escape sequences is to mark up a shell's output
+with semantic information about where the prompt begins and ends, where
+the user-entered command begins and ends.
 
 `vterm` supports _directory tracking_. If this feature is enabled, the default
 directory in Emacs and the current working directory in `vterm` are synced. As a
@@ -176,28 +181,62 @@ to share the revelant information with Emacs.
 For `zsh`, put this at the end of your `.zshrc`:
 
 ```zsh
+vterm_prompt_begin() {
+   printf "\e]51;C\e\\"
+}
 vterm_prompt_end() {
     printf "\e]51;A$(whoami)@$(hostname):$(pwd)\e\\";
 }
-PROMPT=$PROMPT'%{$(vterm_prompt_end)%}'
+PROMPT='%{$(vterm_prompt_begin)%}'$PROMPT'%{$(vterm_prompt_end)%}'
+
+autoload -U add-zsh-hook
+add-zsh-hook -Uz preexec(){printf "\e]51;B\e\\";}
 ```
 
 For `bash`, put this at the end of your `.bashrc`:
+Please install  [bash-preexec](https://github.com/rcaloras/bash-preexec)
 
 ```bash
+vterm_prompt_begin(){
+  printf "\e]51;C\e\\"
+}
 vterm_prompt_end(){
     printf "\e]51;A$(whoami)@$(hostname):$(pwd)\e\\"
 }
-PS1=$PS1'$(vterm_prompt_end)'
+PS1='$(vterm_prompt_begin)'$PS1'$(vterm_prompt_end)'
+
+test -e "${HOME}/.bash-preexec.sh" && source "${HOME}/.bash-preexec.sh"
+preexec() { printf "\e]51;B\e\\"; }
 ```
 
 For `fish`, put this in your `~/.config/fish/config.fish`:
 
 ```fish
-function fish_vterm_prompt_end;
+function vterm_cmd_end --on-event fish_preexec; printf "\e]51;B\e\\"; end
+
+function vterm_prompt_begin;
+    printf "\e]51;C\e\\";
+end
+
+function vterm_prompt_end;
     printf '\e]51;A'(whoami)'@'(hostname)':'(pwd)'\e\\';
 end
-function track_directories --on-event fish_prompt; fish_vterm_prompt_end; end
+
+
+functions -c fish_mode_prompt vterm_old_fish_mode_prompt
+function fish_mode_prompt --description 'Write out the prompt; do not replace this. Instead, put this at end of your file.'
+    vterm_prompt_begin
+    vterm_old_fish_mode_prompt
+end
+
+functions -c fish_prompt vterm_old_fish_prompt
+function fish_prompt --description 'Write out the prompt; do not replace this. Instead, put this at end of your file.'
+    # Remove the trailing newline from the original prompt. This is done
+    # using the string builtin from fish, but to make sure any escape codes
+    # are correctly interpreted, use %b for printf.
+    printf "%b" (string join "\n" (vterm_old_fish_prompt))
+    vterm_prompt_end
+end
 ```
 
 Directory tracking works on remote servers too. In case the hostname of your
