@@ -3,12 +3,12 @@
 # Introduction
 
 This emacs module implements a bridge to
-[libvterm](https://github.com/neovim/libvterm) to display a terminal in an emacs
+[libvterm](https://github.com/neovim/libvterm) to display a terminal in an Emacs
 buffer.
 
 ## Warning
 
-This is an **alpha release**, so it will crash your emacs. If it does, please
+This is an **alpha release**, so it will crash your Emacs. If it does, please
 [report a bug](https://github.com/akermu/emacs-libvterm/issues/new)!
 
 # Installation
@@ -165,17 +165,24 @@ is ansi color 8-15.
 
 ## Directory tracking
 
-For `zsh` put this at the end of your `.zshrc`:
+`vterm` supports _directory tracking_. If this feature is enabled, the default
+directory in Emacs and the current working directory in `vterm` are synced. As a
+result, interactive functions that ask for a path or a file (e.g., `dired` or
+`find-file`) will do so starting from the current location.
+
+Directory tracking requires some configuration, as the shell has to be instructed
+to share the revelant information with Emacs.
+
+For `zsh`, put this at the end of your `.zshrc`:
 
 ```zsh
-
 vterm_prompt_end() {
     print -Pn "\e]51;A$(whoami)@$(hostname):$(pwd)\e\\";
 }
 PROMPT=$PROMPT'%{$(vterm_prompt_end)%}'
 ```
 
-For `bash` put this at the end of your `.bashrc`:
+For `bash`, put this at the end of your `.bashrc`:
 
 ```bash
 vterm_prompt_end(){
@@ -184,7 +191,7 @@ vterm_prompt_end(){
 PS1=$PS1'$(vterm_prompt_end)'
 ```
 
-For `fish` put this in your `~/.config/fish/config.fish`:
+For `fish`, put this in your `~/.config/fish/config.fish`:
 
 ```fish
 function fish_vterm_prompt_end;
@@ -193,6 +200,9 @@ end
 function track_directories --on-event fish_prompt; fish_vterm_prompt_end; end
 ```
 
+Directory tracking works on remote servers too. In case the hostname of your
+remote machine does not match the actual hostname needed to connect to that
+server, change `$(hostname)` with the correct one.
 
 ## Send Elisp Commands
 
