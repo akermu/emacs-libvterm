@@ -110,7 +110,7 @@ scrollback. In order to achieve this behavior, you need to add a new shell alias
 For `zsh`, put this in your `.zshrc`:
 ```zsh
 if [[ "$INSIDE_EMACS" = 'vterm' ]]; then
-    alias clear='echo -n  "\e]51;E(vterm-clear-scrollback)\e\\";tput clear'
+    alias clear='printf "\e]51;E(vterm-clear-scrollback)\e\\";tput clear'
 fi
 ```
 For `bash`, put this in your `.bashrc`:
@@ -177,7 +177,7 @@ For `zsh`, put this at the end of your `.zshrc`:
 
 ```zsh
 vterm_prompt_end() {
-    print -Pn "\e]51;A$(whoami)@$(hostname):$(pwd)\e\\";
+    printf "\e]51;A$(whoami)@$(hostname):$(pwd)\e\\";
 }
 PROMPT=$PROMPT'%{$(vterm_prompt_end)%}'
 ```
@@ -213,7 +213,7 @@ passed by providing a specific escape sequence. For example, to evaluate
 ```
 use
 ``` sh
-echo -n  "\e]51;E(message (buffer-name))\e\\"
+printf  "\e]51;E(message (buffer-name))\e\\"
 ```
 
 An example of implementation of a shell function that uses this feature to open
@@ -221,7 +221,7 @@ a file is
 ```sh
 if [[ "$INSIDE_EMACS" = 'vterm' ]]; then
     function find-file(){
-        echo -n  "\e]51;E(find-file \"$@\")\e\\"
+        printf  "\e]51;E(find-file \"$@\")\e\\"
     }
 fi
 ```
