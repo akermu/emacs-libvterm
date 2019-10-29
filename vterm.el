@@ -296,6 +296,7 @@ If nil, never delay")
 (define-key vterm-mode-map [remap yank-pop]            #'vterm-yank-pop)
 (define-key vterm-mode-map [remap mouse-yank-primary]  #'vterm-yank-primary)
 (define-key vterm-mode-map (kbd "C-SPC")               #'vterm--self-insert)
+(define-key vterm-mode-map (kbd "S-SPC")               #'vterm-send-space)
 (define-key vterm-mode-map (kbd "C-_")                 #'vterm--self-insert)
 (define-key vterm-mode-map (kbd "C-/")                 #'vterm-undo)
 (define-key vterm-mode-map (kbd "M-.")                 #'vterm-send-meta-dot)
@@ -379,6 +380,11 @@ If nil, never delay")
   "Sends `<tab>' to the libvterm."
   (interactive)
   (vterm-send-key "<tab>"))
+
+(defun vterm-send-space ()
+  "Sends `<space>' to the libvterm."
+  (interactive)
+  (vterm-send-key " "))
 
 (defun vterm-send-backspace ()
   "Sends `<backspace>' to the libvterm."
