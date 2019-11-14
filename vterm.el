@@ -371,9 +371,11 @@ If nil, never delay")
   (vterm-send-key "<stop>"))
 
 (defun vterm-send-return ()
-  "Sends `<return>' to the libvterm."
+  "Sends C-m to the libvterm."
   (interactive)
-  (vterm-send-key "<return>"))
+  (if (vterm--get-icrnl vterm--term)
+      (process-send-string vterm--process "\C-j")
+    (process-send-string vterm--process "\C-m")))
 
 (defun vterm-send-tab ()
   "Sends `<tab>' to the libvterm."
@@ -445,10 +447,6 @@ If nil, never delay")
   (interactive)
   (vterm-send-key "_" nil nil t))
 
-(defun vterm-send-return ()
-  "Sends C-m to the libvterm."
-  (interactive)
-  (process-send-string vterm--process "\C-m"))
 
 (defun vterm-yank (&optional arg)
   "Implementation of `yank' (paste) in vterm."
