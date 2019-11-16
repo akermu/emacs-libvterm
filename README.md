@@ -110,14 +110,14 @@ scrollback. In order to achieve this behavior, you need to add a new shell alias
 For `zsh`, put this in your `.zshrc`:
 ```zsh
 if [[ "$INSIDE_EMACS" = 'vterm' ]]; then
-    alias clear='printf "\e]51;E(vterm-clear-scrollback)\e\\";tput clear'
+    alias clear='printf "\e]51;Evterm-clear-scrollback\e\\";tput clear'
 fi
 ```
 For `bash`, put this in your `.bashrc`:
 ```bash
 if [[ "$INSIDE_EMACS" = 'vterm' ]]; then
     function clear(){
-        printf  "\e]51;E(vterm-clear-scrollback)\e\\";
+        printf  "\e]51;Evterm-clear-scrollback\e\\";
         tput clear;
     }
 fi
@@ -204,30 +204,94 @@ Directory tracking works on remote servers too. In case the hostname of your
 remote machine does not match the actual hostname needed to connect to that
 server, change `$(hostname)` with the correct one.
 
-## Send Elisp Commands
+## Message passing
 
-`vterm` can read and execute `elisp` commands. At the moment, a command is
+`vterm` can read and execute commands. At the moment, a command is
 passed by providing a specific escape sequence. For example, to evaluate
 ``` elisp
-(message (buffer-name))
+(message "Hello!")
 ```
 use
 ``` sh
-printf  "\e]51;E(message (buffer-name))\e\\"
+printf "\e]51;Emessage \"Hello\!\"\e\\"
 ```
 
-An example of implementation of a shell function that uses this feature to open
-a file is
+The commands that are understood are defined in the setting `vterm-eval-cmds`.
+
+As `split-string-and-unquote` is used the parse the passed string, double quotes
+and backslashes need to be escaped via backslash. For instance, bash can replace
+strings internally.
+
 ```sh
-if [[ "$INSIDE_EMACS" = 'vterm' ]]; then
-    function find-file(){
-        printf  "\e]51;E(find-file \"$@\")\e\\"
-    }
-fi
+vterm_cmd() {
+    printf "\e]51;E"
+    local r
+    while [[ $# -gt 0 ]]; do
+        r="${1//\\/\\\\}"
+        r="${r//\"/\\\"}"
+        printf '"%s" ' "$r"
+        shift
+    done
+    printf "\e\\"
+}
 ```
-This can be used inside `vterm` as
+
+However if you are using dash and need a pure POSIX implementation:
+
 ```sh
-find-file name_of_file_in_local_directory
+vterm_cmd() {
+    printf "\e]51;E"
+    while [ $# -gt 0 ]; do
+        printf '"%s" ' "$(printf "%s" "$1" | sed -e 's|\\|\\\\|g' -e 's|"|\\"|g')"
+        shift
+    done
+    printf "\e\\"
+}
+```
+
+Now we can write shell functions to call the ones defined in `vterm-eval-cmds`.
+
+```sh
+find_file() {
+    vterm_cmd find-file "$(realpath "$@")"
+}
+
+say() {
+    vterm_cmd message "%s" "$*"
+}
+```
+
+This can be used inside `vterm` as
+
+```sh
+find_file name_of_file_in_local_directory
+```
+
+As an example, say you like having files opened below the current window. You
+could add the command to do it on the lisp side like so:
+
+``` elisp
+(push (list "find-file-below"
+            (lambda (path)
+              (if-let* ((buf (find-file-noselect path))
+                        (window (display-buffer-below-selected buf nil)))
+                  (select-window window)
+                (message "Failed to open file: %s" path))))
+      vterm-eval-cmds)
+```
+
+Then add the command in your `.bashrc` file.
+
+```sh
+open_file_below() {
+    vterm_cmd find-file-below "$(realpath "$@")"
+}
+```
+
+Then you can open any file from inside your shell.
+
+```sh
+open_file_below ~/Documents
 ```
 
 ## Related packages
