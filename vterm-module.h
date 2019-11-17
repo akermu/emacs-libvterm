@@ -17,10 +17,17 @@ int plugin_is_GPL_compatible;
 #define MAX(X, Y) ((X) > (Y) ? (X) : (Y))
 #endif
 
+typedef struct LineInfo {
+  char *directory; /* working directory */
+
+} LineInfo;
+
 typedef struct ScrollbackLine {
   size_t cols;
+  LineInfo *info;
   VTermScreenCell cells[];
 } ScrollbackLine;
+
 
 enum {
   VTERM_PROP_CURSOR_BLOCK = VTERM_PROP_CURSORSHAPE_BLOCK,
@@ -67,8 +74,13 @@ typedef struct Term {
   char *elisp_code;
   bool elisp_code_changed;
 
+  /* the size of dirs almost = window height,value = directory of that line */
+  LineInfo **lines;
+  int lines_len;
+
   int width, height;
   int height_resize;
+  bool resizing;
 
   int pty_fd;
 } Term;
@@ -104,6 +116,9 @@ emacs_value Fvterm_set_pty_name(emacs_env *env, ptrdiff_t nargs,
                                 emacs_value args[], void *data);
 emacs_value Fvterm_get_icrnl(emacs_env *env, ptrdiff_t nargs,
                               emacs_value args[], void *data);
+
+emacs_value Fvterm_get_pwd(emacs_env *env, ptrdiff_t nargs,
+                                emacs_value args[], void *data);
 
 int emacs_module_init(struct emacs_runtime *ert);
 
