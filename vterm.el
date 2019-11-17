@@ -132,6 +132,15 @@ for different shell"
   :type 'string
   :group 'vterm)
 
+(defcustom vterm-eval-cmds '(("find-file" find-file)
+                             ("message" message)
+                             ("vterm-clear-scrollback" vterm-clear-scrollback))
+  "Map of commands to functions. To be used by vterm--eval.
+
+Avoid using EVAL on input arguments, as it could allow a third
+party to commandeer your editor."
+  :type '(alist :key-type string)
+  :group 'vterm)
 
 (defface vterm-color-default
   `((t :inherit default))
@@ -639,11 +648,17 @@ Argument INDEX index of color."
     (face-background 'vterm-color-default nil 'default))))
 
 (defun vterm--eval(str)
-  "evaluate Elisp code contained in a string.
-Argument STR Elisp code."
-  (eval (car (read-from-string
-              (format "(progn %s)" str)))))
+  "Parse STR for command and arguments and call command defined in vterm-eval-cmds.
 
+All passed in arguments are strings and forwarded as string to
+the called functions."
+  (let* ((parts (split-string-and-unquote str))
+         (command (car parts))
+         (args (cdr parts))
+         (f (assoc command vterm-eval-cmds)))
+    (if f
+        (apply (cadr f) args)
+      (message "Failed to find command: %s" command))))
 
 (provide 'vterm)
 ;;; vterm.el ends here
