@@ -575,9 +575,11 @@ Argument EVENT process event."
          (inhibit-read-only t))
     (setq width (- width (vterm--get-margin-width)))
     (when (and (processp process)
-               (process-live-p process))
-      (vterm--set-size vterm--term height width))
-    (cons width height)))
+               (process-live-p process)
+               (> width 0)
+               (> height 0))
+      (vterm--set-size vterm--term height width)
+      (cons width height))))
 
 (defun vterm--get-margin-width ()
   "Get margin width of vterm buffer when `display-line-numbers-mode' is enabled."
