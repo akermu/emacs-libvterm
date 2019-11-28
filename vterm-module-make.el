@@ -10,16 +10,19 @@
 (defun vterm-module-compile ()
   "This function compiles the vterm-module."
   (interactive)
-  (let ((default-directory (file-name-directory (file-truename (locate-library "vterm")))))
-    (unless (file-executable-p (concat default-directory "vterm-module.so" ))
+  (let ((default-directory
+          (file-name-directory (file-truename (locate-library "vterm"))))
+        (make-commands
+         "mkdir -p build; \
+          cd build; \
+          cmake -DCMAKE_BUILD_TYPE=RelWithDebInfo ..; \
+          make"))
+    (unless (file-executable-p (concat default-directory "vterm-module.so"))
       (let* ((buffer (get-buffer-create vterm-install-buffer-name))
              status)
         (pop-to-buffer vterm-install-buffer-name)
-        (setq status (call-process "sh" nil buffer t "-c"
-                                   "mkdir -p build;                             \
-                                    cd build;                                   \
-                                    cmake -DCMAKE_BUILD_TYPE=RelWithDebInfo ..; \
-                                    make") )
+        (setq status
+              (call-process "sh" nil buffer t "-c" make-commands))
         (if (eq status 0)
             (message "Compilation of emacs-libvterm module succeeded")
           (error "Compilation of emacs-libvterm module failed!"))))))
