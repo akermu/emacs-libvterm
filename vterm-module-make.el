@@ -15,7 +15,9 @@
         (make-commands
          "mkdir -p build; \
           cd build; \
-          cmake -DCMAKE_BUILD_TYPE=RelWithDebInfo ..; \
+          cmake \
+            -DCMAKE_BUILD_TYPE=RelWithDebInfo \
+            ..; \
           make"))
     (unless (file-executable-p (concat default-directory "vterm-module.so"))
       (let* ((buffer (get-buffer-create vterm-install-buffer-name))
