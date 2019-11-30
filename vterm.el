@@ -344,6 +344,7 @@ This is the value of `next-error-function' in Compilation buffers."
 (define-key vterm-mode-map (kbd "C-c C-l")             #'vterm-clear-scrollback)
 (define-key vterm-mode-map (kbd "C-\\")                #'vterm-send-ctrl-slash)
 (define-key vterm-mode-map (kbd "C-c C-g")             #'vterm-send-ctrl-g)
+(define-key vterm-mode-map (kbd "C-c C-u")             #'vterm-send-ctrl-u)
 (define-key vterm-mode-map [remap self-insert-command] #'vterm--self-insert)
 
 (define-key vterm-mode-map (kbd "C-c C-t")             #'vterm-copy-mode)
@@ -490,6 +491,10 @@ This is the value of `next-error-function' in Compilation buffers."
 (defun vterm-send-ctrl-g ()
   (interactive)
   (vterm-send-key "g" nil nil t))
+
+(defun vterm-send-ctrl-u ()
+  (interactive)
+  (vterm-send-key "u" nil nil t))
 
 (defun vterm-clear-scrollback ()
   "Sends `<clear-scrollback>' to the libvterm."
