@@ -402,6 +402,16 @@ This is the value of `next-error-function' in Compilation buffers."
         (setq key (upcase key)))
       (vterm--update vterm--term key shift meta ctrl))))
 
+(defun vterm-send (key)
+  "Sends KEY to libvterm. KEY can be anything ‘kbd’ understands."
+  (let* ((event (listify-key-sequence (kbd key)))
+         (modifiers (event-modifiers event))
+         (base (event-basic-type event)))
+    (vterm-send-key (char-to-string base)
+                    (memq 'shift modifiers)
+                    (memq 'meta modifiers)
+                    (memq 'control modifiers))))
+
 (defun vterm-send-start ()
   "Output from the system is started when the system receives START."
   (interactive)
