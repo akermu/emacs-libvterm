@@ -22,8 +22,7 @@
     (unless (file-executable-p (concat default-directory "vterm-module.so"))
       (let* ((buffer (get-buffer-create vterm-install-buffer-name)))
         (pop-to-buffer vterm-install-buffer-name)
-        (if (eql 0
-                 (call-process "sh" nil buffer t "-c" make-commands))
+        (if (zerop (call-process "sh" nil buffer t "-c" make-commands))
             (message "Compilation of emacs-libvterm module succeeded")
           (error "Compilation of emacs-libvterm module failed!"))))))
 
