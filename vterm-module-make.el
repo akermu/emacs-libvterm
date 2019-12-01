@@ -1,7 +1,6 @@
 ;;; vterm-module-make.el --- make vterm-module in elisp  -*- lexical-binding: t; -*-
 
 (require 'files)
-(require 'term)
 
 (defvar vterm-install-buffer-name " *Install vterm"
   "Name of the buffer used for compiling vterm-module.")

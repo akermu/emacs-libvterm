@@ -50,6 +50,7 @@
 
 (require 'subr-x)
 (require 'cl-lib)
+(require 'term)
 (require 'color)
 (require 'compile)
 
