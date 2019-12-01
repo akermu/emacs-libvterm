@@ -46,7 +46,8 @@
   (error "VTerm needs module support. Please compile your Emacs with the --with-modules option!"))
 
 (or (require 'vterm-module nil t)
-    (require 'vterm-module-make)) 
+    (and (require 'vterm-module-make)
+         (require 'vterm-module))) 
 
 (require 'subr-x)
 (require 'cl-lib)
