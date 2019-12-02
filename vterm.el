@@ -339,6 +339,9 @@ This is the value of `next-error-function' in Compilation buffers."
 (define-key vterm-mode-map (kbd "C-/")                 #'vterm-undo)
 (define-key vterm-mode-map (kbd "M-.")                 #'vterm-send-meta-dot)
 (define-key vterm-mode-map (kbd "M-,")                 #'vterm-send-meta-comma)
+(define-key vterm-mode-map (kbd "M-d")                 #'vterm-send-meta-d)
+(define-key vterm-mode-map (kbd "M-f")                 #'vterm-send-meta-f)
+(define-key vterm-mode-map (kbd "M-b")                 #'vterm-send-meta-b)
 (define-key vterm-mode-map (kbd "C-c C-y")             #'vterm--self-insert)
 (define-key vterm-mode-map (kbd "C-c C-c")             #'vterm-send-ctrl-c)
 (define-key vterm-mode-map (kbd "C-c C-l")             #'vterm-clear-scrollback)
@@ -477,6 +480,21 @@ This is the value of `next-error-function' in Compilation buffers."
   "Sends `M-,' to the libvterm."
   (interactive)
   (vterm-send-key "," nil t))
+
+(defun vterm-send-meta-d ()
+  "Send `M-d' to the libvterm."
+  (interactive)
+  (vterm-send-key "d" nil t nil))
+
+(defun vterm-send-meta-f ()
+  "Send `M-f' to the libvterm."
+  (interactive)
+  (vterm-send-key "f" nil t nil))
+
+(defun vterm-send-meta-b ()
+  "Send `M-b' to the libvterm."
+  (interactive)
+  (vterm-send-key "b" nil t nil))
 
 (defun vterm-send-ctrl-c ()
   "Sends `C-c' to the libvterm."
