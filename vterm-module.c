@@ -185,7 +185,8 @@ static char *get_row_directory(Term *term, int row) {
     return sbrow->info->directory;
     /* return term->dirs[0]; */
   } else {
-    return term->lines[row]->directory;
+    LineInfo* line = term->lines[row];
+    return line ? line->directory : NULL;
   }
 }
 static LineInfo *get_lineinfo(Term *term, int row) {
@@ -1015,7 +1016,7 @@ emacs_value Fvterm_get_pwd(emacs_env *env, ptrdiff_t nargs, emacs_value args[],
   int row = linenr_to_row(term, linenum);
   char *dir = get_row_directory(term, row);
 
-  return env->make_string(env, dir, strlen(dir));
+  return dir ? env->make_string(env, dir, strlen(dir)) : Qnil;
 }
 
 emacs_value Fvterm_get_icrnl(emacs_env *env, ptrdiff_t nargs,
