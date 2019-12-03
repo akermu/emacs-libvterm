@@ -120,7 +120,7 @@ those functions are called one by one, with 1 arguments.
 The value of HOOK may be nil, a function, or a list of functions.
 for example
     (defun vterm--rename-buffer-as-title (title)
-    (rename-buffer (format \"vterm %s\" title)))
+    (rename-buffer (format \"vterm %s\" title) t))
     (add-hook 'vterm-set-title-functions 'vterm--rename-buffer-as-title)
 
 see http://tldp.org/HOWTO/Xterm-Title-4.html about how to set terminal title
