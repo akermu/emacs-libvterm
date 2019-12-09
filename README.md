@@ -188,7 +188,7 @@ For `bash`, put this at the end of your `.bashrc`:
 vterm_prompt_end(){
     printf "\e]51;A$(whoami)@$(hostname):$(pwd)\e\\"
 }
-PS1=$PS1'$(vterm_prompt_end)'
+PS1=$PS1'\[$(vterm_prompt_end)\]'
 ```
 
 For `fish`, put this in your `~/.config/fish/config.fish`:
