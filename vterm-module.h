@@ -86,6 +86,8 @@ typedef struct Term {
   bool disable_underline;
   bool disable_inverse_video;
 
+  char *cmd_buffer;
+
   int pty_fd;
 } Term;
 

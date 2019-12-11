@@ -609,15 +609,37 @@ static bool is_key(unsigned char *key, size_t len, char *key_description) {
           memcmp(key, key_description, len) == 0);
 }
 
-static void term_set_title(Term *term, char *title) {
-  size_t len = strlen(title);
-  if (term->title) {
-    free(term->title);
+/* str1=concat(str1,str2,str2_len,true); */
+/* str1 can be NULL */
+static char *concat(char *str1, const char *str2, size_t str2_len,
+                    bool free_str1) {
+  if (str1 == NULL) {
+    str1 = malloc(str2_len + 1);
+    memcpy(str1, str2, str2_len);
+    str1[str2_len] = '\0';
+    return str1;
   }
-  term->title = malloc(sizeof(char) * (len + 1));
-  strncpy(term->title, title, len);
-  term->title[len] = 0;
-  term->title_changed = true;
+  size_t str1_len = strlen(str1);
+  char *buf = malloc(str1_len + str2_len + 1);
+  memcpy(buf, str1, str1_len);
+  memcpy(&buf[str1_len], str2, str2_len);
+  buf[str1_len + str2_len] = '\0';
+  if (free_str1) {
+    free(str1);
+  }
+  return buf;
+}
+static void term_set_title(Term *term, const char *title, size_t len,
+                           bool initial, bool final) {
+  if (term->title && initial) {
+    free(term->title);
+    term->title = NULL;
+    term->title_changed = false;
+  }
+  term->title = concat(term->title, title, len, true);
+  if (final) {
+    term->title_changed = true;
+  }
   return;
 }
 
@@ -640,7 +662,12 @@ static int term_settermprop(VTermProp prop, VTermValue *val, void *user_data) {
 
     break;
   case VTERM_PROP_TITLE:
-    term_set_title(term, val->string);
+#ifdef VTermStringFragmentNotExists
+    term_set_title(term, val->string, strlen(val->string), true, true);
+#else
+    term_set_title(term, val->string.str, val->string.len, val->string.initial,
+                   val->string.final);
+#endif
     break;
   case VTERM_PROP_ALTSCREEN:
     invalidate_terminal(term, 0, term->height);
@@ -907,6 +934,11 @@ void term_finalize(void *object) {
     free(term->elisp_code);
     term->elisp_code = NULL;
   }
+  if (term->cmd_buffer) {
+    free(term->cmd_buffer);
+    term->cmd_buffer = NULL;
+  }
+
   for (int i = 0; i < term->lines_len; i++) {
     if (term->lines[i] != NULL) {
       free_lineinfo(term->lines[i]);
@@ -924,29 +956,16 @@ void term_finalize(void *object) {
   free(term);
 }
 
-static int osc_callback(const char *command, size_t cmdlen, void *user) {
-  /* osc_callback (OSC = Operating System Command) */
-
-  /* We interpret escape codes that start with "51;" */
-  /* "51;A" sets the current directory */
-  /* "51;A" has also the role of identifying the end of the prompt */
-  /* "51;E" executes elisp code */
-  /* The elisp code is executed in term_redraw */
-
-  Term *term = (Term *)user;
-  char buffer[cmdlen + 1];
-
-  buffer[cmdlen] = '\0';
-  memcpy(buffer, command, cmdlen);
-
-  if (cmdlen > 4 && buffer[0] == '5' && buffer[1] == '1' && buffer[2] == ';' &&
-      buffer[3] == 'A') {
+static int handle_osc_cmd_51(Term *term, char subCmd, char *buffer) {
+  if (subCmd == 'A') {
+    /* "51;A" sets the current directory */
+    /* "51;A" has also the role of identifying the end of the prompt */
     if (term->directory != NULL) {
       free(term->directory);
       term->directory = NULL;
     }
-    term->directory = malloc(cmdlen - 4 + 1);
-    strcpy(term->directory, &buffer[4]);
+    term->directory = malloc(strlen(buffer) + 1);
+    strcpy(term->directory, buffer);
     term->directory_changed = true;
 
     for (int i = term->cursor.row; i < term->lines_len; i++) {
@@ -957,8 +976,8 @@ static int osc_callback(const char *command, size_t cmdlen, void *user) {
       if (term->lines[i]->directory != NULL) {
         free(term->lines[i]->directory);
       }
-      term->lines[i]->directory = malloc(cmdlen - 4 + 1);
-      strcpy(term->lines[i]->directory, &buffer[4]);
+      term->lines[i]->directory = malloc(strlen(buffer) + 1);
+      strcpy(term->lines[i]->directory, buffer);
       if (i == term->cursor.row) {
         term->lines[i]->prompt_col = term->cursor.col;
       } else {
@@ -966,12 +985,40 @@ static int osc_callback(const char *command, size_t cmdlen, void *user) {
       }
     }
     return 1;
-  } else if (cmdlen > 4 && buffer[0] == '5' && buffer[1] == '1' &&
-             buffer[2] == ';' && buffer[3] == 'E') {
-    term->elisp_code = malloc(cmdlen - 4 + 1);
-    strcpy(term->elisp_code, &buffer[4]);
+  } else if (subCmd == 'E') {
+    /* "51;E" executes elisp code */
+    /* The elisp code is executed in term_redraw */
+    term->elisp_code = malloc(strlen(buffer) + 1);
+    strcpy(term->elisp_code, buffer);
     term->elisp_code_changed = true;
     return 1;
+  }
+  return 0;
+}
+static int handle_osc_cmd(Term *term, int cmd, char *buffer) {
+  if (cmd == 51) {
+    char subCmd = '0';
+    if (strlen(buffer) == 0) {
+      return 0;
+    }
+    subCmd = buffer[0];
+    return handle_osc_cmd_51(term, subCmd, ++buffer);
+  }
+  return 0;
+}
+#ifdef VTermStringFragmentNotExists
+static int osc_callback(const char *command, size_t cmdlen, void *user) {
+  Term *term = (Term *)user;
+  char buffer[cmdlen + 1];
+  buffer[cmdlen] = '\0';
+  memcpy(buffer, command, cmdlen);
+
+  if (cmdlen > 4 && buffer[0] == '5' && buffer[1] == '1' && buffer[2] == ';' &&
+      buffer[3] == 'A') {
+    return handle_osc_cmd_51(term, 'A', &buffer[4]);
+  } else if (cmdlen > 4 && buffer[0] == '5' && buffer[1] == '1' &&
+             buffer[2] == ';' && buffer[3] == 'E') {
+    return handle_osc_cmd_51(term, 'E', &buffer[4]);
   }
   return 0;
 }
@@ -984,6 +1031,47 @@ static VTermParserCallbacks parser_callbacks = {
     .osc = &osc_callback,
     .dcs = NULL,
 };
+#else
+
+static int osc_callback(int cmd, VTermStringFragment frag, void *user) {
+  /* osc_callback (OSC = Operating System Command) */
+
+  /* We interpret escape codes that start with "51;" */
+  /* "51;A" sets the current directory */
+  /* "51;A" has also the role of identifying the end of the prompt */
+  /* "51;E" executes elisp code */
+  /* The elisp code is executed in term_redraw */
+
+  Term *term = (Term *)user;
+
+  if (frag.initial) {
+     /* drop old fragment,because this is a initial fragment */
+    if (term->cmd_buffer) {
+      free(term->cmd_buffer);
+      term->cmd_buffer = NULL;
+    }
+  }
+
+  if (!frag.initial && !frag.final && frag.len == 0) {
+    return 0;
+  }
+
+  term->cmd_buffer = concat(term->cmd_buffer, frag.str, frag.len, true);
+  if (frag.final) {
+    handle_osc_cmd(term, cmd, term->cmd_buffer);
+    free(term->cmd_buffer);
+    term->cmd_buffer = NULL;
+  }
+  return 0;
+}
+static VTermStateFallbacks parser_callbacks = {
+    .control = NULL,
+    .csi = NULL,
+    .osc = &osc_callback,
+    .dcs = NULL,
+};
+
+#endif
 
 emacs_value Fvterm_new(emacs_env *env, ptrdiff_t nargs, emacs_value args[],
                        void *data) {
@@ -1040,6 +1128,8 @@ emacs_value Fvterm_new(emacs_env *env, ptrdiff_t nargs, emacs_value args[],
   term->directory_changed = false;
   term->elisp_code = NULL;
   term->elisp_code_changed = false;
+
+  term->cmd_buffer = NULL;
 
   term->lines = malloc(sizeof(LineInfo *) * rows);
   term->lines_len = rows;
