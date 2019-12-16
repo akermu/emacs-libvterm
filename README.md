@@ -171,7 +171,7 @@ result, interactive functions that ask for a path or a file (e.g., `dired` or
 `find-file`) will do so starting from the current location.
 
 Directory tracking requires some configuration, as the shell has to be instructed
-to share the revelant information with Emacs.
+to share the relevant information with Emacs.
 
 For `zsh`, put this at the end of your `.zshrc`:
 
