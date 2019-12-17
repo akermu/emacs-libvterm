@@ -764,6 +764,26 @@ static void term_process_key(Term *term, emacs_env *env, unsigned char *key,
     vterm_keyboard_key(term->vt, VTERM_KEY_FUNCTION(11), modifier);
   } else if (is_key(key, len, "<f12>")) {
     vterm_keyboard_key(term->vt, VTERM_KEY_FUNCTION(12), modifier);
+  } else if (is_key(key, len, "<kp-0>")) {
+    vterm_keyboard_key(term->vt, VTERM_KEY_KP_0, modifier);
+  } else if (is_key(key, len, "<kp-1>")) {
+    vterm_keyboard_key(term->vt, VTERM_KEY_KP_1, modifier);
+  } else if (is_key(key, len, "<kp-2>")) {
+    vterm_keyboard_key(term->vt, VTERM_KEY_KP_2, modifier);
+  } else if (is_key(key, len, "<kp-3>")) {
+    vterm_keyboard_key(term->vt, VTERM_KEY_KP_3, modifier);
+  } else if (is_key(key, len, "<kp-4>")) {
+    vterm_keyboard_key(term->vt, VTERM_KEY_KP_4, modifier);
+  } else if (is_key(key, len, "<kp-5>")) {
+    vterm_keyboard_key(term->vt, VTERM_KEY_KP_5, modifier);
+  } else if (is_key(key, len, "<kp-6>")) {
+    vterm_keyboard_key(term->vt, VTERM_KEY_KP_6, modifier);
+  } else if (is_key(key, len, "<kp-7>")) {
+    vterm_keyboard_key(term->vt, VTERM_KEY_KP_7, modifier);
+  } else if (is_key(key, len, "<kp-8>")) {
+    vterm_keyboard_key(term->vt, VTERM_KEY_KP_8, modifier);
+  } else if (is_key(key, len, "<kp-9>")) {
+    vterm_keyboard_key(term->vt, VTERM_KEY_KP_9, modifier);
   } else if (is_key(key, len, "j") && (modifier == VTERM_MOD_CTRL)) {
     vterm_keyboard_unichar(term->vt, '\n', 0);
   } else if (is_key(key, len, "SPC")) {
