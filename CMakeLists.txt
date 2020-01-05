@@ -3,6 +3,12 @@ include(ExternalProject)
 
 project(emacs-libvterm C)
 
+if(CMAKE_SYSTEM_NAME STREQUAL "FreeBSD")
+   set(LIBVTERM_BUILD_COMMAND "gmake")
+else()
+   set(LIBVTERM_BUILD_COMMAND "make")
+endif()
+
 add_library(vterm-module MODULE vterm-module.c utf8.c elisp.c)
 set_target_properties(vterm-module PROPERTIES
   C_STANDARD 99
@@ -36,7 +42,7 @@ else()
     GIT_REPOSITORY https://github.com/neovim/libvterm.git
     GIT_TAG 89675ffdda615ffc3f29d1c47a933f4f44183364
     CONFIGURE_COMMAND ""
-    BUILD_COMMAND make "CFLAGS='-fPIC'"
+    BUILD_COMMAND ${LIBVTERM_BUILD_COMMAND} "CFLAGS='-fPIC'"
     BUILD_IN_SOURCE ON
     INSTALL_COMMAND "")
 
