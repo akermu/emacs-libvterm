@@ -107,17 +107,50 @@ current buffer from the data that it is not currently visible.
 with the `clear` function provided by the shell to clear both screen and
 scrollback. In order to achieve this behavior, you need to add a new shell alias.
 
+for `bash` or `zsh`, put this in your `.zshrc` or `.bashrc`
+```
+function vterm_printf(){
+    if [ -n "$TMUX" ]; then
+        # tell tmux to pass the escape sequences through
+        # (Source: http://permalink.gmane.org/gmane.comp.terminal-emulators.tmux.user/1324)
+        printf "\ePtmux;\e\e]%s\007\e\\" "$1"
+    elif [ "${TERM%%-*}" = "screen" ]; then
+        # GNU screen (screen, screen-256color, screen-256color-bce)
+        printf "\eP\e]%s\007\e\\" "$1"
+    else
+        printf "\e]%s\e\\" "$1"
+    fi
+}
+```
+
+for `fish`   put this in your `~/.config/fish/config.fish`:
+```
+function vterm_printf;
+    if [ -n "$TMUX" ]
+        # tell tmux to pass the escape sequences through
+        # (Source: http://permalink.gmane.org/gmane.comp.terminal-emulators.tmux.user/1324)
+        printf "\ePtmux;\e\e]%s\007\e\\" "$argv"
+    else if string match -q -- "screen*" "$TERM"
+        # GNU screen (screen, screen-256color, screen-256color-bce)
+        printf "\eP\e]%s\007\e\\" "$argv"
+    else
+        printf "\e]%s\e\\" "$argv"
+    end
+end
+```
+
 For `zsh`, put this in your `.zshrc`:
 ```zsh
+
 if [[ "$INSIDE_EMACS" = 'vterm' ]]; then
-    alias clear='printf "\e]51;Evterm-clear-scrollback\e\\";tput clear'
+    alias clear='vterm_printf "51;Evterm-clear-scrollback";tput clear'
 fi
 ```
 For `bash`, put this in your `.bashrc`:
 ```bash
 if [[ "$INSIDE_EMACS" = 'vterm' ]]; then
     function clear(){
-        printf  "\e]51;Evterm-clear-scrollback\e\\";
+        vterm_printf "51;Evterm-clear-scrollback";
         tput clear;
     }
 fi
@@ -176,8 +209,9 @@ to share the relevant information with Emacs.
 For `zsh`, put this at the end of your `.zshrc`:
 
 ```zsh
+
 vterm_prompt_end() {
-    printf "\e]51;A$(whoami)@$(hostname):$(pwd)\e\\";
+    vterm_printf "51;A$(whoami)@$(hostname):$(pwd)";
 }
 PROMPT=$PROMPT'%{$(vterm_prompt_end)%}'
 ```
@@ -186,7 +220,7 @@ For `bash`, put this at the end of your `.bashrc`:
 
 ```bash
 vterm_prompt_end(){
-    printf "\e]51;A$(whoami)@$(hostname):$(pwd)\e\\"
+    vterm_printf "51;A$(whoami)@$(hostname):$(pwd)"
 }
 PS1=$PS1'\[$(vterm_prompt_end)\]'
 ```
@@ -195,7 +229,7 @@ For `fish`, put this in your `~/.config/fish/config.fish`:
 
 ```fish
 function fish_vterm_prompt_end;
-    printf '\e]51;A'(whoami)'@'(hostname)':'(pwd)'\e\\';
+    vterm_printf '51;A'(whoami)'@'(hostname)':'(pwd)
 end
 function track_directories --on-event fish_prompt; fish_vterm_prompt_end; end
 ```
@@ -214,6 +248,9 @@ passed by providing a specific escape sequence. For example, to evaluate
 use
 ``` sh
 printf "\e]51;Emessage \"Hello\!\"\e\\"
+
+# or
+vterm_printf "51;Emessage \"Hello\!\""
 ```
 
 The commands that are understood are defined in the setting `vterm-eval-cmds`.
@@ -224,6 +261,17 @@ strings internally.
 
 ```sh
 vterm_cmd() {
+    if [ -n "$TMUX" ]; then
+        # tell tmux to pass the escape sequences through
+        # (Source: http://permalink.gmane.org/gmane.comp.terminal-emulators.tmux.user/1324)
+        printf "\ePtmux;\e\e]51;E"
+    elif [ "${TERM%%-*}" = "screen" ]; then
+        # GNU screen (screen, screen-256color, screen-256color-bce)
+        printf "\eP\e]51;E"
+    else
+        printf "\e]51;E"
+    fi
+
     printf "\e]51;E"
     local r
     while [[ $# -gt 0 ]]; do
@@ -232,7 +280,16 @@ vterm_cmd() {
         printf '"%s" ' "$r"
         shift
     done
-    printf "\e\\"
+    if [ -n "$TMUX" ]; then
+        # tell tmux to pass the escape sequences through
+        # (Source: http://permalink.gmane.org/gmane.comp.terminal-emulators.tmux.user/1324)
+        printf "\007\e\\"
+    elif [ "${TERM%%-*}" = "screen" ]; then
+        # GNU screen (screen, screen-256color, screen-256color-bce)
+        printf "\007\e\\"
+    else
+        printf "\e\\"
+    fi
 }
 ```
 
@@ -240,12 +297,30 @@ However if you are using dash and need a pure POSIX implementation:
 
 ```sh
 vterm_cmd() {
-    printf "\e]51;E"
+    if [ -n "$TMUX" ]; then
+        # tell tmux to pass the escape sequences through
+        # (Source: http://permalink.gmane.org/gmane.comp.terminal-emulators.tmux.user/1324)
+        printf "\ePtmux;\e\e]51;E"
+    elif [ "${TERM%%-*}" = "screen" ]; then
+        # GNU screen (screen, screen-256color, screen-256color-bce)
+        printf "\eP\e]51;E"
+    else
+        printf "\e]51;E"
+    fi
     while [ $# -gt 0 ]; do
         printf '"%s" ' "$(printf "%s" "$1" | sed -e 's|\\|\\\\|g' -e 's|"|\\"|g')"
         shift
     done
-    printf "\e\\"
+    if [ -n "$TMUX" ]; then
+        # tell tmux to pass the escape sequences through
+        # (Source: http://permalink.gmane.org/gmane.comp.terminal-emulators.tmux.user/1324)
+        printf "\007\e\\"
+    elif [ "${TERM%%-*}" = "screen" ]; then
+        # GNU screen (screen, screen-256color, screen-256color-bce)
+        printf "\007\e\\"
+    else
+        printf "\e\\"
+    fi
 }
 ```
 
