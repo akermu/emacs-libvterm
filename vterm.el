@@ -273,6 +273,31 @@ This is the value of `next-error-function' in Compilation buffers."
     (goto-char pt)
     (compilation-next-error-function n reset)))
 
+(defmacro vterm-define-key (key)
+  "Define an command sending M-[a-z] or C-[a-z] to vterm."
+  (declare (indent defun)
+           (doc-string 3))
+  `(defun ,(intern(format "vterm-send-%s" key))()
+     ,(format "Sends %s to the libvterm."  key)
+     (interactive)
+     (vterm-send-key ,(char-to-string (get-byte (1- (length key)) key)) nil
+                     ,(string-prefix-p "M-" key)
+                     ,(string-prefix-p "C-" key))))
+
+(defmacro vterm-bind-key (key)
+  (declare (indent defun)
+           (doc-string 3))
+  `(define-key vterm-mode-map (kbd ,key)
+     #',(intern (format "vterm-send-%s"  key))))
+
+(mapc (lambda (key)
+        (eval `(vterm-define-key ,key)))
+      (cl-loop for prefix in '("C-" "M-")
+               append (cl-loop for char from ?a to ?z
+                               for key = (format "%s%c" prefix char)
+                               collect key)))
+
+
 ;; Function keys and most of C- and M- bindings
 (defun vterm--exclude-keys (exceptions)
   (mapc (lambda (key)
@@ -280,15 +305,17 @@ This is the value of `next-error-function' in Compilation buffers."
         exceptions)
   (mapc (lambda (key)
           (define-key vterm-mode-map (kbd key) #'vterm--self-insert))
-        (append (cl-loop for number from 1 to 12
-                         for key = (format "<f%i>" number)
-                         unless (member key exceptions)
-                         collect key)
-                (cl-loop for prefix in '("C-" "M-")
-                         append (cl-loop for char from ?a to ?z
-                                         for key = (format "%s%c" prefix char)
-                                         unless (member key exceptions)
-                                         collect key)))))
+        (cl-loop for number from 1 to 12
+                 for key = (format "<f%i>" number)
+                 unless (member key exceptions)
+                 collect key))
+  (mapc (lambda (key)
+          (eval `(vterm-bind-key ,key)))
+        (cl-loop for prefix in '("C-" "M-")
+                 append (cl-loop for char from ?a to ?z
+                                 for key = (format "%s%c" prefix char)
+                                 unless (member key exceptions)
+                                 collect key))))
 
 (vterm--exclude-keys vterm-keymap-exceptions)
 
@@ -320,15 +347,12 @@ This is the value of `next-error-function' in Compilation buffers."
 (define-key vterm-mode-map (kbd "C-/")                 #'vterm-undo)
 (define-key vterm-mode-map (kbd "M-.")                 #'vterm-send-meta-dot)
 (define-key vterm-mode-map (kbd "M-,")                 #'vterm-send-meta-comma)
-(define-key vterm-mode-map (kbd "M-d")                 #'vterm-send-meta-d)
-(define-key vterm-mode-map (kbd "M-f")                 #'vterm-send-meta-f)
-(define-key vterm-mode-map (kbd "M-b")                 #'vterm-send-meta-b)
 (define-key vterm-mode-map (kbd "C-c C-y")             #'vterm--self-insert)
-(define-key vterm-mode-map (kbd "C-c C-c")             #'vterm-send-ctrl-c)
+(define-key vterm-mode-map (kbd "C-c C-c")             #'vterm-send-C-c)
 (define-key vterm-mode-map (kbd "C-c C-l")             #'vterm-clear-scrollback)
 (define-key vterm-mode-map (kbd "C-\\")                #'vterm-send-ctrl-slash)
-(define-key vterm-mode-map (kbd "C-c C-g")             #'vterm-send-ctrl-g)
-(define-key vterm-mode-map (kbd "C-c C-u")             #'vterm-send-ctrl-u)
+(define-key vterm-mode-map (kbd "C-c C-g")             #'vterm-send-C-g)
+(define-key vterm-mode-map (kbd "C-c C-u")             #'vterm-send-C-u)
 (define-key vterm-mode-map [remap self-insert-command] #'vterm--self-insert)
 
 (define-key vterm-mode-map (kbd "C-c C-t")             #'vterm-copy-mode)
@@ -473,37 +497,11 @@ This is the value of `next-error-function' in Compilation buffers."
   (interactive)
   (vterm-send-key "," nil t))
 
-(defun vterm-send-meta-d ()
-  "Send `M-d' to the libvterm."
-  (interactive)
-  (vterm-send-key "d" nil t nil))
-
-(defun vterm-send-meta-f ()
-  "Send `M-f' to the libvterm."
-  (interactive)
-  (vterm-send-key "f" nil t nil))
-
-(defun vterm-send-meta-b ()
-  "Send `M-b' to the libvterm."
-  (interactive)
-  (vterm-send-key "b" nil t nil))
-
-(defun vterm-send-ctrl-c ()
-  "Sends `C-c' to the libvterm."
-  (interactive)
-  (vterm-send-key "c" nil nil t))
-
 (defun vterm-send-ctrl-slash ()
   (interactive)
   (vterm-send-key "\\" nil nil t))
 
-(defun vterm-send-ctrl-g ()
-  (interactive)
-  (vterm-send-key "g" nil nil t))
 
-(defun vterm-send-ctrl-u ()
-  (interactive)
-  (vterm-send-key "u" nil nil t))
 
 (defun vterm-clear-scrollback ()
   "Sends `<clear-scrollback>' to the libvterm."
