@@ -64,6 +64,10 @@
   "Maximum 'scrollback' value."
   :type 'number
   :group 'vterm)
+(defcustom vterm-min-window-width 80
+  "Minimum window width."
+  :type 'number
+  :group 'vterm)
 
 (defcustom vterm-keymap-exceptions '("C-c" "C-x" "C-u" "C-g" "C-h" "M-x" "M-o" "C-v" "M-v" "C-y" "M-y")
   "Exceptions for vterm-keymap.
@@ -628,11 +632,13 @@ Argument EVENT process event."
          (height (cdr size))
          (inhibit-read-only t))
     (setq width (- width (vterm--get-margin-width)))
+    (setq width (max width vterm-min-window-width))
     (when (and (processp process)
                (process-live-p process)
                (> width 0)
                (> height 0))
       (vterm--set-size vterm--term height width)
+      (scroll-left)
       (cons width height))))
 
 (defun vterm--get-margin-width ()
