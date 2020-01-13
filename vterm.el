@@ -636,7 +636,7 @@ Argument EVENT process event."
                (> width 0)
                (> height 0))
       (vterm--set-size vterm--term height width)
-      (scroll-left)
+      ;; (scroll-left)
       (cons width height))))
 
 (defun vterm--get-margin-width ()
