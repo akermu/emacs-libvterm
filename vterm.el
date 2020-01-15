@@ -47,7 +47,7 @@
 
 (or (require 'vterm-module nil t)
     (and (require 'vterm-module-make)
-         (require 'vterm-module))) 
+         (require 'vterm-module)))
 
 (require 'subr-x)
 (require 'cl-lib)
@@ -329,6 +329,7 @@ This is the value of `next-error-function' in Compilation buffers."
 (define-key vterm-mode-map [backtab]                   #'vterm--self-insert)
 (define-key vterm-mode-map [backspace]                 #'vterm-send-backspace)
 (define-key vterm-mode-map (kbd "DEL")                 #'vterm-send-backspace)
+(define-key vterm-mode-map [delete]                    #'vterm-send-delete)
 (define-key vterm-mode-map [M-backspace]               #'vterm-send-meta-backspace)
 (define-key vterm-mode-map (kbd "M-DEL")               #'vterm-send-meta-backspace)
 (define-key vterm-mode-map [return]                    #'vterm-send-return)
@@ -455,6 +456,11 @@ This is the value of `next-error-function' in Compilation buffers."
   "Sends `<backspace>' to the libvterm."
   (interactive)
   (vterm-send-key "<backspace>"))
+
+(defun vterm-send-delete ()
+  "Sends `<delete>' to the libvterm."
+  (interactive)
+  (vterm-send-key "<delete>"))
 
 (defun vterm-send-meta-backspace ()
   "Sends `M-<backspace>' to the libvterm."
