@@ -107,8 +107,8 @@ current buffer from the data that it is not currently visible.
 with the `clear` function provided by the shell to clear both screen and
 scrollback. In order to achieve this behavior, you need to add a new shell alias.
 
-for `bash` or `zsh`, put this in your `.zshrc` or `.bashrc`
-```
+For `bash` or `zsh`, put this in your `.zshrc` or `.bashrc`
+```bash
 function vterm_printf(){
     if [ -n "$TMUX" ]; then
         # tell tmux to pass the escape sequences through
@@ -123,8 +123,8 @@ function vterm_printf(){
 }
 ```
 
-for `fish`   put this in your `~/.config/fish/config.fish`:
-```
+For `fish`   put this in your `~/.config/fish/config.fish`:
+```bash
 function vterm_printf;
     if [ -n "$TMUX" ]
         # tell tmux to pass the escape sequences through
