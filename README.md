@@ -73,6 +73,26 @@ lines to your `init.el`:
 )
 ```
 
+## Under Ubuntu
+
+To install emacs with module support under Ubuntu, purge your installed emacs installation and reinstall emacs from Kevin Kelley's PPA
+
+```sh
+sudo add-apt-repository ppa:kelleyk/emacs
+sudo apt update
+sudo apt-get install emacs26
+```
+
+Make sure you have libtools and CMake (> 3.11) installed. Libtools can be installed via `apt-get` and the newest CMake version via linuxbrew.
+
+```sh
+brew install cmake
+sudo apt-get install libtool
+```
+
+In some cases `/bin/sh` needs to be relinked to `/bin/bash` for the compile to work (https://github.com/akermu/emacs-libvterm/issues/216#issuecomment-575934593).
+
+
 # Debugging and testing
 
 If you have successfully built the module, you can test it by executing the
