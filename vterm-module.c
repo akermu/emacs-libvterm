@@ -784,6 +784,8 @@ static void term_process_key(Term *term, emacs_env *env, unsigned char *key,
     vterm_keyboard_key(term->vt, VTERM_KEY_KP_8, modifier);
   } else if (is_key(key, len, "<kp-9>")) {
     vterm_keyboard_key(term->vt, VTERM_KEY_KP_9, modifier);
+  } else if (is_key(key, len, "<kp-decimal>")) {
+    vterm_keyboard_key(term->vt, VTERM_KEY_KP_PERIOD, modifier);
   } else if (is_key(key, len, "j") && (modifier == VTERM_MOD_CTRL)) {
     vterm_keyboard_unichar(term->vt, '\n', 0);
   } else if (is_key(key, len, "SPC")) {
