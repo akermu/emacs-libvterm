@@ -172,6 +172,11 @@ Value for the `TERM` environment variable. It defaults to `xterm-256color`. If
 setting `vterm-term-environment-variable` to `eterm-color` improves the
 rendering of colors in some systems.
 
+## `vterm-kill-buffer-on-exit`
+
+If set to `t`, buffers are killed when the associated process is terminated
+(for example, by logging out the shell).
+
 ## Keybindings
 
 If you want a key to be sent to the terminal, bind it to `vterm--self-insert`,
