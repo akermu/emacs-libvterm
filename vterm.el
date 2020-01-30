@@ -43,7 +43,8 @@
 ;;; Code:
 
 (unless module-file-suffix
-  (error "VTerm needs module support. Please compile your Emacs with the --with-modules option!"))
+  (error "VTerm needs module support. Please compile your Emacs
+  with the --with-modules option!"))
 
 (or (require 'vterm-module nil t)
     (and (require 'vterm-module-make)
@@ -64,12 +65,20 @@
   "Maximum 'scrollback' value."
   :type 'number
   :group 'vterm)
+
 (defcustom vterm-min-window-width 80
   "Minimum window width."
   :type 'number
   :group 'vterm)
 
-(defcustom vterm-keymap-exceptions '("C-c" "C-x" "C-u" "C-g" "C-h" "M-x" "M-o" "C-v" "M-v" "C-y" "M-y")
+(defcustom vterm-kill-buffer-on-exit nil
+  "Kill vterm buffer when the attached process is terminated."
+  :type '(radio (const :tag "Kill buffer" t)
+                (const :tag "Do not kill buffer" nil))
+  :group 'vterm)
+
+(defcustom vterm-keymap-exceptions
+'("C-c" "C-x" "C-u" "C-g" "C-h" "M-x" "M-o" "C-v" "M-v" "C-y" "M-y")
   "Exceptions for vterm-keymap.
 
 If you use a keybinding with a prefix-key, add that prefix-key to
@@ -103,13 +112,14 @@ Note that this hook will not work if another package like
 those functions are called one by one, with 1 arguments.
 `vterm-set-title-functions' should be a symbol, a hook variable.
 The value of HOOK may be nil, a function, or a list of functions.
-for example
+For example
     (defun vterm--rename-buffer-as-title (title)
     (rename-buffer (format \"vterm %s\" title) t))
-    (add-hook 'vterm-set-title-functions 'vterm--rename-buffer-as-title)
+    (add-hook 'vterm-set-title-functions
+              'vterm--rename-buffer-as-title)
 
-see http://tldp.org/HOWTO/Xterm-Title-4.html about how to set terminal title
-for different shell"
+See http://tldp.org/HOWTO/Xterm-Title-4.html about how to set
+terminal title for different shell"
   :type 'hook
   :group 'vterm)
 
@@ -226,7 +236,7 @@ If nil, never delay")
   (setq-local scroll-conservatively 101)
   (setq-local scroll-margin 0)
   (let ((process-environment (append `(,(concat "TERM="
-						                        vterm-term-environment-variable)
+                                                vterm-term-environment-variable)
                                        "INSIDE_EMACS=vterm"
                                        "LINES"
                                        "COLUMNS")
@@ -244,16 +254,20 @@ If nil, never delay")
            :coding 'no-conversion
            :connection-type 'pty
            :filter #'vterm--filter
-           :sentinel (when vterm-exit-functions #'vterm--sentinel))))
+           ;; Sentinel needed if there are exit functions or if vterm-kill-buffer-on-exit
+           ;; is set to t. In this latter case, vterm--sentinel will kill the buffer
+           :sentinel (when (or vterm-exit-functions
+                               vterm-kill-buffer-on-exit)
+                       #'vterm--sentinel))))
   (vterm--set-pty-name vterm--term (process-tty-name vterm--process))
   (process-put vterm--process 'adjust-window-size-function
                #'vterm--window-adjust-process-window-size)
   (setq next-error-function 'vterm-next-error-function))
 
 (defun vterm--compilation-setup ()
-  "function to setup `compilation-shell-minor-mode' for vterm.
-`'compilation-shell-minor-mode' would change the value of
-local variable `next-error-function',so we should call this function in
+  "Function to setup `compilation-shell-minor-mode' for vterm.
+`'compilation-shell-minor-mode' would change the value of local
+variable `next-error-function', so we should call this function in
 `compilation-shell-minor-mode-hook'."
   (when (eq major-mode 'vterm-mode)
     (setq next-error-function 'vterm-next-error-function)))
@@ -511,8 +525,6 @@ This is the value of `next-error-function' in Compilation buffers."
   (interactive)
   (vterm-send-key "\\" nil nil t))
 
-
-
 (defun vterm-clear-scrollback ()
   "Sends `<clear-scrollback>' to the libvterm."
   (interactive)
@@ -522,7 +534,6 @@ This is the value of `next-error-function' in Compilation buffers."
   "Sends `C-_' to the libvterm."
   (interactive)
   (vterm-send-key "_" nil nil t))
-
 
 (defun vterm-yank (&optional arg)
   "Implementation of `yank' (paste) in vterm."
@@ -626,7 +637,10 @@ Argument EVENT process event."
   (let ((buf (process-buffer process)))
     (run-hook-with-args 'vterm-exit-functions
                         (if (buffer-live-p buf) buf nil)
-                        event)))
+                        event)
+    (if (and vterm-kill-buffer-on-exit (buffer-live-p buf))
+        (kill-buffer buf))
+    ))
 
 (defun vterm--window-adjust-process-window-size (process windows)
   "Adjust process window size considering the width of line number."
@@ -655,9 +669,9 @@ Argument EVENT process event."
 
 (defun vterm--delete-lines (line-num count &optional delete-whole-line)
   "Delete COUNT lines from LINE-NUM.
-if LINE-NUM is negative backward-line from end of buffer.
- If option DELETE-WHOLE-LINE is non-nil, then this command kills
- the whole line including its terminating newline"
+If LINE-NUM is negative backward-line from end of buffer.
+If option DELETE-WHOLE-LINE is non-nil, then this command kills
+the whole line including its terminating newline"
   (save-excursion
     (when (vterm--goto-line line-num)
       (delete-region (point) (point-at-eol count))
@@ -667,7 +681,7 @@ if LINE-NUM is negative backward-line from end of buffer.
 
 (defun vterm--goto-line(n)
   "Go to line N and return true on success.
-if N is negative backward-line from end of buffer."
+If N is negative backward-line from end of buffer."
   (cond
    ((> n 0)
     (goto-char (point-min))
@@ -686,7 +700,7 @@ if N is negative backward-line from end of buffer."
     (when dir (setq default-directory dir))))
 
 (defun vterm--get-directory (path)
-  "Get  normalized directory to PATH."
+  "Get normalized directory to PATH."
   (when path
     (let (directory)
       (if (string-match "^\\(.*?\\)@\\(.*?\\):\\(.*?\\)$" path)
