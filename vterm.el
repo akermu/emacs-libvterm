@@ -228,20 +228,20 @@ If nil, never delay")
 (define-derived-mode vterm-mode fundamental-mode "VTerm"
   "Major mode for vterm buffer."
   (buffer-disable-undo)
-  (setq vterm--term (vterm--new (window-body-height)
-                                (- (window-body-width) (vterm--get-margin-width))
-                                vterm-max-scrollback))
-
-  (setq buffer-read-only t)
-  (setq-local scroll-conservatively 101)
-  (setq-local scroll-margin 0)
   (let ((process-environment (append `(,(concat "TERM="
                                                 vterm-term-environment-variable)
                                        "INSIDE_EMACS=vterm"
                                        "LINES"
                                        "COLUMNS")
                                      process-environment))
-        (process-adaptive-read-buffering nil))
+        (process-adaptive-read-buffering nil)
+        (width (max (- (window-body-width) (vterm--get-margin-width))
+                    vterm-min-window-width)))
+    (setq vterm--term (vterm--new (window-body-height)
+                                  width vterm-max-scrollback))
+    (setq buffer-read-only t)
+    (setq-local scroll-conservatively 101)
+    (setq-local scroll-margin 0)
     (setq vterm--process
           (make-process
            :name "vterm"
@@ -249,8 +249,7 @@ If nil, never delay")
            :command `("/bin/sh" "-c"
                       ,(format "stty -nl sane iutf8 erase ^? rows %d columns %d >/dev/null && exec %s"
                                (window-body-height)
-                               (- (window-body-width) (vterm--get-margin-width))
-                               vterm-shell))
+                               width vterm-shell))
            :coding 'no-conversion
            :connection-type 'pty
            :filter #'vterm--filter
