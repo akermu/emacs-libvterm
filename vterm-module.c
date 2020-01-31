@@ -185,7 +185,7 @@ static char *get_row_directory(Term *term, int row) {
     return sbrow->info->directory;
     /* return term->dirs[0]; */
   } else {
-    LineInfo* line = term->lines[row];
+    LineInfo *line = term->lines[row];
     return line ? line->directory : NULL;
   }
 }
@@ -694,7 +694,7 @@ static void term_clear_scrollback(Term *term, emacs_env *env) {
 }
 static void term_process_key(Term *term, emacs_env *env, unsigned char *key,
                              size_t len, VTermModifier modifier) {
-    if (is_key(key, len, "<clear_scrollback>")) {
+  if (is_key(key, len, "<clear_scrollback>")) {
     term_clear_scrollback(term, env);
   } else if (is_key(key, len, "<start>")) {
     tcflow(term->pty_fd, TCOON);
@@ -956,7 +956,7 @@ emacs_value Fvterm_update(emacs_env *env, ptrdiff_t nargs, emacs_value args[],
       modifier = modifier | VTERM_MOD_CTRL;
 
     // Ignore the final zero byte
-    term_process_key(term, env,key, len - 1, modifier);
+    term_process_key(term, env, key, len - 1, modifier);
   }
 
   // Flush output
@@ -1037,7 +1037,7 @@ emacs_value Fvterm_get_pwd(emacs_env *env, ptrdiff_t nargs, emacs_value args[],
 }
 
 emacs_value Fvterm_get_icrnl(emacs_env *env, ptrdiff_t nargs,
-                              emacs_value args[], void *data) {
+                             emacs_value args[], void *data) {
   Term *term = env->get_user_ptr(env, args[0]);
 
   if (term->pty_fd > 0) {
@@ -1115,8 +1115,7 @@ int emacs_module_init(struct emacs_runtime *ert) {
   Feq = env->make_global_ref(env, env->intern(env, "eq"));
   Fvterm_get_color =
       env->make_global_ref(env, env->intern(env, "vterm--get-color"));
-  Fvterm_eval =
-      env->make_global_ref(env, env->intern(env, "vterm--eval"));
+  Fvterm_eval = env->make_global_ref(env, env->intern(env, "vterm--eval"));
 
   // Exported functions
   emacs_value fun;
