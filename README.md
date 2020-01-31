@@ -23,10 +23,10 @@ git clone https://github.com/akermu/emacs-libvterm.git
 
 Before installing emacs-libvterm, you need to make sure you have
 installed
- 1. Emacs with [module
+ 1. GNU Emacs (>= 25.1) with [module
     support](https://www.gnu.org/software/emacs/manual/html_node/elisp/Dynamic-Modules.html).
     You can check that, by verifying that `module-file-suffix` is not `nil`.
- 2. cmake (>=3.11)
+ 2. cmake (>= 3.11)
  3. libtool-bin (related issues:
     [#66](https://github.com/akermu/emacs-libvterm/issues/66)
     [#85](https://github.com/akermu/emacs-libvterm/issues/85#issuecomment-491845136))
@@ -73,25 +73,32 @@ lines to your `init.el`:
 )
 ```
 
-## Under Ubuntu
+## vterm and Ubuntu
 
-To install emacs with module support under Ubuntu, purge your installed emacs installation and reinstall emacs from Kevin Kelley's PPA
+Using `vterm` on Ubuntu requires additional steps. The latest LTS version
+(18.04) ships with a version of CMake that is too old for `vterm` and GNU
+Emacs is not compiled with support for dynamical module loading.
 
+It is possible to install GNU Emacs with module support from Kevin Kelley's PPA
+In case Emacs is already on the system, you need to purge it before proceeding
+with the following commands.
 ```sh
 sudo add-apt-repository ppa:kelleyk/emacs
 sudo apt update
 sudo apt-get install emacs26
 ```
 
-Make sure you have libtools and CMake (> 3.11) installed. Libtools can be installed via `apt-get` and the newest CMake version via linuxbrew.
-
+A way to install a recent version of CMake (>= 3.11) is with linuxbrew.
 ```sh
 brew install cmake
-sudo apt-get install libtool
 ```
 
-In some cases `/bin/sh` needs to be relinked to `/bin/bash` for the compile to work (https://github.com/akermu/emacs-libvterm/issues/216#issuecomment-575934593).
+In some cases, `/bin/sh` needs to be relinked to `/bin/bash` for the compilation
+to work (see,
+https://github.com/akermu/emacs-libvterm/issues/216#issuecomment-575934593).
 
+Pull requests are welcome to improve support for Ubuntu (e.g., simplyfing the
+installation).
 
 # Debugging and testing
 
