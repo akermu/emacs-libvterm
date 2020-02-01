@@ -219,8 +219,9 @@ color is used as ansi color 15."
   "Shell process of current term.")
 
 (defvar-local vterm--redraw-timer nil)
+(defvar-local vterm--redraw-immididately nil)
 
-(defvar vterm-timer-delay 0.01
+(defvar vterm-timer-delay 0.1
   "Delay for refreshing the buffer after receiving updates from libvterm.
 Improves performance when receiving large bursts of data.
 If nil, never delay")
@@ -426,7 +427,8 @@ This is the value of `next-error-function' in Compilation buffers."
           (inhibit-read-only t))
       (when (and (not (symbolp last-input-event)) shift (not meta) (not ctrl))
         (setq key (upcase key)))
-      (vterm--update vterm--term key shift meta ctrl))))
+      (vterm--update vterm--term key shift meta ctrl)
+      (setq vterm--redraw-immididately t))))
 
 (defun vterm-send (key)
   "Sends KEY to libvterm. KEY can be anything ‘kbd’ understands."
@@ -569,16 +571,19 @@ Optional argument PASTE-P paste-p."
     (dolist (char (string-to-list string))
       (vterm--update vterm--term (char-to-string char) nil nil nil))
     (when paste-p
-      (vterm--update vterm--term "<end_paste>" nil nil nil))))
+      (vterm--update vterm--term "<end_paste>" nil nil nil)))
+  (setq vterm--redraw-immididately t))
 
 (defun vterm--invalidate()
   "The terminal buffer is invalidated, the buffer needs redrawing."
-  (if vterm-timer-delay
+  (if (and (not vterm--redraw-immididately)
+           vterm-timer-delay)
       (unless vterm--redraw-timer
         (setq vterm--redraw-timer
               (run-with-timer vterm-timer-delay nil
                               #'vterm--delayed-redraw (current-buffer))))
-    (vterm--delayed-redraw (current-buffer))))
+    (vterm--delayed-redraw (current-buffer))
+    (setq vterm--redraw-immididately nil)))
 
 (defun vterm--delayed-redraw(buffer)
   "Redraw the terminal buffer .
