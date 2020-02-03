@@ -760,6 +760,14 @@ the called functions."
         (apply (cadr f) args)
       (message "Failed to find command: %s" command))))
 
+(defun vterm--get-prompt-point ()
+  "Get the position of the end of current prompt."
+  (let (pt)
+    (save-excursion
+      (setq pt (vterm--get-prompt-point-internal
+                vterm--term (line-number-at-pos))))
+    pt))
+
 (defun vterm-reset-cursor-point ()
   "Make sure the cursor at the right postion."
   (interactive)
@@ -770,6 +778,15 @@ the called functions."
   (save-excursion
     (vterm-reset-cursor-point)))
 
+
+(defun vterm--at-prompt-p ()
+  "Check whether the cursor postion is at shell prompt or not."
+  (let ((pt (point))
+        (term-cursor-pt (vterm--get-cursor-point))
+        (prompt-pt (vterm--get-prompt-point)))
+    (unless prompt-pt
+      (user-error "vterm--at-prompt-p error,Please search `vterm_prompt_end' in the README.md"))
+    (= pt  term-cursor-pt (or prompt-pt 0))))
 
 (provide 'vterm)
 ;;; vterm.el ends here
