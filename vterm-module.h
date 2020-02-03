@@ -119,6 +119,9 @@ emacs_value Fvterm_get_icrnl(emacs_env *env, ptrdiff_t nargs,
 emacs_value Fvterm_get_pwd(emacs_env *env, ptrdiff_t nargs, emacs_value args[],
                            void *data);
 
+emacs_value Fvterm_reset_cursor_point(emacs_env *env, ptrdiff_t nargs,
+                                      emacs_value args[], void *data);
+
 int emacs_module_init(struct emacs_runtime *ert);
 
 #endif /* VTERM_MODULE_H */

@@ -1047,6 +1047,16 @@ emacs_value Fvterm_get_icrnl(emacs_env *env, ptrdiff_t nargs,
   return Qnil;
 }
 
+emacs_value Fvterm_reset_cursor_point(emacs_env *env, ptrdiff_t nargs,
+                                      emacs_value args[], void *data) {
+  Term *term = env->get_user_ptr(env, args[0]);
+  int line = row_to_linenr(term, term->cursor.row);
+  goto_line(env, line);
+  size_t offset = get_col_offset(term, term->cursor.row, term->cursor.col);
+  forward_char(env, env->make_integer(env, term->cursor.col - offset));
+  return point(env);
+}
+
 int emacs_module_init(struct emacs_runtime *ert) {
   emacs_env *env = ert->get_environment(ert);
 
