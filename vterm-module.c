@@ -427,24 +427,29 @@ static void adjust_topline(Term *term, emacs_env *env) {
   size_t offset = get_col_offset(term, pos.row, pos.col);
   forward_char(env, env->make_integer(env, pos.col - offset));
 
-  emacs_value cursor_point = point(env);
+  bool following =
+      term->height == 1 + pos.row + term->linenum_added; // cursor at end?
+
   emacs_value windows = get_buffer_window_list(env);
+  emacs_value swindow = selected_window(env);
   int winnum = env->extract_integer(env, length(env, windows));
   for (int i = 0; i < winnum; i++) {
     emacs_value window = nth(env, i, windows);
-    if (env->is_not_nil(env, window)) {
-      int win_height =
-          env->extract_integer(env, window_body_height(env, window));
-      /*
-        -win_height is negative,so we backward win_height lines from end of
-        buffer
-       */
-      goto_line(env, -win_height);
-      set_window_start(env, window, point(env));
-      set_window_point(env, window, cursor_point);
+    if (eq(env, window, swindow)) {
+      if (following) {
+        // "Follow" the terminal output
+        recenter(env,
+                 env->make_integer(
+                     env, -1)); /* make current line at the screen bottom */
+      } else {
+        recenter(env, env->make_integer(env, pos.row));
+      }
+    } else {
+      if (env->is_not_nil(env, window)) {
+        set_window_point(env, window, point(env));
+      }
     }
   }
-  goto_char(env, cursor_point);
 }
 
 static void invalidate_terminal(Term *term, int start_row, int end_row) {
@@ -1094,11 +1099,6 @@ int emacs_module_init(struct emacs_runtime *ert) {
   Frecenter = env->make_global_ref(env, env->intern(env, "recenter"));
   Fset_window_point =
       env->make_global_ref(env, env->intern(env, "set-window-point"));
-  Fset_window_start =
-      env->make_global_ref(env, env->intern(env, "set-window-start"));
-  Fwindow_body_height =
-      env->make_global_ref(env, env->intern(env, "window-body-height"));
-
   Fpoint = env->make_global_ref(env, env->intern(env, "point"));
   Fforward_char = env->make_global_ref(env, env->intern(env, "forward-char"));
   Fget_buffer_window_list =
