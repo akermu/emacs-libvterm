@@ -374,6 +374,8 @@ This is the value of `next-error-function' in Compilation buffers."
 (define-key vterm-mode-map (kbd "C-c C-u")             #'vterm-send-C-u)
 (define-key vterm-mode-map [remap self-insert-command] #'vterm--self-insert)
 
+(define-key vterm-mode-map (kbd "C-c C-r")             #'vterm-reset-cursor-point)
+
 (define-key vterm-mode-map (kbd "C-c C-t")             #'vterm-copy-mode)
 
 (defvar vterm-copy-mode-map (make-sparse-keymap)
@@ -381,6 +383,7 @@ This is the value of `next-error-function' in Compilation buffers."
 (define-key vterm-copy-mode-map (kbd "C-c C-t")        #'vterm-copy-mode)
 (define-key vterm-copy-mode-map [return]               #'vterm-copy-mode-done)
 (define-key vterm-copy-mode-map (kbd "RET")            #'vterm-copy-mode-done)
+(define-key vterm-copy-mode-map (kbd "C-c C-r")        #'vterm-reset-cursor-point)
 
 (defvar-local vterm--copy-saved-point nil)
 
@@ -759,6 +762,17 @@ the called functions."
     (if f
         (apply (cadr f) args)
       (message "Failed to find command: %s" command))))
+
+(defun vterm-reset-cursor-point ()
+  "Make sure the cursor at the right postion."
+  (interactive)
+  (vterm--reset-point vterm--term))
+
+(defun vterm--get-cursor-point ()
+  "Get term cursor position."
+  (save-excursion
+    (vterm-reset-cursor-point)))
+
 
 (provide 'vterm)
 ;;; vterm.el ends here
