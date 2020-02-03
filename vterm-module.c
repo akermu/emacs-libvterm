@@ -427,23 +427,13 @@ static void adjust_topline(Term *term, emacs_env *env) {
   size_t offset = get_col_offset(term, pos.row, pos.col);
   forward_char(env, env->make_integer(env, pos.col - offset));
 
-  bool following =
-      term->height == 1 + pos.row + term->linenum_added; // cursor at end?
-
   emacs_value windows = get_buffer_window_list(env);
   emacs_value swindow = selected_window(env);
   int winnum = env->extract_integer(env, length(env, windows));
   for (int i = 0; i < winnum; i++) {
     emacs_value window = nth(env, i, windows);
     if (eq(env, window, swindow)) {
-      if (following) {
-        // "Follow" the terminal output
-        recenter(env,
-                 env->make_integer(
-                     env, -1)); /* make current line at the screen bottom */
-      } else {
-        recenter(env, env->make_integer(env, pos.row));
-      }
+      recenter(env, env->make_integer(env, pos.row - term->height));
     } else {
       if (env->is_not_nil(env, window)) {
         set_window_point(env, window, point(env));
