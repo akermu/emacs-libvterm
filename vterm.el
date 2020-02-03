@@ -385,7 +385,6 @@ This is the value of `next-error-function' in Compilation buffers."
 (define-key vterm-copy-mode-map (kbd "RET")            #'vterm-copy-mode-done)
 (define-key vterm-copy-mode-map (kbd "C-c C-r")        #'vterm-reset-cursor-point)
 
-(defvar-local vterm--copy-saved-point nil)
 
 (define-minor-mode vterm-copy-mode
   "Toggle vterm copy mode."
@@ -395,10 +394,8 @@ This is the value of `next-error-function' in Compilation buffers."
   (if vterm-copy-mode
       (progn                            ;enable vterm-copy-mode
         (use-local-map nil)
-        (vterm-send-stop)
-        (setq vterm--copy-saved-point (point)))
-    (if vterm--copy-saved-point
-        (goto-char vterm--copy-saved-point))
+        (vterm-send-stop))
+    (vterm-reset-cursor-point)
     (use-local-map vterm-mode-map)
     (vterm-send-start)))
 
