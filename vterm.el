@@ -243,6 +243,7 @@ If nil, never delay")
     (setq buffer-read-only t)
     (setq-local scroll-conservatively 101)
     (setq-local scroll-margin 0)
+    (setq-local line-spacing nil)
     (setq vterm--process
           (make-process
            :name "vterm"
