@@ -1129,6 +1129,9 @@ int emacs_module_init(struct emacs_runtime *ert) {
   Frecenter = env->make_global_ref(env, env->intern(env, "recenter"));
   Fset_window_point =
       env->make_global_ref(env, env->intern(env, "set-window-point"));
+  Fwindow_body_height =
+      env->make_global_ref(env, env->intern(env, "window-body-height"));
+
   Fpoint = env->make_global_ref(env, env->intern(env, "point"));
   Fforward_char = env->make_global_ref(env, env->intern(env, "forward-char"));
   Fget_buffer_window_list =
