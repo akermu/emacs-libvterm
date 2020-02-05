@@ -428,13 +428,24 @@ static void adjust_topline(Term *term, emacs_env *env) {
   size_t offset = get_col_offset(term, pos.row, pos.col);
   forward_char(env, env->make_integer(env, pos.col - offset));
 
+  bool following = term->height == 1 + pos.row;
+
   emacs_value windows = get_buffer_window_list(env);
   emacs_value swindow = selected_window(env);
   int winnum = env->extract_integer(env, length(env, windows));
   for (int i = 0; i < winnum; i++) {
     emacs_value window = nth(env, i, windows);
     if (eq(env, window, swindow)) {
-      recenter(env, env->make_integer(env, pos.row - term->height));
+      int win_body_height =
+          env->extract_integer(env, window_body_height(env, window));
+
+      /* recenter:If ARG is negative, it counts up from the bottom of the
+       * window.  (ARG should be less than the height of the window ) */
+      if (term->height - pos.row <= win_body_height) {
+        recenter(env, env->make_integer(env, pos.row - term->height));
+      } else {
+        recenter(env, env->make_integer(env, pos.row));
+      }
     } else {
       if (env->is_not_nil(env, window)) {
         set_window_point(env, window, point(env));
