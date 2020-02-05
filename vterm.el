@@ -249,7 +249,9 @@ If nil, never delay")
     (setq buffer-read-only t)
     (setq-local scroll-conservatively 101)
     (setq-local scroll-margin 0)
-    (setq-local line-spacing nil)
+    (setq-local hscroll-margin 0)
+    (setq-local hscroll-step 1)
+    (setq-local truncate-lines t)
     (setq vterm--process
           (make-process
            :name "vterm"
@@ -598,14 +600,18 @@ Argument BUFFER the terminal buffer."
   (when (buffer-live-p buffer)
     (with-current-buffer buffer
       (let ((inhibit-redisplay t)
-            (inhibit-read-only t))
+            (inhibit-read-only t)
+            (windows (get-buffer-window-list)))
         (setq vterm--redraw-timer nil)
         (when vterm--term
           (when (and (require 'display-line-numbers nil 'noerror)
                      (get-buffer-window buffer t)
                      (ignore-errors (display-line-numbers-update-width)))
             (window--adjust-process-windows))
-          (vterm--redraw vterm--term))))))
+          (vterm--redraw vterm--term)
+          (unless (zerop (window-hscroll))
+            (when (cl-member (selected-window) windows :test #'eq)
+              (set-window-hscroll (selected-window) 0))))))))
 
 ;;;###autoload
 (defun vterm (&optional buffer-name)
