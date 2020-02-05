@@ -614,7 +614,8 @@ static emacs_value render_text(emacs_env *env, Term *term, char *buffer,
 
   emacs_value fg = color_to_rgb_string(env, term, &cell->fg);
   emacs_value bg = color_to_rgb_string(env, term, &cell->bg);
-  emacs_value bold = cell->attrs.bold ? Qbold : Qnormal;
+  emacs_value bold =
+      cell->attrs.bold && !term->disable_bold_font ? Qbold : Qnormal;
   emacs_value underline = cell->attrs.underline ? Qt : Qnil;
   emacs_value italic = cell->attrs.italic ? Qitalic : Qnormal;
   emacs_value reverse = cell->attrs.reverse ? Qt : Qnil;
@@ -887,6 +888,7 @@ emacs_value Fvterm_new(emacs_env *env, ptrdiff_t nargs, emacs_value args[],
   int rows = env->extract_integer(env, args[0]);
   int cols = env->extract_integer(env, args[1]);
   int sb_size = env->extract_integer(env, args[2]);
+  int disable_bold_font = env->is_not_nil(env, args[3]);
 
   term->vt = vterm_new(rows, cols);
   vterm_set_utf8(term->vt, 1);
@@ -910,6 +912,7 @@ emacs_value Fvterm_new(emacs_env *env, ptrdiff_t nargs, emacs_value args[],
   term->width = cols;
   term->height = rows;
   term->height_resize = 0;
+  term->disable_bold_font = disable_bold_font;
   emacs_value newline = env->make_string(env, "\n", 1);
   for (int i = 0; i < term->height; i++) {
     insert(env, newline);
@@ -1147,7 +1150,7 @@ int emacs_module_init(struct emacs_runtime *ert) {
   // Exported functions
   emacs_value fun;
   fun =
-      env->make_function(env, 3, 3, Fvterm_new, "Allocates a new vterm.", NULL);
+      env->make_function(env, 4, 4, Fvterm_new, "Allocates a new vterm.", NULL);
   bind_function(env, "vterm--new", fun);
 
   fun = env->make_function(env, 1, 5, Fvterm_update,

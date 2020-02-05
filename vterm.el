@@ -138,6 +138,11 @@ party to commandeer your editor."
   :type '(alist :key-type string)
   :group 'vterm)
 
+(defcustom vterm-disable-bold-font nil
+  "Disable bold fonts or not."
+  :type  'boolean
+  :group 'vterm)
+
 (defface vterm-color-default
   `((t :inherit default))
   "The default normal color and bright color.
@@ -239,7 +244,8 @@ If nil, never delay")
         (width (max (- (window-body-width) (vterm--get-margin-width))
                     vterm-min-window-width)))
     (setq vterm--term (vterm--new (window-body-height)
-                                  width vterm-max-scrollback))
+                                  width vterm-max-scrollback
+                                  vterm-disable-bold-font))
     (setq buffer-read-only t)
     (setq-local scroll-conservatively 101)
     (setq-local scroll-margin 0)
