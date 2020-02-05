@@ -143,6 +143,12 @@ party to commandeer your editor."
   :type  'boolean
   :group 'vterm)
 
+(defface vterm-font-default
+  `((t :inherit default))
+  "The default font for vterm buffer.
+Monospaced font whihc is fixed idth and height is recommended."
+  :group 'vterm)
+
 (defface vterm-color-default
   `((t :inherit default))
   "The default normal color and bright color.
@@ -234,6 +240,7 @@ If nil, never delay")
 (define-derived-mode vterm-mode fundamental-mode "VTerm"
   "Major mode for vterm buffer."
   (buffer-disable-undo)
+  (face-remap-add-relative 'default 'vterm-font-default)
   (let ((process-environment (append `(,(concat "TERM="
                                                 vterm-term-environment-variable)
                                        "INSIDE_EMACS=vterm"
