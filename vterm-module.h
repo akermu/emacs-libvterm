@@ -81,6 +81,7 @@ typedef struct Term {
   int width, height;
   int height_resize;
   bool resizing;
+  bool disable_bold_font;
 
   int pty_fd;
 } Term;
