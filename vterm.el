@@ -231,6 +231,7 @@ color is used as ansi color 15."
 
 (defvar-local vterm--redraw-timer nil)
 (defvar-local vterm--redraw-immididately nil)
+(defvar-local vterm--linenum-remapping nil)
 
 (defvar vterm-timer-delay 0.1
   "Delay for refreshing the buffer after receiving updates from libvterm.
@@ -241,6 +242,10 @@ If nil, never delay")
   "Major mode for vterm buffer."
   (buffer-disable-undo)
   (face-remap-add-relative 'default 'vterm-font-default)
+  (and (boundp 'display-line-numbers)
+       (let ((font-height (expt text-scale-mode-step text-scale-mode-amount)))
+         (setq vterm--linenum-remapping
+               (face-remap-add-relative 'line-number :height font-height))))
   (let ((process-environment (append `(,(concat "TERM="
                                                 vterm-term-environment-variable)
                                        "INSIDE_EMACS=vterm"
@@ -611,7 +616,8 @@ Argument BUFFER the terminal buffer."
             (windows (get-buffer-window-list)))
         (setq vterm--redraw-timer nil)
         (when vterm--term
-          (when (and (require 'display-line-numbers nil 'noerror)
+          (when (and (bound-and-true-p display-line-numbers)
+                     (require 'display-line-numbers nil 'noerror)
                      (get-buffer-window buffer t)
                      (ignore-errors (display-line-numbers-update-width)))
             (window--adjust-process-windows))
@@ -666,6 +672,22 @@ Argument EVENT process event."
         (kill-buffer buf))
     ))
 
+(defun vterm--text-scale-mode (&optional argv)
+  "fix `line-number' height for scaled text"
+  (and text-scale-mode
+       (equal major-mode 'vterm-mode)
+       (boundp 'display-line-numbers)
+       (let ((height (expt text-scale-mode-step
+	    				   text-scale-mode-amount)))
+         (when vterm--linenum-remapping
+           (face-remap-remove-relative vterm--linenum-remapping))
+         (setq vterm--linenum-remapping
+               (face-remap-add-relative 'line-number :height height))))
+  (window--adjust-process-windows))
+
+(advice-add #'text-scale-mode :after #'vterm--text-scale-mode)
+
+
 (defun vterm--window-adjust-process-window-size (process windows)
   "Adjust process window size considering the width of line number."
   (let* ((size (funcall window-adjust-process-window-size-function
@@ -680,15 +702,13 @@ Argument EVENT process event."
                (> width 0)
                (> height 0))
       (vterm--set-size vterm--term height width)
-      ;; (scroll-left)
       (cons width height))))
 
 (defun vterm--get-margin-width ()
   "Get margin width of vterm buffer when `display-line-numbers-mode' is enabled."
   (let ((width 0))
-    (when (and (boundp 'display-line-numbers)
-               display-line-numbers)
-      (setq width (+ (or display-line-numbers-width 0) 2)))
+    (when (bound-and-true-p display-line-numbers)
+      (setq width (+ width (or display-line-numbers-width 0) 4)))
     width))
 
 (defun vterm--delete-lines (line-num count &optional delete-whole-line)
