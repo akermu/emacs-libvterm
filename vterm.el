@@ -77,8 +77,14 @@
                 (const :tag "Do not kill buffer" nil))
   :group 'vterm)
 
+(defcustom vterm-clear-scrollback nil
+  "If not nil `C-l' will clear both screen and scrollback.
+else it will only clean screen."
+  :type 'number
+  :group 'vterm)
+
 (defcustom vterm-keymap-exceptions
-'("C-c" "C-x" "C-u" "C-g" "C-h" "M-x" "M-o" "C-v" "M-v" "C-y" "M-y")
+'("C-c" "C-x" "C-u" "C-g" "C-h" "C-l" "M-x" "M-o" "C-v" "M-v" "C-y" "M-y")
   "Exceptions for vterm-keymap.
 
 If you use a keybinding with a prefix-key, add that prefix-key to
@@ -390,6 +396,7 @@ This is the value of `next-error-function' in Compilation buffers."
 (define-key vterm-mode-map (kbd "C-c C-y")             #'vterm--self-insert)
 (define-key vterm-mode-map (kbd "C-c C-c")             #'vterm-send-C-c)
 (define-key vterm-mode-map (kbd "C-c C-l")             #'vterm-clear-scrollback)
+(define-key vterm-mode-map (kbd "C-l")                 #'vterm-clear)
 (define-key vterm-mode-map (kbd "C-\\")                #'vterm-send-ctrl-slash)
 (define-key vterm-mode-map (kbd "C-c C-g")             #'vterm-send-C-g)
 (define-key vterm-mode-map (kbd "C-c C-u")             #'vterm-send-C-u)
@@ -551,6 +558,15 @@ This is the value of `next-error-function' in Compilation buffers."
   "Sends `<clear-scrollback>' to the libvterm."
   (interactive)
   (vterm-send-key "<clear_scrollback>"))
+
+(defun vterm-clear (&optional arg)
+  "Sends `<clear-scrollback>' to the libvterm."
+  (interactive "P")
+  (if (or
+       (and vterm-clear-scrollback (not arg))
+       (and arg (not vterm-clear-scrollback)))
+      (vterm-clear-scrollback))
+  (vterm-send-C-l))
 
 (defun vterm-undo ()
   "Sends `C-_' to the libvterm."
