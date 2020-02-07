@@ -99,7 +99,7 @@ In some cases, `/bin/sh` needs to be relinked to `/bin/bash` for the compilation
 to work (see,
 [#216](https://github.com/akermu/emacs-libvterm/issues/216#issuecomment-575934593)).
 
-Pull requests are welcome to improve support for Ubuntu (e.g., simplyfing the
+Pull requests to improve support for Ubuntu are welcome (e.g., simplyfing the
 installation).
 
 # Debugging and testing
