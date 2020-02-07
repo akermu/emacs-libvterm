@@ -79,7 +79,9 @@ Using `vterm` on Ubuntu requires additional steps. The latest LTS version
 (18.04) ships with a version of CMake that is too old for `vterm` and GNU
 Emacs is not compiled with support for dynamical module loading.
 
-It is possible to install GNU Emacs with module support from Kevin Kelley's PPA
+It is possible to install GNU Emacs with module support from Kevin Kelley's PPA.
+The binary in Ubuntu Emacs Lisp PPA is currently broken and leads to segmentation faults
+(see [#185](https://github.com/akermu/emacs-libvterm/issues/185#issuecomment-562237077)).
 In case Emacs is already on the system, you need to purge it before proceeding
 with the following commands.
 ```sh
@@ -95,7 +97,7 @@ brew install cmake
 
 In some cases, `/bin/sh` needs to be relinked to `/bin/bash` for the compilation
 to work (see,
-https://github.com/akermu/emacs-libvterm/issues/216#issuecomment-575934593).
+[#216](https://github.com/akermu/emacs-libvterm/issues/216#issuecomment-575934593)).
 
 Pull requests are welcome to improve support for Ubuntu (e.g., simplyfing the
 installation).
