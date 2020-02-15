@@ -72,18 +72,30 @@ components.
 
 `vterm` can be install with MELPA with `use-package` by adding the following
 lines to your `init.el`:
-
 ```elisp
 (use-package vterm
     :ensure t
+)
+```
+The package will be compiled the first time `vterm` is run. The package will
+ask you if you want to use your system libvterm (that has to be installed
+separately). If you answer `no`, the latest version available will be downloaded
+and used. Another way to use the libvterm available on your system is to set the
+variable `vterm-compile-with-system-libvterm` to `t` before the first
+compilation:
+```elisp
+(use-package vterm
+    :ensure t
+    :init
+    (setq vterm-compile-with-system-libvterm t)
 )
 ```
 
 ## vterm and Ubuntu
 
 Using `vterm` on Ubuntu requires additional steps. The latest LTS version
-(18.04) ships with a version of CMake that is too old for `vterm` and GNU
-Emacs is not compiled with support for dynamical module loading.
+(18.04) ships with a version of CMake that is too old for `vterm` and GNU Emacs
+is not compiled with support for dynamical module loading.
 
 It is possible to install GNU Emacs with module support from Kevin Kelley's PPA.
 The binary in Ubuntu Emacs Lisp PPA is currently broken and leads to segmentation faults

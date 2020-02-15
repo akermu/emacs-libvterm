@@ -28,7 +28,7 @@ the system libvterm is used."
                (y-or-n-p
                 "Do you want to use the system libvterm? (It has to be installed separately)"))
               "yes"
-            "no"))
+              "no"))
          (make-commands
           (concat
            "mkdir -p build;"
