@@ -30,10 +30,16 @@ installed
  3. libtool-bin (related issues:
     [#66](https://github.com/akermu/emacs-libvterm/issues/66)
     [#85](https://github.com/akermu/emacs-libvterm/issues/85#issuecomment-491845136))
- 4. If you compile vterm with `-DUSE_SYSTEM_LIBVTERM` make sure you have the
-    library from https://github.com/neovim/libvterm
+ 4. OPTIONAL: libvterm. This library can be found in the official repositories
+    of most distributions (e.g., Arch, Debian, Fedora, Gentoo, openSUSE,
+    Ubuntu). In case you want to use the version already installed on your
+    system, change `cmake ..` with `cmake -DUSE_SYSTEM_LIBVTERM=yes ..` in the
+    following instructions. If `-DUSE_SYSTEM_LIBVTERM` is not explicitly set to `yes`
+    (or if it is set to no), emacs-libvterm will download the latest version
+    available of libvterm (from [here](https://github.com/neovim/libvterm)),
+    compile it, and use it.
 
-Run the build:
+Build the module with:
 
 ``` sh
 mkdir -p build
