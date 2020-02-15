@@ -27,7 +27,10 @@ the system libvterm is used."
                vterm-compile-with-system-libvterm
                (y-or-n-p
                 "Do you want to use the system libvterm? (It has to be installed separately)"))
-              "yes"
+              (progn
+                (setq vterm-compile-with-system-libvterm t) ; If the user says "yes",
+                                                            ; we save their preference
+               "yes")
               "no"))
          (make-commands
           (concat
