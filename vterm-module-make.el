@@ -2,7 +2,7 @@
 
 (require 'files)
 
-(defvar vterm-install-buffer-name " *Install vterm"
+(defvar vterm-install-buffer-name "*Install vterm*"
   "Name of the buffer used for compiling vterm-module.")
 
 (defcustom vterm-compile-with-system-libvterm nil
