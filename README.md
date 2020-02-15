@@ -35,7 +35,7 @@ installed
     Ubuntu). In case you want to use the version already installed on your
     system, change `cmake ..` with `cmake -DUSE_SYSTEM_LIBVTERM=yes ..` in the
     following instructions. If `-DUSE_SYSTEM_LIBVTERM` is not explicitly set to `yes`
-    (or if it is set to no), emacs-libvterm will download the latest version
+    (or if it is set to `no`), emacs-libvterm will download the latest version
     available of libvterm (from [here](https://github.com/neovim/libvterm)),
     compile it, and use it.
 
