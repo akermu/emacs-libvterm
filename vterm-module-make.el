@@ -9,15 +9,22 @@
 (defun vterm-module-compile ()
   "This function compiles the vterm-module."
   (interactive)
-  (let ((default-directory
-          (file-name-directory (file-truename (locate-library "vterm"))))
-        (make-commands
-         "mkdir -p build; \
-          cd build; \
-          cmake \
-            -DCMAKE_BUILD_TYPE=RelWithDebInfo \
-            ..; \
-          make"))
+  (let* ((default-directory
+           (file-name-directory (file-truename (locate-library "vterm"))))
+         ;; Ask the user if they want to compile with the version of libvterm
+         ;; on the system. It has to be available! (We don't perform checks)
+         (compile-with-system-libvterm
+          (if (y-or-n-p
+                   "Do you want to use the system libvterm? (It has to be installed)")
+              "yes"
+              "no"))
+         (make-commands
+          (concat
+           "mkdir -p build;"
+           "cd build;"
+           "cmake" "-DUSE_SYSTEM_LIBVTERM=" compile-with-system-libvterm " "
+           "-DCMAKE_BUILD_TYPE=RelWithDebInfo" "..;"
+           "make")))
     (unless (file-executable-p (concat default-directory "vterm-module.so"))
       (let* ((buffer (get-buffer-create vterm-install-buffer-name)))
         (pop-to-buffer vterm-install-buffer-name)
