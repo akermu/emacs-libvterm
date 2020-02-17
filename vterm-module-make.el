@@ -18,7 +18,7 @@ and a local copy from GitHub."
 If the variable vterm-compile-with-system-libvterm is set to t,
 the system libvterm is used."
   (interactive)
-  (let* ((default-directory
+  (let* ((vterm-directory
            (file-name-directory (file-truename (locate-library "vterm"))))
          ;; Ask the user if they want to compile with the version of libvterm
          ;; on the system. It has to be available! (We don't perform checks)
@@ -34,10 +34,11 @@ the system libvterm is used."
               "no"))
          (make-commands
           (concat
+           "cd " vterm-directory ";"
            "mkdir -p build;"
            "cd build;"
-           "cmake" "-DUSE_SYSTEM_LIBVTERM=" compile-with-system-libvterm " "
-           "-DCMAKE_BUILD_TYPE=RelWithDebInfo" "..;"
+           "cmake" " -DUSE_SYSTEM_LIBVTERM=" compile-with-system-libvterm
+           " -DCMAKE_BUILD_TYPE=RelWithDebInfo " "..;"
            "make")))
     (unless (file-executable-p (concat default-directory "vterm-module.so"))
       (let* ((buffer (get-buffer-create vterm-install-buffer-name)))
