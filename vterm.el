@@ -649,7 +649,7 @@ Argument BUFFER the terminal buffer."
   (let ((buffer (generate-new-buffer (or buffer-name "vterm"))))
     (with-current-buffer buffer
       (vterm-mode))
-    (switch-to-buffer buffer)))
+    (pop-to-buffer-same-window buffer)))
 
 ;;;###autoload
 (defun vterm-other-window ()
