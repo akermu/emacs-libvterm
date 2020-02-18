@@ -481,9 +481,10 @@ This is the value of `next-error-function' in Compilation buffers."
 (defun vterm-send-return ()
   "Sends C-m to the libvterm."
   (interactive)
-  (if (vterm--get-icrnl vterm--term)
-      (process-send-string vterm--process "\C-j")
-    (process-send-string vterm--process "\C-m")))
+  (when vterm--term
+    (if (vterm--get-icrnl vterm--term)
+        (process-send-string vterm--process "\C-j")
+      (process-send-string vterm--process "\C-m"))))
 
 (defun vterm-send-tab ()
   "Sends `<tab>' to the libvterm."
