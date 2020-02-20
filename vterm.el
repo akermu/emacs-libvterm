@@ -645,21 +645,26 @@ Argument BUFFER the terminal buffer."
 
 ;;;###autoload
 (defun vterm (&optional buffer-name)
-  "Create a new vterm."
+  "Create a new vterm.
+
+If called with an argument ARG, the name of the new buffer will
+be set to ARG, otherwise it will be `vterm'"
   (interactive)
   (let ((buffer (generate-new-buffer (or buffer-name "vterm"))))
     (with-current-buffer buffer
       (vterm-mode))
-    (switch-to-buffer buffer)))
+    (pop-to-buffer-same-window buffer)))
 
 ;;;###autoload
-(defun vterm-other-window ()
-  "Create a new vterm."
+(defun vterm-other-window (&optional buffer-name)
+  "Create a new vterm in another window.
+
+If called with an argument ARG, the name of the new buffer will
+be set to ARG, otherwise it will be `vterm'"
   (interactive)
-  (let ((buffer (generate-new-buffer "vterm")))
+  (let ((buffer (generate-new-buffer (or buffer-name "vterm"))))
     (with-current-buffer buffer
       (vterm-mode))
-
     (pop-to-buffer buffer)))
 
 (defun vterm--flush-output (output)
