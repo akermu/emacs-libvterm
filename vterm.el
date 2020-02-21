@@ -46,10 +46,11 @@
   (error "VTerm needs module support. Please compile your Emacs
   with the --with-modules option!"))
 
-(unless (require 'vterm-module nil t)
-  (require 'vterm-module-make)
-  (vterm-module-compile)
-  (require 'vterm-module))
+(eval-and-compile
+  (unless (require 'vterm-module nil t)
+    (require 'vterm-module-make)
+    (vterm-module-compile)
+    (require 'vterm-module)))
 
 (declare-function display-line-numbers-update-width "display-line-numbers")
 
@@ -311,23 +312,25 @@ This is the value of `next-error-function' in Compilation buffers."
     (goto-char pt)
     (compilation-next-error-function n reset)))
 
-(defmacro vterm-define-key (key)
-  "Define an command sending M-[a-z] or C-[a-z] to vterm."
-  (declare (indent defun)
-           (doc-string 3))
-  `(defun ,(intern(format "vterm-send-%s" key))()
-     ,(format "Sends %s to the libvterm."  key)
-     (interactive)
-     (vterm-send-key ,(char-to-string (get-byte (1- (length key)) key)) nil
-                     ,(string-prefix-p "M-" key)
-                     ,(string-prefix-p "C-" key))))
 
-(mapc (lambda (key)
-        (eval `(vterm-define-key ,key)))
-      (cl-loop for prefix in '("C-" "M-")
-               append (cl-loop for char from ?a to ?z
-                               for key = (format "%s%c" prefix char)
-                               collect key)))
+(eval-and-compile
+  (defmacro vterm-define-key (key)
+    "Define an command sending M-[a-z] or C-[a-z] to vterm."
+    (declare (indent defun)
+             (doc-string 3))
+    `(defun ,(intern(format "vterm-send-%s" key))()
+       ,(format "Sends %s to the libvterm."  key)
+       (interactive)
+       (vterm-send-key ,(char-to-string (get-byte (1- (length key)) key)) nil
+                       ,(string-prefix-p "M-" key)
+                       ,(string-prefix-p "C-" key))))
+
+  (mapc (lambda (key)
+          (eval `(vterm-define-key ,key)))
+        (cl-loop for prefix in '("C-" "M-")
+                 append (cl-loop for char from ?a to ?z
+                                 for key = (format "%s%c" prefix char)
+                                 collect key))))
 
 
 ;; Function keys and most of C- and M- bindings
