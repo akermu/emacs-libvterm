@@ -304,10 +304,6 @@ variable `next-error-function', so we should call this function in
 This is the value of `next-error-function' in Compilation buffers."
   (interactive "p")
   (let* ((pt (point))
-         (msg (compilation-next-error (or n 1) nil
-				                      (or compilation-current-error
-					                      compilation-messages-start
-					                      (point-min))))
          (default-directory default-directory)
          (pwd (vterm--get-pwd)))
     (when pwd
@@ -691,7 +687,7 @@ Argument EVENT process event."
         (kill-buffer buf))
     ))
 
-(defun vterm--text-scale-mode (&optional argv)
+(defun vterm--text-scale-mode (&optional _argv)
   "fix `line-number' height for scaled text"
   (and text-scale-mode
        (equal major-mode 'vterm-mode)
