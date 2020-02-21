@@ -54,7 +54,4 @@ the executable."
               (message "Compilation of `emacs-libvterm' module succeeded")
             (error "Compilation of `emacs-libvterm' module failed!")))))))
 
-(or (require 'vterm-module nil t)
-    (vterm-module-compile))
-
 (provide 'vterm-module-make)
