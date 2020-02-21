@@ -322,12 +322,6 @@ This is the value of `next-error-function' in Compilation buffers."
                      ,(string-prefix-p "M-" key)
                      ,(string-prefix-p "C-" key))))
 
-(defmacro vterm-bind-key (key)
-  (declare (indent defun)
-           (doc-string 3))
-  `(define-key vterm-mode-map (kbd ,key)
-     #',(intern (format "vterm-send-%s"  key))))
-
 (mapc (lambda (key)
         (eval `(vterm-define-key ,key)))
       (cl-loop for prefix in '("C-" "M-")
@@ -348,7 +342,8 @@ This is the value of `next-error-function' in Compilation buffers."
                  unless (member key exceptions)
                  collect key))
   (mapc (lambda (key)
-          (eval `(vterm-bind-key ,key)))
+          (define-key vterm-mode-map (kbd key)
+            (intern (format "vterm-send-%s" key))))
         (cl-loop for prefix in '("C-" "M-")
                  append (cl-loop for char from ?a to ?z
                                  for key = (format "%s%c" prefix char)
