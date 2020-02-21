@@ -51,6 +51,8 @@
   (vterm-module-compile)
   (require 'vterm-module))
 
+(declare-function display-line-numbers-update-width "display-line-numbers")
+
 (require 'subr-x)
 (require 'cl-lib)
 (require 'term)
