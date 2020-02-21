@@ -46,12 +46,11 @@ the executable."
              vterm-module-cmake-args
              " ..; \
              make; \
-             cd -")))
-      (unless (file-executable-p (concat default-directory "vterm-module.so"))
-        (let* ((buffer (get-buffer-create vterm-install-buffer-name)))
-          (pop-to-buffer vterm-install-buffer-name)
-          (if (zerop (call-process "sh" nil buffer t "-c" make-commands))
-              (message "Compilation of `emacs-libvterm' module succeeded")
-            (error "Compilation of `emacs-libvterm' module failed!")))))))
+             cd -"))
+           (buffer (get-buffer-create vterm-install-buffer-name)))
+      (pop-to-buffer buffer)
+      (if (zerop (call-process "sh" nil buffer t "-c" make-commands))
+          (message "Compilation of `emacs-libvterm' module succeeded")
+        (error "Compilation of `emacs-libvterm' module failed!")))))
 
 (provide 'vterm-module-make)
