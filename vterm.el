@@ -32,7 +32,10 @@
 
 ;;; Installation
 
-;; And add this to your `init.el`:
+;; emacs-libvterm requires cmake (>= 3.11) and libtool-bin to be successfully
+;; compiled.
+
+;; Add this to your `init.el`:
 
 ;; ```
 ;; (add-to-list 'load-path "path/to/emacs-libvterm")
