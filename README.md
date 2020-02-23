@@ -108,6 +108,12 @@ to work (see,
 Pull requests to improve support for Ubuntu are welcome (e.g., simplyfing the
 installation).
 
+## GNU Guix
+
+`vterm` and its dependencies are available in GNU Guix as
+[emacs-vterm](https://guix.gnu.org/packages/emacs-vterm-0-1.7d7381f/).
+The package can be installed with `guix package -i emacs-vterm`.
+
 # Debugging and testing
 
 If you have successfully built the module, you can test it by executing the
