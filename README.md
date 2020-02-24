@@ -220,6 +220,20 @@ or remove it from `vterm-mode-map`. By default, `vterm.el` binds most of the
 like `<backspace>` and `<return>`. Sending a keyboard interrupt is bound to `C-c
 C-c`.
 
+## Fonts
+
+If you would like to change the font or face used in a vterm, use the following code:
+
+``` emacs
+(add-hook 'vterm-mode-hook
+          (lambda ()
+            (set (make-local-variable 'buffer-face-mode-face) 'fixed-pitch)
+                 (buffer-face-mode t)))
+```
+
+The above would change change the font in vterm buffers to a mono-spaced font
+(the `fixed-pitch` face) if your default font in Emacs is a proportional font.
+
 ## Colors
 
 Set the `:foreground` and `:background` attributes of the following faces to a
