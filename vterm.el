@@ -822,6 +822,11 @@ the called functions."
     (save-excursion
       (setq pt (vterm--get-prompt-point-internal
                 vterm--term (line-number-at-pos))))
+    (unless pt
+      (save-excursion
+        (beginning-of-line)
+        (term-skip-prompt)
+        (setq pt (point))))
     pt))
 
 (defun vterm-reset-cursor-point ()
@@ -834,21 +839,15 @@ the called functions."
   (save-excursion
     (vterm-reset-cursor-point)))
 
-
 (defun vterm--at-prompt-p ()
   "Check whether the cursor postion is at shell prompt or not."
   (let ((pt (point))
         (term-cursor-pt (vterm--get-cursor-point))
         (prompt-pt (vterm--get-prompt-point)))
-    (unless prompt-pt
-      (save-excursion
-        (goto-char (point-at-bol))
-        (term-skip-prompt)
-        (setq prompt-pt (point))))
-    (and
-     (= pt term-cursor-pt)
-     (or (= pt prompt-pt)
-         (string-blank-p (buffer-substring-no-properties pt prompt-pt))))))
+    (and (= pt term-cursor-pt)
+         (or (= pt prompt-pt)
+             (string-blank-p (buffer-substring-no-properties pt prompt-pt))))))
+
 
 (provide 'vterm)
 ;;; vterm.el ends here
