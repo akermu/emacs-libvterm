@@ -46,6 +46,11 @@ else()
     BUILD_IN_SOURCE ON
     INSTALL_COMMAND "")
 
+  find_program(LIBTOOL NAMES libtool glibtool)
+  if(NOT LIBTOOL)
+    message(FATAL_ERROR "libtool not found. Please install libtool")
+  endif()
+
   ExternalProject_Get_property(libvterm SOURCE_DIR)
 
   set(LIBVTERM_INCLUDE_DIR ${SOURCE_DIR}/include)
