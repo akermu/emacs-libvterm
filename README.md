@@ -32,6 +32,22 @@ Before installing emacs-libvterm, you need to make sure you have installed
     Debian, Fedora, Gentoo, openSUSE, Ubuntu). If not available, it will be
     downloaded during the compilation process.
 
+## From MELPA
+
+`vterm` is available on [MELPA](https://melpa.org/), and it can be installed as
+a normal package. If the requirements are satisfied (mainly, Emacs was built
+with support for modules), `vterm` will compile the module the first time it is
+run.
+
+`vterm` can be install with MELPA with `use-package` by adding the following
+lines to your `init.el`:
+
+```elisp
+(use-package vterm
+    :ensure t
+)
+```
+
 ## Manual installation
 
 Clone the repository:
@@ -69,22 +85,6 @@ Or, with `use-package`:
 ```elisp
 (use-package vterm
   :load-path  "path/to/emacs-libvterm/"
-)
-```
-
-## From MELPA
-
-`vterm` is available on [MELPA](https://melpa.org/), and it can be installed as
-a normal package. If the requirements are satisfied (mainly, Emacs was built
-with support for modules), `vterm` will compile the module the first time it is
-run.
-
-`vterm` can be install with MELPA with `use-package` by adding the following
-lines to your `init.el`:
-
-```elisp
-(use-package vterm
-    :ensure t
 )
 ```
 
