@@ -2,6 +2,20 @@
 
 (require 'files)
 
+(defcustom vterm-module-custom-compilation-flags ""
+  "Flags given to CMake to compile vterm-module.
+
+Currently, the flags available are:
+
+`USE_SYSTEM_LIBVTERM'. Set it to `yes' to use the version of
+libvterm installed on your system.
+
+This string is given verbatim to CMake, so it has to have the
+correct syntax. An example of meaningful value for this variable
+is `-DUSE_SYSTEM_LIBVTERM=yes'."
+  :type 'string
+  :group 'vterm)
+
 (defvar vterm-install-buffer-name " *Install vterm* "
   "Name of the buffer used for compiling vterm-module.")
 
@@ -16,24 +30,29 @@ the executable."
 
 ;;;###autoload
 (defun vterm-module-compile ()
-  "This function compiles the vterm-module."
+  "Compile vterm-module."
   (interactive)
   (when (vterm-module--cmake-is-available)
-  (let ((default-directory
-          (file-name-directory (file-truename (locate-library "vterm"))))
-        (make-commands
-         "mkdir -p build; \
-          cd build; \
-          cmake \
-            -DCMAKE_BUILD_TYPE=RelWithDebInfo \
-            ..; \
-          make"))
-    (unless (file-executable-p (concat default-directory "vterm-module.so"))
-      (let* ((buffer (get-buffer-create vterm-install-buffer-name)))
-        (pop-to-buffer vterm-install-buffer-name)
-        (if (zerop (call-process "sh" nil buffer t "-c" make-commands))
-            (message "Compilation of emacs-libvterm module succeeded")
-          (error "Compilation of emacs-libvterm module failed!")))))))
+    (let* ((vterm-directory
+            (shell-quote-argument
+             (file-name-directory (file-truename (locate-library "vterm")))))
+          (make-commands
+           (concat
+            "cd " vterm-directory "; \
+             mkdir -p build; \
+             cd build; \
+             cmake \
+             -DCMAKE_BUILD_TYPE=RelWithDebInfo "
+            vterm-module-custom-compilation-flags
+            " ..; \
+             make"
+            )))
+      (unless (file-executable-p (concat default-directory "vterm-module.so"))
+        (let* ((buffer (get-buffer-create vterm-install-buffer-name)))
+          (pop-to-buffer vterm-install-buffer-name)
+          (if (zerop (call-process "sh" nil buffer t "-c" make-commands))
+              (message "Compilation of `emacs-libvterm' module succeeded")
+            (error "Compilation of `emacs-libvterm' module failed!")))))))
 
 (or (require 'vterm-module nil t)
     (vterm-module-compile))
