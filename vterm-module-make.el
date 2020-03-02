@@ -45,7 +45,8 @@ the executable."
              -DCMAKE_BUILD_TYPE=RelWithDebInfo "
             vterm-module-custom-compilation-flags
             " ..; \
-             make"
+             make; \
+             cd -"
             )))
       (unless (file-executable-p (concat default-directory "vterm-module.so"))
         (let* ((buffer (get-buffer-create vterm-install-buffer-name)))
