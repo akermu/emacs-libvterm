@@ -2,7 +2,7 @@
 
 (require 'files)
 
-(defcustom vterm-module-custom-compilation-flags ""
+(defcustom vterm-module-compilation-flags ""
   "Flags given to CMake to compile vterm-module.
 
 Currently, the flags available are:
@@ -43,7 +43,7 @@ the executable."
              cd build; \
              cmake \
              -DCMAKE_BUILD_TYPE=RelWithDebInfo "
-            vterm-module-custom-compilation-flags
+            vterm-module-compilation-flags
             " ..; \
              make; \
              cd -"
