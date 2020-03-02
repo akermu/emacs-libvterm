@@ -2,27 +2,24 @@
 
 # Introduction
 
-This emacs module implements a bridge to
-[libvterm](https://github.com/neovim/libvterm) to display a terminal in an Emacs
-buffer.
+Emacs-libvterm (_vterm_) is fully-fledged terminal emulator inside GNU Emacs
+based on [libvterm](https://github.com/neovim/libvterm), a C library. As a
+result of using compiled code (as opposed to elisp), emacs-libvterm is fully
+capable, fast, and it can seamlessly handle large outputs.
 
 ## Warning
 
-This is an **alpha release**, so it will crash your Emacs. If it does, please
-[report a bug](https://github.com/akermu/emacs-libvterm/issues/new)!
+This package is in active development and, while being stable enough to be used
+as a daily-driver, it is currently in early **alpha** stage. Moreover,
+emacs-libvterm deals directly with some low-level operations, hence, bugs in the
+code can lead to segmentation faults and crashes. If that happens, please
+[report the problem](https://github.com/akermu/emacs-libvterm/issues/new).
 
 # Installation
 
-## Manual
+## Requirements
 
-Clone the repository:
-
-```sh
-git clone https://github.com/akermu/emacs-libvterm.git
-```
-
-Before installing emacs-libvterm, you need to make sure you have
-installed
+Before installing emacs-libvterm, you need to make sure you have installed
  1. GNU Emacs (>= 25.1) with [module
     support](https://www.gnu.org/software/emacs/manual/html_node/elisp/Dynamic-Modules.html).
     You can check that, by verifying that `module-file-suffix` is not `nil`.
@@ -30,18 +27,46 @@ installed
  3. libtool-bin (related issues:
     [#66](https://github.com/akermu/emacs-libvterm/issues/66)
     [#85](https://github.com/akermu/emacs-libvterm/issues/85#issuecomment-491845136))
- 4. OPTIONAL: libvterm. This library can be found in the official repositories
-    of most distributions (e.g., Arch, Debian, Fedora, Gentoo, openSUSE,
-    Ubuntu). In case you want to use the version already installed on your
-    system, change `cmake ..` with `cmake -DUSE_SYSTEM_LIBVTERM=yes ..` in the
-    following instructions. If `-DUSE_SYSTEM_LIBVTERM` is not explicitly set to `yes`
-    (or if it is set to `no`), emacs-libvterm will download the latest version
-    available of libvterm (from [here](https://github.com/neovim/libvterm)),
-    compile it, and use it.
+ 4. OPTIONAL: [libvterm](https://github.com/neovim/libvterm). This library can
+    be found in the official repositories of most distributions (e.g., Arch,
+    Debian, Fedora, Gentoo, openSUSE, Ubuntu). If not available, it will be
+    downloaded during the compilation process.
+
+## From MELPA
+
+`vterm` is available on [MELPA](https://melpa.org/), and it can be installed as
+a normal package. If the requirements are satisfied (mainly, Emacs was built
+with support for modules), `vterm` will compile the module the first time it is
+run.
+
+`vterm` can be install with MELPA with `use-package` by adding the following
+lines to your `init.el`:
+
+```elisp
+(use-package vterm
+    :ensure t
+)
+```
+
+## Manual installation
+
+Clone the repository:
+
+```sh
+git clone https://github.com/akermu/emacs-libvterm.git
+```
+
+In case you want to use the version of libvterm already installed on your
+system, change `cmake ..` with `cmake -DUSE_SYSTEM_LIBVTERM=yes ..` in the
+following instructions. If `-DUSE_SYSTEM_LIBVTERM` is not explicitly set to
+`yes` (or if it is set to `no`), emacs-libvterm will download the latest version
+available of libvterm (from [here](https://github.com/neovim/libvterm)), compile
+it, and use it.
 
 Build the module with:
 
 ``` sh
+cd emacs-libvterm
 mkdir -p build
 cd build
 cmake ..
@@ -60,22 +85,6 @@ Or, with `use-package`:
 ```elisp
 (use-package vterm
   :load-path  "path/to/emacs-libvterm/"
-)
-```
-
-## From MELPA
-
-`vterm` is available on [MELPA](https://melpa.org/), and it can be installed as
-a normal package. If the requirements are satisfied (mainly, Emacs was built
-with support for modules), `vterm` will take care of the compilation of all its
-components.
-
-`vterm` can be install with MELPA with `use-package` by adding the following
-lines to your `init.el`:
-
-```elisp
-(use-package vterm
-    :ensure t
 )
 ```
 
