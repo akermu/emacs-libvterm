@@ -212,6 +212,13 @@ rendering of colors in some systems.
 If set to `t`, buffers are killed when the associated process is terminated
 (for example, by logging out the shell).
 
+## `vterm-module-compilation-flags`
+
+Compilation flags to be given to CMake when compiling the module. This string is
+directly passed to CMake, so it uses the same syntax. At the moment, it main use
+is for compiling vterm using the system libvterm instead of the one downloaded
+from GitHub.
+
 ## Keybindings
 
 If you want a key to be sent to the terminal, bind it to `vterm--self-insert`,
