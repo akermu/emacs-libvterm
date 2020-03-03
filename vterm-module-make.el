@@ -2,10 +2,11 @@
 
 (require 'files)
 
-(defcustom vterm-module-compilation-flags ""
-  "Flags given to CMake to compile vterm-module.
+(defcustom vterm-module-cmake-args ""
+  "Arguments given to CMake to compile vterm-module.
 
-Currently, the flags available are:
+Currently, vterm defines the following flags (in addition to the
+ones already available in CMake):
 
 `USE_SYSTEM_LIBVTERM'. Set it to `yes' to use the version of
 libvterm installed on your system.
@@ -36,18 +37,16 @@ the executable."
     (let* ((vterm-directory
             (shell-quote-argument
              (file-name-directory (file-truename (locate-library "vterm")))))
-          (make-commands
-           (concat
-            "cd " vterm-directory "; \
+           (make-commands
+            (concat
+             "cd " vterm-directory "; \
              mkdir -p build; \
              cd build; \
-             cmake \
-             -DCMAKE_BUILD_TYPE=RelWithDebInfo "
-            vterm-module-compilation-flags
-            " ..; \
+             cmake "
+             vterm-module-cmake-args
+             " ..; \
              make; \
-             cd -"
-            )))
+             cd -")))
       (unless (file-executable-p (concat default-directory "vterm-module.so"))
         (let* ((buffer (get-buffer-create vterm-install-buffer-name)))
           (pop-to-buffer vterm-install-buffer-name)
