@@ -44,8 +44,7 @@ lines to your `init.el`:
 
 ```elisp
 (use-package vterm
-    :ensure t
-)
+    :ensure t)
 ```
 
 ## Manual installation
@@ -84,8 +83,7 @@ Or, with `use-package`:
 
 ```elisp
 (use-package vterm
-  :load-path  "path/to/emacs-libvterm/"
-)
+  :load-path  "path/to/emacs-libvterm/")
 ```
 
 ## vterm and Ubuntu
