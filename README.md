@@ -4,7 +4,7 @@
 
 Emacs-libvterm (_vterm_) is fully-fledged terminal emulator inside GNU Emacs
 based on [libvterm](https://github.com/neovim/libvterm), a C library. As a
-result of using compiled code (as opposed to elisp), emacs-libvterm is fully
+result of using compiled code (instead of elisp), emacs-libvterm is fully
 capable, fast, and it can seamlessly handle large outputs.
 
 ## Warning
@@ -44,8 +44,7 @@ lines to your `init.el`:
 
 ```elisp
 (use-package vterm
-    :ensure t
-)
+    :ensure t)
 ```
 
 ## Manual installation
@@ -84,8 +83,7 @@ Or, with `use-package`:
 
 ```elisp
 (use-package vterm
-  :load-path  "path/to/emacs-libvterm/"
-)
+  :load-path  "path/to/emacs-libvterm/")
 ```
 
 ## vterm and Ubuntu
@@ -290,7 +288,7 @@ For `zsh`, put this at the end of your `.zshrc`:
 vterm_prompt_end() {
     vterm_printf "51;A$(whoami)@$(hostname):$(pwd)";
 }
-PROMPT=$PROMPT'%{$(vterm_prompt_end)%}'
+PROMPT=$PROMPT"%{$(vterm_prompt_end)%}"
 ```
 
 For `bash`, put this at the end of your `.bashrc`:
