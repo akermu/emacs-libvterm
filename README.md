@@ -37,15 +37,19 @@ Before installing emacs-libvterm, you need to make sure you have installed
 `vterm` is available on [MELPA](https://melpa.org/), and it can be installed as
 a normal package. If the requirements are satisfied (mainly, Emacs was built
 with support for modules), `vterm` will compile the module the first time it is
-run.
+run. This is the recommended way to install `vterm`.
 
-`vterm` can be install with MELPA with `use-package` by adding the following
+`vterm` can be install from MELPA with `use-package` by adding the following
 lines to your `init.el`:
 
 ```elisp
 (use-package vterm
     :ensure t)
 ```
+
+To take full advantage of the capabilities of `vterm`, you should configure your
+shell too. Read about this in the section [shell-side
+configuration](#shell-side-configuration).
 
 ## Manual installation
 
@@ -121,6 +125,49 @@ installation).
 [emacs-vterm](https://guix.gnu.org/packages/emacs-vterm-0-1.7d7381f/).
 The package can be installed with `guix package -i emacs-vterm`.
 
+## Shell-side configuration
+
+Some of the most useful features in `vterm` (e.g.,
+[directory-tracking](#directory-tracking) or [message
+passing](#message-passing)) require shell-side configurations. The main goal of
+these additional functions is to enable the shell to send information to `vterm`
+via properly escaped sequences. A function that helps in this task,
+`vterm_printf`, is defined below. This function is widely used throughout this
+readme.
+
+For `bash` or `zsh`, put this in your `.zshrc` or `.bashrc`
+```bash
+function vterm_printf(){
+    if [ -n "$TMUX" ]; then
+        # Tell tmux to pass the escape sequences through
+        # (Source: http://permalink.gmane.org/gmane.comp.terminal-emulators.tmux.user/1324)
+        printf "\ePtmux;\e\e]%s\007\e\\" "$1"
+    elif [ "${TERM%%-*}" = "screen" ]; then
+        # GNU screen (screen, screen-256color, screen-256color-bce)
+        printf "\eP\e]%s\007\e\\" "$1"
+    else
+        printf "\e]%s\e\\" "$1"
+    fi
+}
+```
+
+For `fish`   put this in your `~/.config/fish/config.fish`:
+```bash
+function vterm_printf;
+    if [ -n "$TMUX" ]
+        # tell tmux to pass the escape sequences through
+        # (Source: http://permalink.gmane.org/gmane.comp.terminal-emulators.tmux.user/1324)
+        printf "\ePtmux;\e\e]%s\007\e\\" "$argv"
+    else if string match -q -- "screen*" "$TERM"
+        # GNU screen (screen, screen-256color, screen-256color-bce)
+        printf "\eP\e]%s\007\e\\" "$argv"
+    else
+        printf "\e]%s\e\\" "$argv"
+    end
+end
+```
+
+
 # Debugging and testing
 
 If you have successfully built the module, you can test it by executing the
@@ -155,38 +202,6 @@ current buffer from the data that it is not currently visible.
 with the `clear` function provided by the shell to clear both screen and
 scrollback. In order to achieve this behavior, you need to add a new shell alias.
 
-For `bash` or `zsh`, put this in your `.zshrc` or `.bashrc`
-```bash
-function vterm_printf(){
-    if [ -n "$TMUX" ]; then
-        # tell tmux to pass the escape sequences through
-        # (Source: http://permalink.gmane.org/gmane.comp.terminal-emulators.tmux.user/1324)
-        printf "\ePtmux;\e\e]%s\007\e\\" "$1"
-    elif [ "${TERM%%-*}" = "screen" ]; then
-        # GNU screen (screen, screen-256color, screen-256color-bce)
-        printf "\eP\e]%s\007\e\\" "$1"
-    else
-        printf "\e]%s\e\\" "$1"
-    fi
-}
-```
-
-For `fish`   put this in your `~/.config/fish/config.fish`:
-```bash
-function vterm_printf;
-    if [ -n "$TMUX" ]
-        # tell tmux to pass the escape sequences through
-        # (Source: http://permalink.gmane.org/gmane.comp.terminal-emulators.tmux.user/1324)
-        printf "\ePtmux;\e\e]%s\007\e\\" "$argv"
-    else if string match -q -- "screen*" "$TERM"
-        # GNU screen (screen, screen-256color, screen-256color-bce)
-        printf "\eP\e]%s\007\e\\" "$argv"
-    else
-        printf "\e]%s\e\\" "$argv"
-    end
-end
-```
-
 For `zsh`, put this in your `.zshrc`:
 ```zsh
 
@@ -203,7 +218,6 @@ if [[ "$INSIDE_EMACS" = 'vterm' ]]; then
     }
 fi
 ```
-
 These aliases take advantage of the fact that `vterm` can execute `elisp`
 commands, as explained below.
 
@@ -225,7 +239,7 @@ rendering of colors in some systems.
 If set to `t`, buffers are killed when the associated process is terminated
 (for example, by logging out the shell).
 
-## `vterm-module-cmake-args
+## `vterm-module-cmake-args`
 
 Compilation flags and arguments to be given to CMake when compiling the module.
 This string is directly passed to CMake, so it uses the same syntax. At the
@@ -278,13 +292,14 @@ directory in Emacs and the current working directory in `vterm` are synced. As a
 result, interactive functions that ask for a path or a file (e.g., `dired` or
 `find-file`) will do so starting from the current location.
 
-Directory tracking requires some configuration, as the shell has to be instructed
-to share the relevant information with Emacs.
+Directory tracking requires some configuration, as the shell has to be
+instructed to share the relevant information with Emacs. The following pieces of
+code assume that you have the function `vterm_printf` as defined in section
+[shell-side configuration](#shell-side-configuration).
 
 For `zsh`, put this at the end of your `.zshrc`:
 
 ```zsh
-
 vterm_prompt_end() {
     vterm_printf "51;A$(whoami)@$(hostname):$(pwd)";
 }
