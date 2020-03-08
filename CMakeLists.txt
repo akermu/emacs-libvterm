@@ -17,6 +17,12 @@ set_target_properties(vterm-module PROPERTIES
   LIBRARY_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}
   )
 
+# Set RelWithDebInfo as default build type
+if (NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
+  message(STATUS "No build type selected, defaulting to RelWithDebInfo")
+  set(CMAKE_BUILD_TYPE "RelWithDebInfo" CACHE STRING "Build type (default RelWithDebInfo)" FORCE)
+endif()
+
 # Look for the header file.
 option(USE_SYSTEM_LIBVTERM "Use system libvterm instead of the vendored version." OFF)
 
@@ -38,9 +44,14 @@ if(USE_SYSTEM_LIBVTERM)
     message(FATAL_ERROR "libvterm not found")
   endif()
 else()
+  find_program(LIBTOOL NAMES libtool glibtool)
+  if(NOT LIBTOOL)
+    message(FATAL_ERROR "libtool not found. Please install libtool")
+  endif()
+
   ExternalProject_add(libvterm
     GIT_REPOSITORY https://github.com/neovim/libvterm.git
-    GIT_TAG 89675ffdda615ffc3f29d1c47a933f4f44183364
+    GIT_TAG 65dbda3ed214f036ee799d18b2e693a833a0e591
     CONFIGURE_COMMAND ""
     BUILD_COMMAND ${LIBVTERM_BUILD_COMMAND} "CFLAGS='-fPIC'"
     BUILD_IN_SOURCE ON
