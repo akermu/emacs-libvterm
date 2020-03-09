@@ -303,7 +303,8 @@ For `zsh`, put this at the end of your `.zshrc`:
 vterm_prompt_end() {
     vterm_printf "51;A$(whoami)@$(hostname):$(pwd)";
 }
-PROMPT=$PROMPT"%{$(vterm_prompt_end)%}"
+setopt PROMPT_SUBST
+PROMPT=$PROMPT'%{$(vterm_prompt_end)%}'
 ```
 
 For `bash`, put this at the end of your `.bashrc`:
