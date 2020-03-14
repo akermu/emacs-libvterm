@@ -406,6 +406,7 @@ This is the value of `next-error-function' in Compilation buffers."
 (define-key vterm-copy-mode-map [return]               #'vterm-copy-mode-done)
 (define-key vterm-copy-mode-map (kbd "RET")            #'vterm-copy-mode-done)
 (define-key vterm-copy-mode-map (kbd "C-c C-r")        #'vterm-reset-cursor-point)
+(define-key vterm-copy-mode-map (kbd "C-a")            #'vterm-beginning-of-line)
 
 
 (define-minor-mode vterm-copy-mode
@@ -822,6 +823,11 @@ the called functions."
     (save-excursion
       (setq pt (vterm--get-prompt-point-internal
                 vterm--term (line-number-at-pos))))
+    (unless pt
+      (save-excursion
+        (beginning-of-line)
+        (term-skip-prompt)
+        (setq pt (point))))
     pt))
 
 (defun vterm-reset-cursor-point ()
@@ -834,21 +840,30 @@ the called functions."
   (save-excursion
     (vterm-reset-cursor-point)))
 
-
 (defun vterm--at-prompt-p ()
   "Check whether the cursor postion is at shell prompt or not."
   (let ((pt (point))
         (term-cursor-pt (vterm--get-cursor-point))
         (prompt-pt (vterm--get-prompt-point)))
-    (unless prompt-pt
-      (save-excursion
-        (goto-char (point-at-bol))
-        (term-skip-prompt)
-        (setq prompt-pt (point))))
-    (and
-     (= pt term-cursor-pt)
-     (or (= pt prompt-pt)
-         (string-blank-p (buffer-substring-no-properties pt prompt-pt))))))
+    (and (= pt term-cursor-pt)
+         (or (= pt prompt-pt)
+             (string-blank-p (buffer-substring-no-properties pt prompt-pt))))))
+
+(defun vterm-beginning-of-line ()
+"Move point to the beginning of the line.
+
+Move the point to the first character after the shell prompt on this line.
+If the point is already there, move to the beginning of the line.
+Effectively toggle between the two positions."
+  (interactive)
+  (let ((pt (point))
+        (prompt-pt (vterm--get-prompt-point)))
+    (if (= pt prompt-pt)
+        (beginning-of-line)
+      (if (= (line-number-at-pos prompt-pt)
+             (line-number-at-pos pt))
+          (goto-char prompt-pt)
+        (beginning-of-line)))))
 
 (provide 'vterm)
 ;;; vterm.el ends here
