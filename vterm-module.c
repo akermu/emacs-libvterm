@@ -633,12 +633,24 @@ static emacs_value render_text(emacs_env *env, Term *term, char *buffer,
   emacs_value strike = cell->attrs.strike ? Qt : Qnil;
 
   // TODO: Blink, font, dwl, dhl is missing
-  emacs_value properties =
-      list(env,
-           (emacs_value[]){Qforeground, fg, Qbackground, bg, Qweight, bold,
-                           Qunderline, underline, Qslant, italic, Qreverse,
-                           reverse, Qstrike, strike},
-           14);
+  int emacs_major_version =
+      env->extract_integer(env, symbol_value(env, Qemacs_major_version));
+  emacs_value properties;
+  if (emacs_major_version >= 27) {
+    properties =
+        list(env,
+             (emacs_value[]){Qforeground, fg, Qbackground, bg, Qweight, bold,
+                             Qunderline, underline, Qslant, italic, Qreverse,
+                             reverse, Qstrike, strike, Qextend, Qt},
+             16);
+  } else {
+    properties =
+        list(env,
+             (emacs_value[]){Qforeground, fg, Qbackground, bg, Qweight, bold,
+                             Qunderline, underline, Qslant, italic, Qreverse,
+                             reverse, Qstrike, strike},
+             14);
+  }
 
   put_text_property(env, text, Qface, properties);
 
@@ -1114,6 +1126,10 @@ int emacs_module_init(struct emacs_runtime *ert) {
   Qslant = env->make_global_ref(env, env->intern(env, ":slant"));
   Qreverse = env->make_global_ref(env, env->intern(env, ":inverse-video"));
   Qstrike = env->make_global_ref(env, env->intern(env, ":strike-through"));
+  Qextend = env->make_global_ref(env, env->intern(env, ":extend"));
+  Qemacs_major_version =
+      env->make_global_ref(env, env->intern(env, "emacs-major-version"));
+
   Qface = env->make_global_ref(env, env->intern(env, "font-lock-face"));
   Qbox = env->make_global_ref(env, env->intern(env, "box"));
   Qbar = env->make_global_ref(env, env->intern(env, "bar"));

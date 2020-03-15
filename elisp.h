@@ -17,11 +17,13 @@ emacs_value Qunderline;
 emacs_value Qslant;
 emacs_value Qreverse;
 emacs_value Qstrike;
+emacs_value Qextend;
 emacs_value Qface;
 emacs_value Qbox;
 emacs_value Qbar;
 emacs_value Qhbar;
 emacs_value Qcursor_type;
+emacs_value Qemacs_major_version;
 
 // Emacs functions
 emacs_value Fsymbol_value;
