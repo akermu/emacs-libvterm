@@ -359,6 +359,8 @@ This is the value of `next-error-function' in Compilation buffers."
 (vterm--exclude-keys vterm-keymap-exceptions)
 
 ;; Keybindings
+(define-key vterm-mode-map (kbd "M-<")                 #'vterm--self-insert)
+(define-key vterm-mode-map (kbd "M->")                 #'vterm--self-insert)
 (define-key vterm-mode-map [tab]                       #'vterm-send-tab)
 (define-key vterm-mode-map (kbd "TAB")                 #'vterm-send-tab)
 (define-key vterm-mode-map [backtab]                   #'vterm--self-insert)
