@@ -257,6 +257,8 @@ static void refresh_lines(Term *term, emacs_env *env, int start_row,
 
   int offset = 0;
   for (i = start_row; i < end_row; i++) {
+
+    int newline = 0;
     for (j = 0; j < end_col; j++) {
       fetch_cell(term, i, j, &cell);
 
@@ -270,6 +272,9 @@ static void refresh_lines(Term *term, emacs_env *env, int start_row,
       if (cell.chars[0] == 0) {
         if (is_eol(term, end_col, i, j)) {
           /* This cell is EOL if this and every cell to the right is black */
+          buffer[length] = '\n';
+          length++;
+          newline = 1;
           break;
         }
         buffer[length] = ' ';
@@ -290,8 +295,13 @@ static void refresh_lines(Term *term, emacs_env *env, int start_row,
       }
     }
 
-    buffer[length] = '\n';
-    length++;
+    if (!newline) {
+      emacs_value text = render_text(env, term, buffer, length, &lastCell);
+      insert(env, text);
+      length = 0;
+      text = render_fake_newline(env, term);
+      insert(env, text);
+    }
   }
   emacs_value text = render_text(env, term, buffer, length, &lastCell);
   insert(env, text);
@@ -653,6 +663,21 @@ static emacs_value render_text(emacs_env *env, Term *term, char *buffer,
   }
 
   put_text_property(env, text, Qface, properties);
+
+  return text;
+}
+
+static emacs_value render_fake_newline(emacs_env *env, Term *term) {
+
+  emacs_value text;
+  text = env->make_string(env, "\n", 1);
+
+  emacs_value properties;
+
+  properties =
+      list(env, (emacs_value[]){Qvterm_line_wrap, Qt, Qrear_nonsticky, Qt}, 4);
+
+  add_text_properties(env, text, properties);
 
   return text;
 }
@@ -1129,6 +1154,10 @@ int emacs_module_init(struct emacs_runtime *ert) {
   Qextend = env->make_global_ref(env, env->intern(env, ":extend"));
   Qemacs_major_version =
       env->make_global_ref(env, env->intern(env, "emacs-major-version"));
+  Qvterm_line_wrap =
+      env->make_global_ref(env, env->intern(env, "vterm-line-wrap"));
+  Qrear_nonsticky =
+      env->make_global_ref(env, env->intern(env, "rear-nonsticky"));
 
   Qface = env->make_global_ref(env, env->intern(env, "font-lock-face"));
   Qbox = env->make_global_ref(env, env->intern(env, "box"));
@@ -1146,6 +1175,8 @@ int emacs_module_init(struct emacs_runtime *ert) {
   Fgoto_char = env->make_global_ref(env, env->intern(env, "goto-char"));
   Fput_text_property =
       env->make_global_ref(env, env->intern(env, "put-text-property"));
+  Fadd_text_properties =
+      env->make_global_ref(env, env->intern(env, "add-text-properties"));
   Fset = env->make_global_ref(env, env->intern(env, "set"));
   Fvterm_flush_output =
       env->make_global_ref(env, env->intern(env, "vterm--flush-output"));
@@ -1211,7 +1242,6 @@ int emacs_module_init(struct emacs_runtime *ert) {
   fun = env->make_function(env, 1, 1, Fvterm_reset_cursor_point,
                            "Reset cursor postion.", NULL);
   bind_function(env, "vterm--reset-point", fun);
-
 
   fun = env->make_function(env, 1, 1, Fvterm_get_icrnl,
                            "Gets the icrnl state of the pty", NULL);

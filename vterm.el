@@ -264,6 +264,9 @@ If nil, never delay")
     (setq-local hscroll-margin 0)
     (setq-local hscroll-step 1)
     (setq-local truncate-lines t)
+    (add-function :filter-return
+                  (local 'filter-buffer-substring-function)
+                  #'vterm--filter-buffer-substring)
     (setq vterm--process
           (make-process
            :name "vterm"
@@ -875,6 +878,22 @@ Effectively toggle between the two positions."
              (line-number-at-pos pt))
           (goto-char prompt-pt)
         (beginning-of-line)))))
+
+(defun vterm--remove-fake-newlines ()
+  (goto-char (point-min))
+  (let (fake-newline)
+    (while (setq fake-newline (next-single-property-change (point)
+                                                           'vterm-line-wrap))
+      (goto-char fake-newline)
+      (cl-assert (eq ?\n (char-after)))
+      (let ((inhibit-read-only t))
+        (delete-char 1)))))
+
+(defun vterm--filter-buffer-substring (content)
+  (with-temp-buffer
+    (insert content)
+    (vterm--remove-fake-newlines)
+    (buffer-string)))
 
 (provide 'vterm)
 ;;; vterm.el ends here

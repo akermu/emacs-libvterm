@@ -49,6 +49,15 @@ void put_text_property(emacs_env *env, emacs_value string, emacs_value property,
                (emacs_value[]){start, end, property, value, string});
 }
 
+void add_text_properties(emacs_env *env, emacs_value string,
+                         emacs_value property) {
+  emacs_value start = env->make_integer(env, 0);
+  emacs_value end = length(env, string);
+
+  env->funcall(env, Fadd_text_properties, 4,
+               (emacs_value[]){start, end, property, string});
+}
+
 void erase_buffer(emacs_env *env) { env->funcall(env, Ferase_buffer, 0, NULL); }
 
 void insert(emacs_env *env, emacs_value string) {
