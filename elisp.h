@@ -25,7 +25,7 @@ emacs_value Qhbar;
 emacs_value Qcursor_type;
 emacs_value Qemacs_major_version;
 emacs_value Qvterm_line_wrap;
-emacs_value Qrear_nonsticky; 
+emacs_value Qrear_nonsticky;
 
 // Emacs functions
 emacs_value Fsymbol_value;
@@ -45,7 +45,7 @@ emacs_value Fwindow_body_height;
 emacs_value Fpoint;
 
 emacs_value Fput_text_property;
-emacs_value Fadd_text_properties; 
+emacs_value Fadd_text_properties;
 emacs_value Fset;
 emacs_value Fvterm_flush_output;
 emacs_value Fget_buffer_window_list;

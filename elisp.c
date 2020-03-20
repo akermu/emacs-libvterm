@@ -58,7 +58,6 @@ void add_text_properties(emacs_env *env, emacs_value string,
                (emacs_value[]){start, end, property, string});
 }
 
-
 void erase_buffer(emacs_env *env) { env->funcall(env, Ferase_buffer, 0, NULL); }
 
 void insert(emacs_env *env, emacs_value string) {
