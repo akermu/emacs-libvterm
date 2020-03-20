@@ -667,6 +667,10 @@ static emacs_value render_text(emacs_env *env, Term *term, char *buffer,
   return text;
 }
 
+// render_fake_newline attaches a text property to the newline being injected by
+// the terminal emulator when it reaches edge of the terminal. This text
+// property is later used to identify such insertions and remove them when the
+// text is being killed/copied, thus preserving the output's natural line breaks.
 static emacs_value render_fake_newline(emacs_env *env, Term *term) {
 
   emacs_value text;
@@ -674,6 +678,7 @@ static emacs_value render_fake_newline(emacs_env *env, Term *term) {
 
   emacs_value properties;
 
+  // Attach the 'vterm-line-wrap property to the newline being inserted. 
   properties =
       list(env, (emacs_value[]){Qvterm_line_wrap, Qt, Qrear_nonsticky, Qt}, 4);
 

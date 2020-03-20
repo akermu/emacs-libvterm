@@ -880,6 +880,10 @@ Effectively toggle between the two positions."
         (beginning-of-line)))))
 
 (defun vterm--remove-fake-newlines ()
+"Filters out fake/injected newlines.
+
+Filters out injected newlines that had been tagged with the 'vterm-line-wrap
+property."
   (goto-char (point-min))
   (let (fake-newline)
     (while (setq fake-newline (next-single-property-change (point)
@@ -890,6 +894,7 @@ Effectively toggle between the two positions."
         (delete-char 1)))))
 
 (defun vterm--filter-buffer-substring (content)
+" Filters killed text of fake/injected newlines."
   (with-temp-buffer
     (insert content)
     (vterm--remove-fake-newlines)
