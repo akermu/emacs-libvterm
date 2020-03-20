@@ -299,7 +299,7 @@ static void refresh_lines(Term *term, emacs_env *env, int start_row,
       emacs_value text = render_text(env, term, buffer, length, &lastCell);
       insert(env, text);
       length = 0;
-      text = render_fake_newline(env, term, buffer, length, &lastCell);
+      text = render_fake_newline(env, term);
       insert(env, text);
     }
   }
@@ -667,8 +667,7 @@ static emacs_value render_text(emacs_env *env, Term *term, char *buffer,
   return text;
 }
 
-static emacs_value render_fake_newline(emacs_env *env, Term *term, char *buffer,
-                                       int len, VTermScreenCell *cell) {
+static emacs_value render_fake_newline(emacs_env *env, Term *term) {
 
   emacs_value text;
   text = env->make_string(env, "\n", 1);
