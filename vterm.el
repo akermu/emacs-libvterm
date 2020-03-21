@@ -233,6 +233,7 @@ color is used as ansi color 15."
 (defvar-local vterm--redraw-timer nil)
 (defvar-local vterm--redraw-immididately nil)
 (defvar-local vterm--linenum-remapping nil)
+(defvar-local vterm--prompt-tracking-enabled-p nil)
 
 (defvar vterm-timer-delay 0.1
   "Delay for refreshing the buffer after receiving updates from libvterm.
@@ -402,6 +403,8 @@ This is the value of `next-error-function' in Compilation buffers."
 (define-key vterm-mode-map [remap self-insert-command] #'vterm--self-insert)
 
 (define-key vterm-mode-map (kbd "C-c C-r")             #'vterm-reset-cursor-point)
+(define-key vterm-mode-map (kbd "C-c C-n")             #'vterm-next-prompt)
+(define-key vterm-mode-map (kbd "C-c C-p")             #'vterm-previous-prompt)
 
 (define-key vterm-mode-map (kbd "C-c C-t")             #'vterm-copy-mode)
 
@@ -412,6 +415,8 @@ This is the value of `next-error-function' in Compilation buffers."
 (define-key vterm-copy-mode-map (kbd "RET")            #'vterm-copy-mode-done)
 (define-key vterm-copy-mode-map (kbd "C-c C-r")        #'vterm-reset-cursor-point)
 (define-key vterm-copy-mode-map (kbd "C-a")            #'vterm-beginning-of-line)
+(define-key vterm-copy-mode-map (kbd "C-c C-n")        #'vterm-next-prompt)
+(define-key vterm-copy-mode-map (kbd "C-c C-p")        #'vterm-previous-prompt)
 
 
 (define-minor-mode vterm-copy-mode
@@ -831,28 +836,66 @@ the called functions."
         (apply (cadr f) args)
       (message "Failed to find command: %s" command))))
 
+
+(defun vterm--prompt-tracking-enabled-p ()
+  "Check whether feature of tracking the prompt is enabled or not.
+
+Prompt tracking need shell side configurations.
+
+For zsh user, this is done by PROMPT=$PROMPT'%{$(vterm_prompt_end)%}'.
+
+The shell send semantic information about where the prompt ends via properly
+escaped sequences to Emacs.
+
+More information see `Shell-side configuration' and `Directory tracking'
+in README."
+  (or vterm--prompt-tracking-enabled-p
+      (save-excursion
+        (setq vterm--prompt-tracking-enabled-p
+              (next-single-property-change (point-min) 'vterm-prompt)))))
+
+(defun vterm-next-prompt (n)
+  "Move to end of Nth next prompt in the buffer."
+  (interactive "p")
+  (if (vterm--prompt-tracking-enabled-p)
+      (let ((pt (point)) )
+        (goto-char (vterm--get-prompt-point))
+        (cl-loop repeat (or n 1) do
+                 (setq pt (next-single-property-change (point-at-bol 2) 'vterm-prompt))
+                 (when pt (goto-char pt))))
+    (term-next-prompt n)))
+
+(defun vterm-previous-prompt (n)
+  "Move to end of Nth previous prompt in the buffer."
+  (interactive "p")
+  (if (vterm--prompt-tracking-enabled-p)
+      (let ((pt (point)) )
+        (goto-char (vterm--get-prompt-point))
+        (cl-loop repeat (or n 1) do
+                 (setq pt (previous-single-property-change (1- (point)) 'vterm-prompt))
+                 (when pt (goto-char (1- pt)))))
+    (term-previous-prompt n)))
+
 (defun vterm--get-prompt-point ()
-  "Get the position of the end of current prompt."
+  "Get the position of the end of current prompt.
+More information see `vterm--prompt-tracking-enabled-p' and
+`Directory tracking and Prompt tracking'in README. "
   (let (pt)
     (save-excursion
-      (setq pt (vterm--get-prompt-point-internal
-                vterm--term (line-number-at-pos))))
+      (end-of-line)
+      (if (get-text-property (point) 'vterm-prompt)
+          (setq pt (point))
+        (setq pt (previous-single-property-change (point) 'vterm-prompt))
+        (when pt
+          (goto-char pt)
+          (backward-char)
+          (setq pt (point)))))
     (unless pt
       (save-excursion
         (beginning-of-line)
         (term-skip-prompt)
         (setq pt (point))))
     pt))
-
-(defun vterm-reset-cursor-point ()
-  "Make sure the cursor at the right postion."
-  (interactive)
-  (vterm--reset-point vterm--term))
-
-(defun vterm--get-cursor-point ()
-  "Get term cursor position."
-  (save-excursion
-    (vterm-reset-cursor-point)))
 
 (defun vterm--at-prompt-p ()
   "Check whether the cursor postion is at shell prompt or not."
@@ -878,6 +921,17 @@ Effectively toggle between the two positions."
              (line-number-at-pos pt))
           (goto-char prompt-pt)
         (beginning-of-line)))))
+
+(defun vterm-reset-cursor-point ()
+  "Make sure the cursor at the right postion."
+  (interactive)
+  (vterm--reset-point vterm--term))
+
+(defun vterm--get-cursor-point ()
+  "Get term cursor position."
+  (save-excursion
+    (vterm-reset-cursor-point)))
+
 
 (defun vterm--remove-fake-newlines ()
   (goto-char (point-min))

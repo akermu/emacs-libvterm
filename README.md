@@ -128,8 +128,8 @@ The package can be installed with `guix package -i emacs-vterm`.
 ## Shell-side configuration
 
 Some of the most useful features in `vterm` (e.g.,
-[directory-tracking](#directory-tracking) or [message
-passing](#message-passing)) require shell-side configurations. The main goal of
+[directory-tracking and prompt-tracking](#directory-tracking-and-prompt-tracking) or
+[message passing](#message-passing)) require shell-side configurations. The main goal of
 these additional functions is to enable the shell to send information to `vterm`
 via properly escaped sequences. A function that helps in this task,
 `vterm_printf`, is defined below. This function is widely used throughout this
@@ -285,14 +285,26 @@ is ansi color 8-15.
 - vterm-color-cyan
 - vterm-color-white
 
-## Directory tracking
+## Directory tracking and Prompt tracking
 
 `vterm` supports _directory tracking_. If this feature is enabled, the default
 directory in Emacs and the current working directory in `vterm` are synced. As a
 result, interactive functions that ask for a path or a file (e.g., `dired` or
 `find-file`) will do so starting from the current location.
 
-Directory tracking requires some configuration, as the shell has to be
+And `vterm` supports _prompt tracking_. If this feature is enabled, Emacs knows
+where the prompt ends, you needn't  customize `term-prompt-regexp` any more.
+Then you can use `vterm-next-prompt` and `vterm-previous-prompt`
+moving to end of next/previous prompt. The default keybinding is `C-c C-n` and `C-c C-p`.
+
+And `vterm-beginning-of-line` would move the point to the first character after the
+shell prompt on this line. If the point is already there, move to the beginning of the line.
+The default keybinding is `C-a` in `vterm-copy-mode`.
+
+And `vterm--at-prompt-p` would check whether the cursor is at the point just after
+the shell prompt.
+
+Directory tracking and Prompt tracking requires some configuration, as the shell has to be
 instructed to share the relevant information with Emacs. The following pieces of
 code assume that you have the function `vterm_printf` as defined in section
 [shell-side configuration](#shell-side-configuration).

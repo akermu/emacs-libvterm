@@ -90,7 +90,8 @@ static bool compare_cells(VTermScreenCell *a, VTermScreenCell *b);
 static bool is_key(unsigned char *key, size_t len, char *key_description);
 static emacs_value render_text(emacs_env *env, Term *term, char *string,
                                int len, VTermScreenCell *cell);
-static emacs_value render_fake_newline(emacs_env *env, Term *term); 
+static emacs_value render_fake_newline(emacs_env *env, Term *term);
+static emacs_value render_prompt(emacs_env *env, emacs_value text);
 static emacs_value color_to_rgb_string(emacs_env *env, Term *term,
                                        VTermColor *color);
 
