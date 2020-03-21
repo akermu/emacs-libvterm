@@ -26,6 +26,7 @@ emacs_value Qcursor_type;
 emacs_value Qemacs_major_version;
 emacs_value Qvterm_line_wrap;
 emacs_value Qrear_nonsticky;
+emacs_value Qvterm_prompt;
 
 // Emacs functions
 emacs_value Fsymbol_value;
