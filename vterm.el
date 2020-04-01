@@ -880,10 +880,10 @@ Effectively toggle between the two positions."
         (beginning-of-line)))))
 
 (defun vterm--remove-fake-newlines ()
-"Filters out fake/injected newlines.
+  "Filters out injected newlines were injected when rendering the terminal.
+  These newlines were tagged with 'vterm-line-wrap property so we can find them
+  and remove them."
 
-Filters out injected newlines that had been tagged with the 'vterm-line-wrap
-property."
   (goto-char (point-min))
   (let (fake-newline)
     (while (setq fake-newline (next-single-property-change (point)
