@@ -433,13 +433,16 @@ This is the value of `next-error-function' in Compilation buffers."
     (vterm-send-start)))
 
 (defun vterm-copy-mode-done ()
-  "Save the active region to the kill ring and exit `vterm-copy-mode'."
+  "Save the active region or line to the kill ring and exit `vterm-copy-mode'."
   (interactive)
   (unless vterm-copy-mode
     (user-error "This command is effective only in vterm-copy-mode"))
-  (unless (region-active-p)
-    (user-error "No region is active"))
-  (kill-ring-save (region-beginning) (region-end))
+  (save-excursion
+    (unless (region-active-p)
+      (beginning-of-line)
+      (set-mark (point))
+      (end-of-line))
+    (kill-ring-save (region-beginning) (region-end)))
   (vterm-copy-mode -1))
 
 (defun vterm--self-insert ()
