@@ -448,7 +448,7 @@ This is the value of `next-error-function' in Compilation buffers."
     (vterm-send-start)))
 
 (defun vterm-copy-mode-done (arg)
-  "If a region is active then kill it, otherwise kill the current line, then exit `vterm-copy-mode'.
+  "Save the active region or line to the kill ring and exit `vterm-copy-mode'.
 
 If a region is defined then that region is killed, with no region then
 current line is killed from start to end.
