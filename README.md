@@ -194,6 +194,10 @@ When you enable `vterm-copy-mode`, the terminal buffer behaves like a normal
 to toggle `vterm-copy-mode` is `C-c C-t`. When a region is selected, it is
 possible to copy the text and leave `vterm-copy-mode` with the enter key.
 
+If no region is selected when the enter key is pressed it will copy the current
+line from start to end. If `vterm-copy-exclude-prompt` is true it will skip
+the prompt and not include it in the copy.
+
 ## `vterm-clear-scrollback`
 
 `vterm-clear-scrollback` does exactly what the name suggests: it clears the
@@ -246,6 +250,17 @@ This string is directly passed to CMake, so it uses the same syntax. At the
 moment, it main use is for compiling vterm using the system libvterm instead of
 the one downloaded from GitHub. You can find all the arguments and flags
 available with `cmake -LA` in the build directory.
+
+## `vterm-copy-exclude-prompt`
+
+Controls whether or not to exclude the prompt when copying a line in
+`vterm-copy-mode`. Using the universal prefix before calling
+`vterm-copy-mode-done` will invert the value for that call, allowing you to
+temporarily override the setting.
+
+The variable `vterm-copy-use-vterm-prompt` determines
+whether to use the vterm prompt tracking, if false it usessearches for the regexp in
+`vterm-copy-prompt-regexp`.  If not found it copies the whole line.
 
 ## Keybindings
 
