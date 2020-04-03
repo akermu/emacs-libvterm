@@ -150,6 +150,21 @@ party to commandeer your editor."
   :type  'boolean
   :group 'vterm)
 
+(defcustom vterm-copy-exclude-prompt t
+  "Should the prompt be excluded from a line copy?"
+  :type 'boolean
+  :group 'vterm)
+
+(defcustom vterm-copy-prompt-regexp term-prompt-regexp
+  "A regexp to find the end of the prompt from the start of the line."
+  :type 'regexp
+  :group 'vterm)
+
+(defcustom vterm-copy-use-vterm-prompt t
+  "Should we use the vterm prompt tracker or the search from `vterm-copy-prompt-regexp'?"
+  :type 'boolean
+  :group 'vterm)
+
 (defface vterm-color-default
   `((t :inherit default))
   "The default normal color and bright color.
@@ -432,14 +447,31 @@ This is the value of `next-error-function' in Compilation buffers."
     (use-local-map vterm-mode-map)
     (vterm-send-start)))
 
-(defun vterm-copy-mode-done ()
-  "Save the active region or line to the kill ring and exit `vterm-copy-mode'."
-  (interactive)
+(defun vterm-copy-mode-done (arg)
+  "If a region is active then kill it, otherwise kill the current line, then exit `vterm-copy-mode'.
+
+If a region is defined then that region is killed, with no region then
+current line is killed from start to end.
+
+The option `vterm-copy-exclude-prompt` controls if the prompt
+should be included in a line copy.  Using the universal prefix
+will invert `vterm-copy-exclude-prompt` for that call."
+  (interactive "P")
   (unless vterm-copy-mode
     (user-error "This command is effective only in vterm-copy-mode"))
   (save-excursion
     (unless (region-active-p)
       (beginning-of-line)
+      ;; Are we excluding the prompt?
+      (when (or (and vterm-copy-exclude-prompt (not arg))
+                (and (not vterm-copy-exclude-prompt) arg))
+        ;; Using vterm's prompt detection
+        (if vterm-copy-use-vterm-prompt
+            (vterm-beginning-of-line)
+          ;; Using vterm-copy-prompt-regexp
+          (unless (re-search-forward vterm-copy-prompt-regexp (save-excursion (end-of-line) (point)) 'noerror)
+            ;; Move to the front of the line if no prompt found
+            (beginning-of-line))))
       (set-mark (point))
       (end-of-line))
     (kill-ring-save (region-beginning) (region-end)))
