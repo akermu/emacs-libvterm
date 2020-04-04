@@ -664,13 +664,15 @@ static emacs_value render_text(emacs_env *env, Term *term, char *buffer,
     text = env->make_string(env, buffer, len);
   }
 
-  emacs_value fg = color_to_rgb_string(env, term, &cell->fg);
-  emacs_value bg = color_to_rgb_string(env, term, &cell->bg);
+  emacs_value fg = cell_rgb_color(env, term, cell, true);
+  emacs_value bg = cell_rgb_color(env, term, cell, false);
   emacs_value bold =
       cell->attrs.bold && !term->disable_bold_font ? Qbold : Qnormal;
-  emacs_value underline = cell->attrs.underline ? Qt : Qnil;
+  emacs_value underline =
+      cell->attrs.underline && !term->disable_underline ? Qt : Qnil;
   emacs_value italic = cell->attrs.italic ? Qitalic : Qnormal;
-  emacs_value reverse = cell->attrs.reverse ? Qt : Qnil;
+  emacs_value reverse =
+      cell->attrs.reverse && !term->disable_inverse_video ? Qt : Qnil;
   emacs_value strike = cell->attrs.strike ? Qt : Qnil;
 
   // TODO: Blink, font, dwl, dhl is missing
@@ -724,13 +726,15 @@ static emacs_value render_fake_newline(emacs_env *env, Term *term) {
   return text;
 }
 
-static emacs_value color_to_rgb_string(emacs_env *env, Term *term,
-                                       VTermColor *color) {
+static emacs_value cell_rgb_color(emacs_env *env, Term *term,
+                                  VTermScreenCell *cell, bool is_foreground) {
+  VTermColor *color = is_foreground ? &cell->fg : &cell->bg;
+
   if (VTERM_COLOR_IS_DEFAULT_FG(color)) {
-    return vterm_get_color(env, -1);
+    return vterm_get_color(env, -1 + (cell->attrs.underline ? -10 : 0));
   }
   if (VTERM_COLOR_IS_DEFAULT_BG(color)) {
-    return vterm_get_color(env, -2);
+    return vterm_get_color(env, -2 + (cell->attrs.reverse ? -10 : 0));
   }
   if (VTERM_COLOR_IS_INDEXED(color)) {
     if (color->indexed.idx < 16) {
@@ -979,6 +983,8 @@ emacs_value Fvterm_new(emacs_env *env, ptrdiff_t nargs, emacs_value args[],
   int cols = env->extract_integer(env, args[1]);
   int sb_size = env->extract_integer(env, args[2]);
   int disable_bold_font = env->is_not_nil(env, args[3]);
+  int disable_underline = env->is_not_nil(env, args[4]);
+  int disable_inverse_video = env->is_not_nil(env, args[5]);
 
   term->vt = vterm_new(rows, cols);
   vterm_set_utf8(term->vt, 1);
@@ -1003,6 +1009,8 @@ emacs_value Fvterm_new(emacs_env *env, ptrdiff_t nargs, emacs_value args[],
   term->height = rows;
   term->height_resize = 0;
   term->disable_bold_font = disable_bold_font;
+  term->disable_underline = disable_underline;
+  term->disable_inverse_video = disable_inverse_video;
   emacs_value newline = env->make_string(env, "\n", 1);
   for (int i = 0; i < term->height; i++) {
     insert(env, newline);
@@ -1233,7 +1241,7 @@ int emacs_module_init(struct emacs_runtime *ert) {
   // Exported functions
   emacs_value fun;
   fun =
-      env->make_function(env, 4, 4, Fvterm_new, "Allocates a new vterm.", NULL);
+      env->make_function(env, 4, 6, Fvterm_new, "Allocates a new vterm.", NULL);
   bind_function(env, "vterm--new", fun);
 
   fun = env->make_function(env, 1, 5, Fvterm_update,

@@ -145,6 +145,16 @@ party to commandeer your editor."
   :type '(alist :key-type string)
   :group 'vterm)
 
+(defcustom vterm-disable-underline nil
+  "Disable underline for the cells with underline attribute."
+  :type  'boolean
+  :group 'vterm)
+
+(defcustom vterm-disable-inverse-video nil
+  "Disable inverse video for the cells with inverse video attribute."
+  :type  'boolean
+  :group 'vterm)
+
 (defcustom vterm-disable-bold-font nil
   "Disable bold fonts or not."
   :type  'boolean
@@ -213,6 +223,18 @@ The foreground color is used as ansi color 7 and the background
 color is used as ansi color 15."
   :group 'vterm)
 
+(defface vterm-color-underline
+  `((t :inherit vterm-color-default))
+  "Face used to render cells with underline attribute.
+Only foreground is used."
+  :group 'vterm)
+
+(defface vterm-color-inverse-video
+  `((t :inherit vterm-color-default))
+  "Face used to render cells with inverse video attribute.
+Only background is used."
+  :group 'vterm)
+
 (defvar vterm-color-palette
   [vterm-color-black
    vterm-color-red
@@ -258,7 +280,9 @@ If nil, never delay")
                     vterm-min-window-width)))
     (setq vterm--term (vterm--new (window-body-height)
                                   width vterm-max-scrollback
-                                  vterm-disable-bold-font))
+                                  vterm-disable-bold-font
+                                  vterm-disable-underline
+                                  vterm-disable-inverse-video))
     (setq buffer-read-only t)
     (setq-local scroll-conservatively 101)
     (setq-local scroll-margin 0)
@@ -820,6 +844,10 @@ Argument INDEX index of color."
      nil 'default))
    ((= index -1)               ;-1 foreground
     (face-foreground 'vterm-color-default nil 'default))
+   ((= index -11)
+    (face-foreground 'vterm-color-underline nil 'default))
+   ((= index -12)
+    (face-background 'vterm-color-inverse-video nil 'default))
    (t                                   ;-2 background
     (face-background 'vterm-color-default nil 'default))))
 

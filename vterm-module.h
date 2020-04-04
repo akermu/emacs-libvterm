@@ -82,6 +82,8 @@ typedef struct Term {
   int height_resize;
   bool resizing;
   bool disable_bold_font;
+  bool disable_underline;
+  bool disable_inverse_video;
 
   int pty_fd;
 } Term;
@@ -92,8 +94,8 @@ static emacs_value render_text(emacs_env *env, Term *term, char *string,
                                int len, VTermScreenCell *cell);
 static emacs_value render_fake_newline(emacs_env *env, Term *term);
 static emacs_value render_prompt(emacs_env *env, emacs_value text);
-static emacs_value color_to_rgb_string(emacs_env *env, Term *term,
-                                       VTermColor *color);
+static emacs_value cell_rgb_color(emacs_env *env, Term *term,
+                                  VTermScreenCell *cell, bool is_foreground);
 
 static int term_settermprop(VTermProp prop, VTermValue *val, void *user_data);
 
