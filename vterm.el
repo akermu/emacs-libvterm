@@ -832,7 +832,14 @@ If N is negative backward-line from end of buffer."
 
 (defun vterm--get-color(index)
   "Get color by index from `vterm-color-palette'.
-Argument INDEX index of color."
+Argument INDEX index of the terminal color.
+Special values for INDEX are:
+-1 means default foreground.
+-2 for default background.
+-11 foreground for cells with underline attribute, foreground of
+the `vterm-color-underline' face is used in this case.
+-12 background for cells with inverse-video attribute, background
+of the `vterm-color-inverse-video' face is used in this case."
   (cond
    ((and (>= index 0)(< index 8))
     (face-foreground

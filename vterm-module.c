@@ -730,6 +730,9 @@ static emacs_value cell_rgb_color(emacs_env *env, Term *term,
                                   VTermScreenCell *cell, bool is_foreground) {
   VTermColor *color = is_foreground ? &cell->fg : &cell->bg;
 
+  /** NOTE: -10 is used as index offset for special indexes,
+   * see C-h f vterm--get-color RET
+   */
   if (VTERM_COLOR_IS_DEFAULT_FG(color)) {
     return vterm_get_color(env, -1 + (cell->attrs.underline ? -10 : 0));
   }
