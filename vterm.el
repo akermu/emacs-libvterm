@@ -430,6 +430,7 @@ This is the value of `next-error-function' in Compilation buffers."
 (define-key vterm-copy-mode-map (kbd "RET")            #'vterm-copy-mode-done)
 (define-key vterm-copy-mode-map (kbd "C-c C-r")        #'vterm-reset-cursor-point)
 (define-key vterm-copy-mode-map (kbd "C-a")            #'vterm-beginning-of-line)
+(define-key vterm-copy-mode-map (kbd "C-e")            #'vterm-end-of-line)
 (define-key vterm-copy-mode-map (kbd "C-c C-n")        #'vterm-next-prompt)
 (define-key vterm-copy-mode-map (kbd "C-c C-p")        #'vterm-previous-prompt)
 
@@ -911,6 +912,15 @@ in README."
                  (when pt (goto-char (1- pt)))))
     (term-previous-prompt n)))
 
+(defun vterm--get-end-of-line ()
+  "Find the start of the line, bypassing line wraps."
+  (save-excursion
+    (end-of-line)
+    (while (get-text-property (point) 'vterm-line-wrap)
+      (forward-char)
+      (end-of-line))
+    (point)))
+
 (defun vterm--get-prompt-point ()
   "Get the position of the end of current prompt.
 More information see `vterm--prompt-tracking-enabled-p' and
@@ -956,6 +966,11 @@ Effectively toggle between the two positions."
              (line-number-at-pos pt))
           (goto-char prompt-pt)
         (beginning-of-line)))))
+(defun vterm-end-of-line ()
+  "Move point to the end of the line, bypassing line wraps."
+  (interactive)
+  (goto-char (vterm--get-end-of-line)))
+
 
 (defun vterm-reset-cursor-point ()
   "Make sure the cursor at the right postion."
