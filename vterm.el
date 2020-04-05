@@ -912,6 +912,15 @@ in README."
                  (when pt (goto-char (1- pt)))))
     (term-previous-prompt n)))
 
+(defun vterm--get-beginning-of-line ()
+  "Find the start of the line, bypassing line wraps."
+  (save-excursion
+    (beginning-of-line)
+    (while (get-text-property (1- (point)) 'vterm-line-wrap)
+      (forward-char -1)
+      (beginning-of-line))
+    (point)))
+
 (defun vterm--get-end-of-line ()
   "Find the start of the line, bypassing line wraps."
   (save-excursion
