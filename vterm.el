@@ -929,12 +929,12 @@ in README."
   "Get the position of the end of current prompt.
 More information see `vterm--prompt-tracking-enabled-p' and
 `Directory tracking and Prompt tracking'in README. "
-  (let ((cur-point (point)))
+  (let ((end-point (end-of-line)))
     (save-excursion
-      (vterm-beginning-of-line)
+      (beginning-of-line)
       (if vterm-copy-use-vterm-prompt
-          (goto-char (next-single-char-property-change (point) 'vterm-prompt nil cur-point))
-      (search-forward-regexp vterm-copy-prompt-regexp cur-point 'noerror))
+          (goto-char (next-single-char-property-change (point) 'vterm-prompt nil end-point))
+      (search-forward-regexp vterm-copy-prompt-regexp end-point 'noerror))
     (point))))
 
 (defun vterm--at-prompt-p ()
@@ -950,7 +950,7 @@ Effectively toggle between the two positions."
   (interactive)
   (if (vterm--at-prompt-p)
       (goto-char (vterm--get-beginning-of-line))
-    (goto-char (vterm--get-prompt-point)))
+    (goto-char (vterm--get-prompt-point))))
 
 (defun vterm-end-of-line ()
   "Move point to the end of the line, bypassing line wraps."
