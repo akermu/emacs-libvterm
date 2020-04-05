@@ -930,9 +930,9 @@ More information see `vterm--prompt-tracking-enabled-p' and
   (let ((end-point (vterm--get-end-of-line)))
     (save-excursion
       (beginning-of-line)
-      (if vterm-copy-use-vterm-prompt
-          (goto-char (next-single-char-property-change (point) 'vterm-prompt nil end-point))
-        (ignore-errors
+      (ignore-errors ;; if no point prompt, don't error out, stay at the beginning-of-line
+        (if vterm-copy-use-vterm-prompt
+            (goto-char (next-single-char-property-change (point) 'vterm-prompt nil end-point))
           (search-forward-regexp vterm-copy-prompt-regexp end-point)))
       (point))))
 
