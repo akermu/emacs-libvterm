@@ -932,7 +932,8 @@ More information see `vterm--prompt-tracking-enabled-p' and
       (beginning-of-line)
       (if vterm-copy-use-vterm-prompt
           (goto-char (next-single-char-property-change (point) 'vterm-prompt nil end-point))
-        (search-forward-regexp vterm-copy-prompt-regexp end-point 'noerror))
+        (ignore-errors
+          (search-forward-regexp vterm-copy-prompt-regexp end-point)))
       (point))))
 
 (defun vterm--at-prompt-p ()
