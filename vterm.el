@@ -929,22 +929,13 @@ in README."
   "Get the position of the end of current prompt.
 More information see `vterm--prompt-tracking-enabled-p' and
 `Directory tracking and Prompt tracking'in README. "
-  (let (pt)
+  (let ((cur-point (point)))
     (save-excursion
-      (end-of-line)
-      (if (get-text-property (point) 'vterm-prompt)
-          (setq pt (point))
-        (setq pt (previous-single-property-change (point) 'vterm-prompt))
-        (when pt
-          (goto-char pt)
-          (backward-char)
-          (setq pt (point)))))
-    (unless pt
-      (save-excursion
-        (beginning-of-line)
-        (term-skip-prompt)
-        (setq pt (point))))
-    pt))
+      (vterm-beginning-of-line)
+      (if vterm-copy-use-vterm-prompt
+          (goto-char (next-single-char-property-change (point) 'vterm-prompt nil cur-point))
+      (search-forward-regexp vterm-copy-prompt-regexp))
+    (point))))
 
 (defun vterm--at-prompt-p ()
   "Check whether the cursor postion is at shell prompt or not."
