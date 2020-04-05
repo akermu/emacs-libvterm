@@ -464,17 +464,12 @@ will invert `vterm-copy-exclude-prompt` for that call."
     (unless (region-active-p)
       (beginning-of-line)
       ;; Are we excluding the prompt?
-      (when (or (and vterm-copy-exclude-prompt (not arg))
-                (and (not vterm-copy-exclude-prompt) arg))
-        ;; Using vterm's prompt detection
-        (if vterm-copy-use-vterm-prompt
-            (vterm-beginning-of-line)
-          ;; Using vterm-copy-prompt-regexp
-          (unless (re-search-forward vterm-copy-prompt-regexp (save-excursion (end-of-line) (point)) 'noerror)
-            ;; Move to the front of the line if no prompt found
-            (beginning-of-line))))
+      (if (or (and vterm-copy-exclude-prompt (not arg))
+              (and (not vterm-copy-exclude-prompt) arg))
+          (goto-char (vterm--get-prompt-point))
+        (beginning-of-line))
       (set-mark (point))
-      (end-of-line))
+      (goto-char (vterm--get-end-of-line)))
     (kill-ring-save (region-beginning) (region-end)))
   (vterm-copy-mode -1))
 
