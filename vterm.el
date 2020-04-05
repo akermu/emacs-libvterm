@@ -460,16 +460,14 @@ will invert `vterm-copy-exclude-prompt` for that call."
   (interactive "P")
   (unless vterm-copy-mode
     (user-error "This command is effective only in vterm-copy-mode"))
-  (save-excursion
-    (unless (region-active-p)
-      (beginning-of-line)
-      ;; Are we excluding the prompt?
-      (if (or (and vterm-copy-exclude-prompt (not arg))
-              (and (not vterm-copy-exclude-prompt) arg))
-          (goto-char (vterm--get-prompt-point))
-        (beginning-of-line))
-      (set-mark (point))
-      (goto-char (vterm--get-end-of-line)))
+  (unless (region-active-p)
+    (goto-char (vterm--get-beginning-of-line))
+    ;; Are we excluding the prompt?
+    (if (or (and vterm-copy-exclude-prompt (not arg))
+            (and (not vterm-copy-exclude-prompt) arg))
+        (goto-char (vterm--get-prompt-point)))
+    (set-mark (point))
+    (goto-char (vterm--get-end-of-line))
     (kill-ring-save (region-beginning) (region-end)))
   (vterm-copy-mode -1))
 
@@ -929,13 +927,14 @@ in README."
   "Get the position of the end of current prompt.
 More information see `vterm--prompt-tracking-enabled-p' and
 `Directory tracking and Prompt tracking'in README. "
-  (let ((end-point (end-of-line)))
+  (let ((end-point (vterm--end-of-line)))
     (save-excursion
+      (message (format "End point %s" end-point))
       (beginning-of-line)
       (if vterm-copy-use-vterm-prompt
           (goto-char (next-single-char-property-change (point) 'vterm-prompt nil end-point))
-      (search-forward-regexp vterm-copy-prompt-regexp end-point 'noerror))
-    (point))))
+        (search-forward-regexp vterm-copy-prompt-regexp end-point 'noerror))
+      (point))))
 
 (defun vterm--at-prompt-p ()
   "Check whether the cursor postion is at shell prompt or not."
