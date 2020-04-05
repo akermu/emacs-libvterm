@@ -939,12 +939,7 @@ More information see `vterm--prompt-tracking-enabled-p' and
 
 (defun vterm--at-prompt-p ()
   "Check whether the cursor postion is at shell prompt or not."
-  (let ((pt (point))
-        (term-cursor-pt (vterm--get-cursor-point))
-        (prompt-pt (vterm--get-prompt-point)))
-    (and (= pt term-cursor-pt)
-         (or (= pt prompt-pt)
-             (string-blank-p (buffer-substring-no-properties pt prompt-pt))))))
+  (= (point) (vterm--get-prompt-point)))
 
 (defun vterm-beginning-of-line ()
 "Move point to the beginning of the line.
