@@ -927,9 +927,8 @@ in README."
   "Get the position of the end of current prompt.
 More information see `vterm--prompt-tracking-enabled-p' and
 `Directory tracking and Prompt tracking'in README. "
-  (let ((end-point (vterm--end-of-line)))
+  (let ((end-point (vterm--get-end-of-line)))
     (save-excursion
-      (message (format "End point %s" end-point))
       (beginning-of-line)
       (if vterm-copy-use-vterm-prompt
           (goto-char (next-single-char-property-change (point) 'vterm-prompt nil end-point))
