@@ -934,7 +934,7 @@ More information see `vterm--prompt-tracking-enabled-p' and
       (vterm-beginning-of-line)
       (if vterm-copy-use-vterm-prompt
           (goto-char (next-single-char-property-change (point) 'vterm-prompt nil cur-point))
-      (search-forward-regexp vterm-copy-prompt-regexp))
+      (search-forward-regexp vterm-copy-prompt-regexp cur-point 'noerror))
     (point))))
 
 (defun vterm--at-prompt-p ()
@@ -942,20 +942,16 @@ More information see `vterm--prompt-tracking-enabled-p' and
   (= (point) (vterm--get-prompt-point)))
 
 (defun vterm-beginning-of-line ()
-"Move point to the beginning of the line.
+  "Move point to the beginning of the line.
 
 Move the point to the first character after the shell prompt on this line.
 If the point is already there, move to the beginning of the line.
 Effectively toggle between the two positions."
   (interactive)
-  (let ((pt (point))
-        (prompt-pt (vterm--get-prompt-point)))
-    (if (= pt prompt-pt)
-        (beginning-of-line)
-      (if (= (line-number-at-pos prompt-pt)
-             (line-number-at-pos pt))
-          (goto-char prompt-pt)
-        (beginning-of-line)))))
+  (if (vterm--at-prompt-p)
+      (goto-char (vterm--get-beginning-of-line))
+    (goto-char (vterm--get-prompt-point)))
+
 (defun vterm-end-of-line ()
   "Move point to the end of the line, bypassing line wraps."
   (interactive)
