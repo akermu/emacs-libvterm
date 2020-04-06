@@ -235,7 +235,7 @@ static int is_end_of_prompt(Term *term, int end_col, int row, int col) {
 static size_t get_col_offset(Term *term, int row, int end_col) {
   int col = 0;
   size_t offset = 0;
-  unsigned char buf[4];
+
   int height;
   int width;
   vterm_get_size(term->vt, &height, &width);
@@ -468,8 +468,6 @@ static void adjust_topline(Term *term, emacs_env *env) {
   goto_line(env, pos.row - term->height);
   size_t offset = get_col_offset(term, pos.row, pos.col);
   forward_char(env, env->make_integer(env, pos.col - offset));
-
-  bool following = term->height == 1 + pos.row;
 
   emacs_value windows = get_buffer_window_list(env);
   emacs_value swindow = selected_window(env);

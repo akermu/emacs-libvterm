@@ -102,7 +102,7 @@ static void term_flush_output(Term *term, emacs_env *env);
 static void term_process_key(Term *term, emacs_env *env, unsigned char *key,
                              size_t len, VTermModifier modifier);
 static void invalidate_terminal(Term *term, int start_row, int end_row);
-static void refresh_size(Term *term);
+
 void term_finalize(void *object);
 
 emacs_value Fvterm_new(emacs_env *env, ptrdiff_t nargs, emacs_value args[],
