@@ -155,13 +155,8 @@ party to commandeer your editor."
   :type 'boolean
   :group 'vterm)
 
-(defcustom vterm-copy-prompt-regexp term-prompt-regexp
-  "A regexp to find the end of the prompt from the start of the line."
-  :type 'regexp
-  :group 'vterm)
-
-(defcustom vterm-copy-use-vterm-prompt t
-  "Should we use the vterm prompt tracker or the search from `vterm-copy-prompt-regexp'?"
+(defcustom vterm-use-vterm-prompt t
+  "Should we use the vterm prompt tracker or the search from `term-prompt-regexp'?"
   :type 'boolean
   :group 'vterm)
 
@@ -465,7 +460,7 @@ will invert `vterm-copy-exclude-prompt` for that call."
     ;; Are we excluding the prompt?
     (if (or (and vterm-copy-exclude-prompt (not arg))
             (and (not vterm-copy-exclude-prompt) arg))
-        (goto-char (vterm--get-prompt-point)))
+        (goto-char (or (vterm--get-prompt-point)))
     (set-mark (point))
     (goto-char (vterm--get-end-of-line))
     (kill-ring-save (region-beginning) (region-end)))
@@ -886,7 +881,8 @@ in README."
 (defun vterm-next-prompt (n)
   "Move to end of Nth next prompt in the buffer."
   (interactive "p")
-  (if (vterm--prompt-tracking-enabled-p)
+  (if (and vterm-use-vterm-prompt
+           (vterm--prompt-tracking-enabled-p))
       (let ((pt (point)) )
         (goto-char (vterm--get-prompt-point))
         (cl-loop repeat (or n 1) do
@@ -897,10 +893,13 @@ in README."
 (defun vterm-previous-prompt (n)
   "Move to end of Nth previous prompt in the buffer."
   (interactive "p")
-  (if (vterm--prompt-tracking-enabled-p)
+  (if (and vterm-use-vterm-prompt
+           (vterm--prompt-tracking-enabled-p))
       (let ((pt (point)) )
         (goto-char (vterm--get-prompt-point))
-        (cl-loop repeat (or n 1) do
+        (when (> pt (point))
+          (setq n (1- (or n 1))))
+        (cl-loop repeat n do
                  (setq pt (previous-single-property-change (1- (point)) 'vterm-prompt))
                  (when pt (goto-char (1- pt)))))
     (term-previous-prompt n)))
@@ -909,7 +908,8 @@ in README."
   "Find the start of the line, bypassing line wraps."
   (save-excursion
     (beginning-of-line)
-    (while (get-text-property (1- (point)) 'vterm-line-wrap)
+    (while (and (not (bobp))
+                (get-text-property (1- (point)) 'vterm-line-wrap))
       (forward-char -1)
       (beginning-of-line))
     (point)))
@@ -927,14 +927,20 @@ in README."
   "Get the position of the end of current prompt.
 More information see `vterm--prompt-tracking-enabled-p' and
 `Directory tracking and Prompt tracking'in README. "
-  (let ((end-point (vterm--get-end-of-line)))
+  (let ((end-point (vterm--get-end-of-line))
+        prompt-point)
     (save-excursion
-      (beginning-of-line)
-      (ignore-errors ;; if no point prompt, don't error out, stay at the beginning-of-line
-        (if vterm-copy-use-vterm-prompt
-            (goto-char (next-single-char-property-change (point) 'vterm-prompt nil end-point))
-          (search-forward-regexp vterm-copy-prompt-regexp end-point)))
-      (point))))
+      (if (and vterm-use-vterm-prompt
+               (vterm--prompt-tracking-enabled-p))
+          (if (get-text-property end-point 'vterm-prompt)
+              end-point
+            (setq prompt-point (previous-single-property-change end-point 'vterm-prompt))
+            (when prompt-point (setq prompt-point (1- prompt-point))))
+        (goto-char end-point)
+        (if (search-backward-regexp term-prompt-regexp (vterm--get-beginning-of-line) 'noerror)
+            (goto-char (match-end 0))
+          (vterm--get-beginning-of-line))
+        (point)))))
 
 (defun vterm--at-prompt-p ()
   "Check whether the cursor postion is at shell prompt or not."
@@ -949,7 +955,9 @@ Effectively toggle between the two positions."
   (interactive)
   (if (vterm--at-prompt-p)
       (goto-char (vterm--get-beginning-of-line))
-    (goto-char (vterm--get-prompt-point))))
+    (goto-char (max (vterm--get-prompt-point)
+                    (vterm--get-beginning-of-line)))))
+
 
 (defun vterm-end-of-line ()
   "Move point to the end of the line, bypassing line wraps."
