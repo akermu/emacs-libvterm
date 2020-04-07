@@ -460,7 +460,7 @@ will invert `vterm-copy-exclude-prompt` for that call."
     ;; Are we excluding the prompt?
     (if (or (and vterm-copy-exclude-prompt (not arg))
             (and (not vterm-copy-exclude-prompt) arg))
-        (goto-char (or (vterm--get-prompt-point)))
+        (goto-char (or (vterm--get-prompt-point))))
     (set-mark (point))
     (goto-char (vterm--get-end-of-line))
     (kill-ring-save (region-beginning) (region-end)))
