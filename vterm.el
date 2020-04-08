@@ -460,10 +460,12 @@ will invert `vterm-copy-exclude-prompt` for that call."
     ;; Are we excluding the prompt?
     (if (or (and vterm-copy-exclude-prompt (not arg))
             (and (not vterm-copy-exclude-prompt) arg))
-        (goto-char (or (vterm--get-prompt-point))))
+      (goto-char (max (vterm--get-prompt-point)
+                      (vterm--get-beginning-of-line))))
     (set-mark (point))
-    (goto-char (vterm--get-end-of-line))
-    (kill-ring-save (region-beginning) (region-end)))
+    (goto-char (vterm--get-end-of-line)))
+
+  (kill-ring-save (region-beginning) (region-end))
   (vterm-copy-mode -1))
 
 (defun vterm--self-insert ()
@@ -937,10 +939,9 @@ More information see `vterm--prompt-tracking-enabled-p' and
             (setq prompt-point (previous-single-property-change end-point 'vterm-prompt))
             (when prompt-point (setq prompt-point (1- prompt-point))))
         (goto-char end-point)
-        (if (search-backward-regexp term-prompt-regexp (vterm--get-beginning-of-line) 'noerror)
+        (if (search-backward-regexp term-prompt-regexp)
             (goto-char (match-end 0))
-          (vterm--get-beginning-of-line))
-        (point)))))
+          (vterm--get-beginning-of-line))))))
 
 (defun vterm--at-prompt-p ()
   "Check whether the cursor postion is at shell prompt or not."
