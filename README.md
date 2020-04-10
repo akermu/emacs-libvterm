@@ -225,6 +225,12 @@ fi
 These aliases take advantage of the fact that `vterm` can execute `elisp`
 commands, as explained below.
 
+If it possible to automatically clear the scrollback when the screen is cleared
+by setting the variable `vterm-clear-scrollback-when-clearing`: When
+`vterm-clear-scrollback-when-clearing` is non nil, `C-l` clears both the screen
+and the scrollback. When is nil, `C-l` only clears the screen. The opposite
+behavior can be achieved by using the universal prefix (ie, calling `C-u C-l`).
+
 # Customization
 
 ## `vterm-shell`
@@ -498,3 +504,9 @@ open_file_below ~/Documents
 
 - [vterm-toggle](https://github.com/jixiuf/vterm-toggle): Toggles between a vterm and the current buffer
 - [multi-libvterm](https://github.com/suonlight/multi-libvterm): Multiterm for emacs-libvterm
+
+## Appendix
+
+### Breaking changes
+
+* `vterm-clear-scrollback` was renamed to `vterm-clear-scrollback-when-clearning`.
