@@ -154,6 +154,16 @@ party to commandeer your editor."
   :type  'boolean
   :group 'vterm)
 
+(defcustom vterm-copy-exclude-prompt t
+  "Should the prompt be excluded from a line copy?"
+  :type 'boolean
+  :group 'vterm)
+
+(defcustom vterm-use-vterm-prompt t
+  "Should we use the vterm prompt tracker or the search from `term-prompt-regexp'?"
+  :type 'boolean
+  :group 'vterm)
+
 (defface vterm-color-default
   `((t :inherit default))
   "The default normal color and bright color.
@@ -412,6 +422,7 @@ This is the value of `next-error-function' in Compilation buffers."
 (define-key vterm-copy-mode-map (kbd "RET")            #'vterm-copy-mode-done)
 (define-key vterm-copy-mode-map (kbd "C-c C-r")        #'vterm-reset-cursor-point)
 (define-key vterm-copy-mode-map (kbd "C-a")            #'vterm-beginning-of-line)
+(define-key vterm-copy-mode-map (kbd "C-e")            #'vterm-end-of-line)
 (define-key vterm-copy-mode-map (kbd "C-c C-n")        #'vterm-next-prompt)
 (define-key vterm-copy-mode-map (kbd "C-c C-p")        #'vterm-previous-prompt)
 
@@ -429,13 +440,28 @@ This is the value of `next-error-function' in Compilation buffers."
     (use-local-map vterm-mode-map)
     (vterm-send-start)))
 
-(defun vterm-copy-mode-done ()
-  "Save the active region to the kill ring and exit `vterm-copy-mode'."
-  (interactive)
+(defun vterm-copy-mode-done (arg)
+  "Save the active region or line to the kill ring and exit `vterm-copy-mode'.
+
+If a region is defined then that region is killed, with no region then
+current line is killed from start to end.
+
+The option `vterm-copy-exclude-prompt` controls if the prompt
+should be included in a line copy.  Using the universal prefix
+will invert `vterm-copy-exclude-prompt` for that call."
+  (interactive "P")
   (unless vterm-copy-mode
     (user-error "This command is effective only in vterm-copy-mode"))
   (unless (region-active-p)
-    (user-error "No region is active"))
+    (goto-char (vterm--get-beginning-of-line))
+    ;; Are we excluding the prompt?
+    (if (or (and vterm-copy-exclude-prompt (not arg))
+            (and (not vterm-copy-exclude-prompt) arg))
+      (goto-char (max (vterm--get-prompt-point)
+                      (vterm--get-beginning-of-line))))
+    (set-mark (point))
+    (goto-char (vterm--get-end-of-line)))
+
   (kill-ring-save (region-beginning) (region-end))
   (vterm-copy-mode -1))
 
@@ -854,7 +880,8 @@ in README."
 (defun vterm-next-prompt (n)
   "Move to end of Nth next prompt in the buffer."
   (interactive "p")
-  (if (vterm--prompt-tracking-enabled-p)
+  (if (and vterm-use-vterm-prompt
+           (vterm--prompt-tracking-enabled-p))
       (let ((pt (point)) )
         (goto-char (vterm--get-prompt-point))
         (cl-loop repeat (or n 1) do
@@ -865,59 +892,76 @@ in README."
 (defun vterm-previous-prompt (n)
   "Move to end of Nth previous prompt in the buffer."
   (interactive "p")
-  (if (vterm--prompt-tracking-enabled-p)
+  (if (and vterm-use-vterm-prompt
+           (vterm--prompt-tracking-enabled-p))
       (let ((pt (point)) )
         (goto-char (vterm--get-prompt-point))
-        (cl-loop repeat (or n 1) do
+        (when (> pt (point))
+          (setq n (1- (or n 1))))
+        (cl-loop repeat n do
                  (setq pt (previous-single-property-change (1- (point)) 'vterm-prompt))
                  (when pt (goto-char (1- pt)))))
     (term-previous-prompt n)))
+
+(defun vterm--get-beginning-of-line ()
+  "Find the start of the line, bypassing line wraps."
+  (save-excursion
+    (beginning-of-line)
+    (while (and (not (bobp))
+                (get-text-property (1- (point)) 'vterm-line-wrap))
+      (forward-char -1)
+      (beginning-of-line))
+    (point)))
+
+(defun vterm--get-end-of-line ()
+  "Find the start of the line, bypassing line wraps."
+  (save-excursion
+    (end-of-line)
+    (while (get-text-property (point) 'vterm-line-wrap)
+      (forward-char)
+      (end-of-line))
+    (point)))
 
 (defun vterm--get-prompt-point ()
   "Get the position of the end of current prompt.
 More information see `vterm--prompt-tracking-enabled-p' and
 `Directory tracking and Prompt tracking'in README. "
-  (let (pt)
+  (let ((end-point (vterm--get-end-of-line))
+        prompt-point)
     (save-excursion
-      (end-of-line)
-      (if (get-text-property (point) 'vterm-prompt)
-          (setq pt (point))
-        (setq pt (previous-single-property-change (point) 'vterm-prompt))
-        (when pt
-          (goto-char pt)
-          (backward-char)
-          (setq pt (point)))))
-    (unless pt
-      (save-excursion
-        (beginning-of-line)
-        (term-skip-prompt)
-        (setq pt (point))))
-    pt))
+      (if (and vterm-use-vterm-prompt
+               (vterm--prompt-tracking-enabled-p))
+          (if (get-text-property end-point 'vterm-prompt)
+              end-point
+            (setq prompt-point (previous-single-property-change end-point 'vterm-prompt))
+            (when prompt-point (setq prompt-point (1- prompt-point))))
+        (goto-char end-point)
+        (if (search-backward-regexp term-prompt-regexp)
+            (goto-char (match-end 0))
+          (vterm--get-beginning-of-line))))))
 
 (defun vterm--at-prompt-p ()
   "Check whether the cursor postion is at shell prompt or not."
-  (let ((pt (point))
-        (term-cursor-pt (vterm--get-cursor-point))
-        (prompt-pt (vterm--get-prompt-point)))
-    (and (= pt term-cursor-pt)
-         (or (= pt prompt-pt)
-             (string-blank-p (buffer-substring-no-properties pt prompt-pt))))))
+  (= (point) (vterm--get-prompt-point)))
 
 (defun vterm-beginning-of-line ()
-"Move point to the beginning of the line.
+  "Move point to the beginning of the line.
 
 Move the point to the first character after the shell prompt on this line.
 If the point is already there, move to the beginning of the line.
 Effectively toggle between the two positions."
   (interactive)
-  (let ((pt (point))
-        (prompt-pt (vterm--get-prompt-point)))
-    (if (= pt prompt-pt)
-        (beginning-of-line)
-      (if (= (line-number-at-pos prompt-pt)
-             (line-number-at-pos pt))
-          (goto-char prompt-pt)
-        (beginning-of-line)))))
+  (if (vterm--at-prompt-p)
+      (goto-char (vterm--get-beginning-of-line))
+    (goto-char (max (vterm--get-prompt-point)
+                    (vterm--get-beginning-of-line)))))
+
+
+(defun vterm-end-of-line ()
+  "Move point to the end of the line, bypassing line wraps."
+  (interactive)
+  (goto-char (vterm--get-end-of-line)))
+
 
 (defun vterm-reset-cursor-point ()
   "Make sure the cursor at the right postion."
