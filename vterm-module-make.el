@@ -36,7 +36,7 @@ the executable."
   (when (vterm-module--cmake-is-available)
     (let* ((vterm-directory
             (shell-quote-argument
-             (file-name-directory (file-truename (locate-library "vterm")))))
+             (file-name-directory (locate-library "vterm"))))
            (make-commands
             (concat
              "cd " vterm-directory "; \
