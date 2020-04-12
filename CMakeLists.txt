@@ -24,17 +24,24 @@ if (NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
 endif()
 
 # Look for the header file.
-option(USE_SYSTEM_LIBVTERM "Use system libvterm instead of the vendored version." OFF)
+option(USE_SYSTEM_LIBVTERM "Use system libvterm instead of the vendored version." ON)
 
-if(USE_SYSTEM_LIBVTERM)
-  find_path(LIBVTERM_INCLUDE_DIR NAMES
-    vterm.h
+# Try to find the libvterm in system.
+if (USE_SYSTEM_LIBVTERM)
+  # try to find the vterm.h header file.
+  find_path(LIBVTERM_INCLUDE_DIR
+    NAMES vterm.h
     )
 
-  if(NOT LIBVTERM_INCLUDE_DIR)
-    message(FATAL_ERROR "vterm.h not found")
+  # vterm.h is found.
+  if (LIBVTERM_INCLUDE_DIR)
+    message(STATUS "System libvterm detected.")
+  else()
+    message(STATUS "System libvterm not found. libvterm will be downloaded and compiled as part of the build process.")
   endif()
+endif()
 
+if (LIBVTERM_INCLUDE_DIR)
   find_library(LIBVTERM_LIBRARY NAMES
     vterm
     libvterm
