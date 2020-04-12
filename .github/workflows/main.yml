@@ -1,0 +1,53 @@
+# emacs-libvterm CI
+
+name: vterm-continuous-integration
+
+# Controls when the action will run. Triggers the workflow on push or pull request
+# events but only for the vterm-ci branch.
+on:
+  push:
+    branches: [ vterm-ci ]
+  pull_request:
+    branches: [ vterm-ci ]
+
+jobs:
+  ## Build for ubuntu and macos
+  build:
+    strategy:
+      matrix:
+        # The types of runner that the job will run on
+        os: [ ubuntu-latest, macos-latest ]
+
+    runs-on: ${{ matrix.os }}
+
+    # Steps represent a sequence of tasks that will be executed as part of the job
+    steps:
+      # Checks-out the repository under $GITHUB_WORKSPACE
+      - uses: actions/checkout@v2
+
+      # Only install for ubuntu
+      - name: Installing dependencies
+        if: ${{ matrix.os == 'ubuntu-latest' }}
+        env:
+          PACKAGES: libtool-bin
+        run: sudo apt install ${PACKAGES}
+
+      # Create the build dir
+      - name: Building make env
+        run: |
+          mkdir Build
+          git config --global advice.detachedHead false
+
+      # Runs cmake
+      - name: Running cmake
+        run: |
+          cd Build
+          cmake ..
+          cd ..
+
+      # Runs make
+      - name: Running make
+        run: |
+          cd Build
+          make
+          cd ..
