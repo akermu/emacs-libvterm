@@ -16,7 +16,7 @@ jobs:
     strategy:
       matrix:
         # The types of runner that the job will run on
-        os: [ ubuntu-latest, macos-latest ]
+        os: [ ubuntu-latest, ubuntu-16.04, macos-latest ]
 
     runs-on: ${{ matrix.os }}
 
@@ -27,7 +27,7 @@ jobs:
 
       # Only install for ubuntu
       - name: Installing dependencies
-        if: ${{ matrix.os == 'ubuntu-latest' }}
+        if: ${{ matrix.os == 'ubuntu-latest' || matrix.os == 'ubuntu-16.04' }}
         env:
           PACKAGES: libtool-bin
         run: sudo apt install ${PACKAGES}
