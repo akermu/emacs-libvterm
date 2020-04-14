@@ -20,7 +20,8 @@ int plugin_is_GPL_compatible;
 typedef struct LineInfo {
   char *directory; /* working directory */
 
-  int prompt_col; /* end column of the prompt,if current line contains prompt */
+  int prompt_col; /* end column of the prompt, if the current line contains the
+                   * prompt */
 } LineInfo;
 
 typedef struct ScrollbackLine {
@@ -74,7 +75,7 @@ typedef struct Term {
   char *elisp_code;
   bool elisp_code_changed;
 
-  /* the size of dirs almost = window height,value = directory of that line */
+  /* the size of dirs almost = window height, value = directory of that line */
   LineInfo **lines;
   int lines_len;
 
