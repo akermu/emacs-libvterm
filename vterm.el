@@ -203,21 +203,27 @@ Note that this hook will not work if another package like
   :type 'hook
   :group 'vterm)
 
-(defcustom vterm-set-title-functions nil
-  "Shell set title hook.
+(make-obsolete-variable 'vterm-set-title-functions
+                        "This variable was substituted by `vterm-buffer-name-string'."
+                        "0.0.1")
 
-These functions are called one by one, with one argument.
-`vterm-set-title-functions' should be a symbol, a hook variable.
-The value of HOOK may be nil, a function, or a list of functions.
-For example
-    (defun vterm--rename-buffer-as-title (title)
-    (rename-buffer (format \"vterm %s\" title) t))
-    (add-hook 'vterm-set-title-functions
-              'vterm--rename-buffer-as-title)
+(defcustom vterm-buffer-name-string nil
+  "Format string for the title of vterm buffers.
 
-See http://tldp.org/HOWTO/Xterm-Title-4.html about how to set
-terminal title for different shells."
-  :type 'hook
+If `vterm-buffer-name-string' is nil, vterm will not set the
+title of its buffers.  If not nil, `vterm-buffer-name-string' has
+to be a format control string (see `format') containing one
+instance of %s which will be substituted with the string TITLE.
+The argument TITLE is provided by the shell.  This requires shell
+side configuration.
+
+For example, if `vterm-buffer-name-string' is set to \"vterm %s\",
+and the shell properly configured to set TITLE=$(pwd), than vterm
+buffers will be named \"vterm\" followed by the current path.
+
+See URL http://tldp.org/HOWTO/Xterm-Title-4.html for additional
+information on the how to configure the shell."
+  :type 'string
   :group 'vterm)
 
 (defcustom vterm-term-environment-variable "xterm-256color"
@@ -938,8 +944,9 @@ If N is negative backward-line from end of buffer."
     (eq 0 (forward-line n)))))
 
 (defun vterm--set-title (title)
-  "Run the `vterm--set-title-hook' with TITLE as argument."
-  (run-hook-with-args 'vterm-set-title-functions title))
+  "Use TITLE to set the buffer name according to `vterm-buffer-name-string'."
+  (when vterm-buffer-name-string
+    (rename-buffer (format vterm-buffer-name-string title) t)))
 
 (defun vterm--set-directory (path)
   "Set `default-directory' to PATH."

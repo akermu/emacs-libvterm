@@ -10,10 +10,15 @@ capable, fast, and it can seamlessly handle large outputs.
 ## Warning
 
 This package is in active development and, while being stable enough to be used
-as a daily-driver, it is currently in early **alpha** stage. Moreover,
-emacs-libvterm deals directly with some low-level operations, hence, bugs in the
-code can lead to segmentation faults and crashes. If that happens, please
-[report the problem](https://github.com/akermu/emacs-libvterm/issues/new).
+as a daily-driver, it is currently in early **alpha** stage. This means that
+occasionally the public interface will change (for example names of options or
+functions). A list of recent breaking changes is in
+[appendix](#breaking-changes). Moreover, emacs-libvterm deals directly with some
+low-level operations, hence, bugs in the code can lead to segmentation faults
+and crashes. If that happens, please [report the
+problem](https://github.com/akermu/emacs-libvterm/issues/new).
+
+
 
 # Installation
 
@@ -264,9 +269,40 @@ Controls whether or not to exclude the prompt when copying a line in
 `vterm-copy-mode-done` will invert the value for that call, allowing you to
 temporarily override the setting.
 
-The variable `vterm-copy-use-vterm-prompt` determines
-whether to use the vterm prompt tracking, if false it usessearches for the regexp in
-`vterm-copy-prompt-regexp`.  If not found it copies the whole line.
+The variable `vterm-copy-use-vterm-prompt` determines whether to use the vterm
+prompt tracking, if false it use the regexp in `vterm-copy-prompt-regexp` to
+search for the prompt. If not found, it copies the whole line.
+
+## `vterm-buffer-name-string`
+
+When `vterm-buffer-name-string` is not nil, vterm renames automatically its own
+buffers with `vterm-buffer-name-string`. This string can contain the character
+`%s`, which is substituted with the _title_ (as defined by the shell, see
+below). A possible value for `vterm-buffer-name-string` is `vterm %s`, according
+to which all the vterm buffers will be named "vterm TITLE".
+
+This requires some shell-side configuration to print the title. For example to
+set the name "HOSTNAME:PWD", use can you the following:
+
+For `zsh`
+```zsh
+autoload -U add-zsh-hook
+add-zsh-hook -Uz chpwd (){ print -Pn "\e]2;%m:%2~\a" }
+```
+For `bash`,
+```bash
+PROMPT_COMMAND='echo -ne "\033]0;\h:\w\007"'
+```
+For `fish`,
+```fish
+function fish_title
+    hostname
+    echo ":"
+    pwd
+end
+```
+See [zsh and bash](http://tldp.org/HOWTO/Xterm-Title-4.html) and (fish
+documentations)[https://fishshell.com/docs/current/#programmable-title].
 
 ## Keybindings
 
@@ -510,3 +546,6 @@ open_file_below ~/Documents
 ### Breaking changes
 
 * `vterm-clear-scrollback` was renamed to `vterm-clear-scrollback-when-clearning`.
+* `vterm-set-title-functions` was removed. In its place, there is a new custom
+  option `vterm-buffer-name-string`. See
+  [vterm-buffer-name-string](vterm-buffer-name-string) for documentation.
