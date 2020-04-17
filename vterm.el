@@ -410,6 +410,12 @@ The units are seconds.")
            :sentinel (when (or vterm-exit-functions
                                vterm-kill-buffer-on-exit)
                        #'vterm--sentinel))))
+
+  ;; Change major-mode is not allowed
+  (add-hook 'change-major-mode-hook
+            (lambda () (interactive)
+               (user-error "You cannot change major mode in vterm buffers")) nil t)
+
   (vterm--set-pty-name vterm--term (process-tty-name vterm--process))
   (process-put vterm--process 'adjust-window-size-function
                #'vterm--window-adjust-process-window-size)
