@@ -155,14 +155,18 @@ When nil, the buffer will still be available as if it were in
   :type  'boolean
   :group 'vterm)
 
-(defcustom vterm-clear-scrollback nil
-  "Should `vterm-clear' clear the scrollback too?.
+(define-obsolete-variable-alias 'vterm-clear-scrollback
+  'vterm-clear-scrollback-when-clearing "0.0.1")
 
-When nil, `vterm-clear' clears both screen and scrollback,
-otherwise it clears only the screen.
+(defcustom vterm-clear-scrollback-when-clearing nil
+  "If not nil `vterm-clear' clears both screen and scrollback.
 
-Calling `vterm-clear' with a prefix argument does the opposite
-than the default behavior."
+The scrollback is everything that is not current visible on
+screen in vterm buffers.
+
+If `vterm-clear-scrollback-when-clearing' is nil, `vterm-clear'
+clears only the screen, so the scrollback is accessible moving
+the point up."
   :type 'number
   :group 'vterm)
 
@@ -725,8 +729,8 @@ This behavior can be altered by calling `vterm-clear' with a
 prefix argument ARG or with \\[universal-argument]."
   (interactive "P")
   (if (or
-       (and vterm-clear-scrollback (not arg))
-       (and arg (not vterm-clear-scrollback)))
+       (and vterm-clear-scrollback-when-clearing (not arg))
+       (and arg (not vterm-clear-scrollback-when-clearing)))
       (vterm-clear-scrollback))
   (vterm-send-C-l))
 
