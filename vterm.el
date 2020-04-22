@@ -1103,7 +1103,7 @@ More information see `vterm--prompt-tracking-enabled-p' and
           (vterm--get-beginning-of-line))))))
 
 (defun vterm--at-prompt-p ()
-  "Return t if the cursor postion is at shell prompt."
+  "Return t if the cursor position is at shell prompt."
   (= (point) (vterm--get-prompt-point)))
 
 (defun vterm-beginning-of-line ()
@@ -1124,7 +1124,7 @@ Effectively toggle between the two positions."
   (goto-char (vterm--get-end-of-line)))
 
 (defun vterm-reset-cursor-point ()
-  "Make sure the cursor at the right postion."
+  "Make sure the cursor at the right position."
   (interactive)
   (vterm--reset-point vterm--term))
 
