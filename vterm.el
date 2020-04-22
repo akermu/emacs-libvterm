@@ -600,7 +600,7 @@ will invert `vterm-copy-exclude-prompt' for that call."
     ;; Are we excluding the prompt?
     (if (or (and vterm-copy-exclude-prompt (not arg))
             (and (not vterm-copy-exclude-prompt) arg))
-        (goto-char (max (vterm--get-prompt-point)
+        (goto-char (max (or (vterm--get-prompt-point) 0)
                         (vterm--get-beginning-of-line))))
     (set-mark (point))
     (goto-char (vterm--get-end-of-line)))
@@ -1050,8 +1050,9 @@ in README."
   (interactive "p")
   (if (and vterm-use-vterm-prompt
            (vterm--prompt-tracking-enabled-p))
-      (let ((pt (point)) )
-        (goto-char (vterm--get-prompt-point))
+      (let ((pt (point))
+            (promp-pt (vterm--get-prompt-point)))
+        (when promp-pt (goto-char promp-pt))
         (cl-loop repeat (or n 1) do
                  (setq pt (next-single-property-change (point-at-bol 2) 'vterm-prompt))
                  (when pt (goto-char pt))))
@@ -1062,13 +1063,15 @@ in README."
   (interactive "p")
   (if (and vterm-use-vterm-prompt
            (vterm--prompt-tracking-enabled-p))
-      (let ((pt (point)) )
-        (goto-char (vterm--get-prompt-point))
-        (when (> pt (point))
-          (setq n (1- (or n 1))))
-        (cl-loop repeat n do
-                 (setq pt (previous-single-property-change (1- (point)) 'vterm-prompt))
-                 (when pt (goto-char (1- pt)))))
+      (let ((pt (point))
+            (prompt-pt (vterm--get-prompt-point)))
+        (when prompt-pt
+          (goto-char prompt-pt)
+          (when (> pt (point))
+            (setq n (1- (or n 1))))
+          (cl-loop repeat n do
+                   (setq pt (previous-single-property-change (1- (point)) 'vterm-prompt))
+                   (when pt (goto-char (1- pt))))))
     (term-previous-prompt n)))
 
 (defun vterm--get-beginning-of-line ()
@@ -1109,8 +1112,9 @@ More information see `vterm--prompt-tracking-enabled-p' and
           (vterm--get-beginning-of-line))))))
 
 (defun vterm--at-prompt-p ()
-  "Return t if the cursor position is at shell prompt."
   (= (point) (vterm--get-prompt-point)))
+  "Return t if the cursor position is at shell prompt."
+  (= (point) (or (vterm--get-prompt-point) 0)))
 
 (defun vterm-beginning-of-line ()
   "Move point to the beginning of the line.
@@ -1121,7 +1125,7 @@ Effectively toggle between the two positions."
   (interactive)
   (if (vterm--at-prompt-p)
       (goto-char (vterm--get-beginning-of-line))
-    (goto-char (max (vterm--get-prompt-point)
+    (goto-char (max (or (vterm--get-prompt-point) 0)
                     (vterm--get-beginning-of-line)))))
 
 (defun vterm-end-of-line ()
