@@ -259,7 +259,9 @@ rendered as normal ones."
   :group 'vterm)
 
 (defcustom vterm-use-vterm-prompt t
-  "Should we use the vterm prompt tracker or the search from `term-prompt-regexp'?"
+  "If t track the prompt using the vterm prompt tracker. If set
+to nil use the value of `term-prompt-regexp' to track the
+prompt."
   :type 'boolean
   :group 'vterm)
 
