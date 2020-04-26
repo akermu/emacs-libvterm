@@ -259,9 +259,9 @@ rendered as normal ones."
   :group 'vterm)
 
 (defcustom vterm-use-vterm-prompt t
-  "If t track the prompt using the vterm prompt tracker. If set
-to nil use the value of `term-prompt-regexp' to track the
-prompt."
+  "If not nil track the prompt using the prompt tracker
+functionality provided by vterm. If set to nil use the value of
+`term-prompt-regexp' to track the prompt."
   :type 'boolean
   :group 'vterm)
 
