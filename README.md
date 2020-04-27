@@ -268,6 +268,13 @@ The variable `vterm-copy-use-vterm-prompt` determines
 whether to use the vterm prompt tracking, if false it usessearches for the regexp in
 `vterm-copy-prompt-regexp`.  If not found it copies the whole line.
 
+## `vterm-always-compile-module`
+
+Vterm needs `vterm-module` to work. This can be compiled externally, or `vterm`
+will ask the user whether to build the module when `vterm` is first called. To
+avoid this question and always compile the module, set
+`vterm-always-compile-module` to `t`.
+
 ## Keybindings
 
 If you want a key to be sent to the terminal, bind it to `vterm--self-insert`,
