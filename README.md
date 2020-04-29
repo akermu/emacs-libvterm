@@ -304,6 +304,13 @@ end
 See [zsh and bash](http://tldp.org/HOWTO/Xterm-Title-4.html) and (fish
 documentations)[https://fishshell.com/docs/current/#programmable-title].
 
+## `vterm-always-compile-module`
+
+Vterm needs `vterm-module` to work. This can be compiled externally, or `vterm`
+will ask the user whether to build the module when `vterm` is first called. To
+avoid this question and always compile the module, set
+`vterm-always-compile-module` to `t`.
+
 ## Keybindings
 
 If you want a key to be sent to the terminal, bind it to `vterm--self-insert`,

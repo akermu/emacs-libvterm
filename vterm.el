@@ -63,6 +63,14 @@ is `-DUSE_SYSTEM_LIBVTERM=yes'."
   :type 'string
   :group 'vterm)
 
+(defcustom vterm-always-compile-module nil
+  "If not nil, if `vterm-module' is not found, compile it without asking.
+
+When `vterm-always-compile-module' is nil, vterm will ask for
+confirmation before compiling."
+  :type  'boolean
+  :group 'vterm)
+
 (defvar vterm-install-buffer-name " *Install vterm* "
   "Name of the buffer used for compiling vterm-module.")
 
@@ -101,8 +109,12 @@ the executable."
 
 ;; If the vterm-module is not compiled yet, compile it
 (unless (require 'vterm-module nil t)
-  (vterm-module-compile)
-  (require 'vterm-module))
+  (if (or vterm-always-compile-module
+            (y-or-n-p "Vterm needs `vterm-module' to work.  Compile it now? "))
+      (progn
+        (vterm-module-compile)
+        (require 'vterm-module))
+    (error "Vterm will not work until `vterm-module' is compiled!")))
 
 ;; Silence compiler warnings by informing it of what functions are defined
 (declare-function display-line-numbers-update-width "display-line-numbers")
