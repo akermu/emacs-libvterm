@@ -1112,7 +1112,6 @@ More information see `vterm--prompt-tracking-enabled-p' and
           (vterm--get-beginning-of-line))))))
 
 (defun vterm--at-prompt-p ()
-  (= (point) (vterm--get-prompt-point)))
   "Return t if the cursor position is at shell prompt."
   (= (point) (or (vterm--get-prompt-point) 0)))
 
