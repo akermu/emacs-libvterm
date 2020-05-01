@@ -410,7 +410,13 @@ end
 
 Directory tracking works on remote servers too. In case the hostname of your
 remote machine does not match the actual hostname needed to connect to that
-server, change `$(hostname)` with the correct one.
+server, change `$(hostname)` with the correct one. For example, if the correct
+hostname is `foo` and the username is `bar`, you should have something like
+```bash
+HOSTNAME=foo
+USER=baz
+vterm_printf "51;A$USER@$HOSTNAME:$(pwd)"
+```
 
 ## Message passing
 
@@ -543,9 +549,37 @@ Then you can open any file from inside your shell.
 open_file_below ~/Documents
 ```
 
+## Frequently Asked Questions and Problems
+
+### `<C-backspace>` doesn't kill previous word.
+
+This can be fixed by rebinding the key to what `C-w` does:
+```emacs-lisp
+(define-key vterm-mode-map (kbd "<C-backspace>")
+    (lambda () (interactive) (vterm-send-key (kbd "C-w"))))
+```
+
+### `counsel-yank-pop` doesn't work.
+
+Add this piece of code to your configuration file to make `counsel` use
+the correct function to yank in vterm buffers.
+```emacs-lisp
+(defun vterm-counsel-yank-pop-action (orig-fun &rest args)
+  (if (equal major-mode 'vterm-mode)
+      (let ((inhibit-read-only t)
+            (yank-undo-function (lambda (_start _end) (vterm-undo))))
+        (cl-letf (((symbol-function 'insert-for-yank)
+               (lambda (str) (vterm-send-string str t))))
+            (apply orig-fun args)))
+    (apply orig-fun args)))
+
+(advice-add 'counsel-yank-pop-action :around #'vterm-counsel-yank-pop-action)
+```
+
 ## Related packages
 
-- [vterm-toggle](https://github.com/jixiuf/vterm-toggle): Toggles between a vterm and the current buffer
+- [vterm-toggle](https://github.com/jixiuf/vterm-toggle): Toggles between a
+  vterm and the current buffer
 - [multi-libvterm](https://github.com/suonlight/multi-libvterm): Multiterm for emacs-libvterm
 
 ## Appendix
