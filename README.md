@@ -64,12 +64,12 @@ Clone the repository:
 git clone https://github.com/akermu/emacs-libvterm.git
 ```
 
-In case you want to use the version of libvterm already installed on your
-system, change `cmake ..` with `cmake -DUSE_SYSTEM_LIBVTERM=yes ..` in the
-following instructions. If `-DUSE_SYSTEM_LIBVTERM` is not explicitly set to
-`yes` (or if it is set to `no`), emacs-libvterm will download the latest version
-available of libvterm (from [here](https://github.com/neovim/libvterm)), compile
-it, and use it.
+By default, vterm will try to find if libvterm is installed. If it is not found,
+emacs-libvterm will download the latest version available of libvterm (from
+[here](https://github.com/neovim/libvterm)), compile it, and use it. If you
+always want to use the vendored version as opposed to the one on you system, set
+`USE_SYSTEM_LIBVTERM` to `Off`. To do this, change `cmake ..` with `cmake
+-DUSE_SYSTEM_LIBVTERM=Off ..` in the following instructions.
 
 Build the module with:
 
