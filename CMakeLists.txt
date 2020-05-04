@@ -35,9 +35,9 @@ if (USE_SYSTEM_LIBVTERM)
 
   # vterm.h is found.
   if (LIBVTERM_INCLUDE_DIR)
-    message(STATUS "System libvterm detected.")
+    message(STATUS "System libvterm detected")
   else()
-    message(STATUS "System libvterm not found. libvterm will be downloaded and compiled as part of the build process.")
+    message(STATUS "System libvterm not found: libvterm will be downloaded and compiled as part of the build process")
   endif()
 endif()
 
