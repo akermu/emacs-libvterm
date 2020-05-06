@@ -227,6 +227,15 @@ if [[ "$INSIDE_EMACS" = 'vterm' ]]; then
     }
 fi
 ```
+For `fish`:
+```
+if [ "$INSIDE_EMACS" = 'vterm' ]
+    function clear
+        vterm_printf "51;Evterm-clear-scrollback";
+        tput clear;
+    end
+end
+```
 These aliases take advantage of the fact that `vterm` can execute `elisp`
 commands, as explained below.
 
@@ -548,6 +557,14 @@ Then you can open any file from inside your shell.
 ```sh
 open_file_below ~/Documents
 ```
+
+## Shell-side configuration files
+
+The configurations described in earlier sections are combined in
+[`etc/`](./etc/). These can be appended to or loaded into your user
+configuration file. Alternatively, they can be installed system-wide, for
+example in `/etc/bash/bashrc.d/`, `/etc/profile.d/` (for `zsh`), or
+`/etc/fish/conf.d/` for `fish`.
 
 ## Frequently Asked Questions and Problems
 
