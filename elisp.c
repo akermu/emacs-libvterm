@@ -1,6 +1,60 @@
 #include "elisp.h"
 #include <stdio.h>
 
+// Emacs symbols
+emacs_value Qt;
+emacs_value Qnil;
+emacs_value Qnormal;
+emacs_value Qbold;
+emacs_value Qitalic;
+emacs_value Qforeground;
+emacs_value Qbackground;
+emacs_value Qweight;
+emacs_value Qunderline;
+emacs_value Qslant;
+emacs_value Qreverse;
+emacs_value Qstrike;
+emacs_value Qextend;
+emacs_value Qface;
+emacs_value Qbox;
+emacs_value Qbar;
+emacs_value Qhbar;
+emacs_value Qcursor_type;
+emacs_value Qemacs_major_version;
+emacs_value Qvterm_line_wrap;
+emacs_value Qrear_nonsticky;
+emacs_value Qvterm_prompt;
+
+// Emacs functions
+emacs_value Fsymbol_value;
+emacs_value Flength;
+emacs_value Flist;
+emacs_value Fnth;
+emacs_value Ferase_buffer;
+emacs_value Finsert;
+emacs_value Fgoto_char;
+emacs_value Fforward_char;
+emacs_value Fforward_line;
+emacs_value Fgoto_line;
+emacs_value Fdelete_lines;
+emacs_value Frecenter;
+emacs_value Fset_window_point;
+emacs_value Fwindow_body_height;
+emacs_value Fpoint;
+
+emacs_value Fput_text_property;
+emacs_value Fadd_text_properties;
+emacs_value Fset;
+emacs_value Fvterm_flush_output;
+emacs_value Fget_buffer_window_list;
+emacs_value Fselected_window;
+emacs_value Fvterm_set_title;
+emacs_value Fvterm_set_directory;
+emacs_value Fvterm_invalidate;
+emacs_value Feq;
+emacs_value Fvterm_get_color;
+emacs_value Fvterm_eval;
+
 /* Set the function cell of the symbol named NAME to SFUN using
    the 'fset' function.  */
 void bind_function(emacs_env *env, const char *name, emacs_value Sfun) {
