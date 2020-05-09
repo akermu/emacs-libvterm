@@ -418,6 +418,26 @@ USER=baz
 vterm_printf "51;A$USER@$HOSTNAME:$(pwd)"
 ```
 
+Here is a dirty hack (linux-only) for local directory track.
+
+Synchronize current working directory before `C-x C-f`.
+
+```elisp
+;; Directory synchronization (linux-only)
+(defun vterm-directory-sync ()
+  "Synchronize current working directory."
+  (when vterm--process
+    (let* ((pid (process-id vterm--process))
+           (dir (file-truename (format "/proc/%d/cwd" pid))))
+      (setq-local default-directory dir))))
+      
+(define-key vterm-mode-map (kbd "C-x C-f") (lambda (&rest _)
+                                             (interactive)
+                                             (vterm-directory-sync)
+                                             ;; Depends on yourself: ivy, helm or ido?
+                                             (call-interactively 'counsel-find-file)))
+```
+
 ## Message passing
 
 `vterm` can read and execute commands. At the moment, a command is
