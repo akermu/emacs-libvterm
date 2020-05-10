@@ -32,10 +32,13 @@ Before installing emacs-libvterm, you need to make sure you have installed
  3. libtool-bin (related issues:
     [#66](https://github.com/akermu/emacs-libvterm/issues/66)
     [#85](https://github.com/akermu/emacs-libvterm/issues/85#issuecomment-491845136))
- 4. OPTIONAL: [libvterm](https://github.com/neovim/libvterm). This library can
-    be found in the official repositories of most distributions (e.g., Arch,
-    Debian, Fedora, Gentoo, openSUSE, Ubuntu). If not available, it will be
-    downloaded during the compilation process.
+ 4. OPTIONAL: [libvterm](https://github.com/neovim/libvterm) (>= 0.1). This
+    library can be found in the official repositories of most distributions
+    (e.g., Arch, Debian, Fedora, Gentoo, openSUSE, Ubuntu). If not available, it
+    will be downloaded during the compilation process. Some distributions (e.g.
+    Ubuntu 18.04) have versions of libvterm that are too old. If you find
+    compilation errors related to `VTERM_COLOR`, you should not use your system
+    libvterm.
 
 ## From MELPA
 
@@ -68,8 +71,8 @@ By default, vterm will try to find if libvterm is installed. If it is not found,
 emacs-libvterm will download the latest version available of libvterm (from
 [here](https://github.com/neovim/libvterm)), compile it, and use it. If you
 always want to use the vendored version as opposed to the one on you system, set
-`USE_SYSTEM_LIBVTERM` to `Off`. To do this, change `cmake ..` with `cmake
--DUSE_SYSTEM_LIBVTERM=Off ..` in the following instructions.
+`USE_SYSTEM_LIBVTERM` to `no`. To do this, change `cmake ..` with `cmake
+-DUSE_SYSTEM_LIBVTERM=no ..` in the following instructions.
 
 Build the module with:
 
@@ -550,6 +553,17 @@ open_file_below ~/Documents
 ```
 
 ## Frequently Asked Questions and Problems
+
+### The package does not compile, I have errors related to `VTERM_COLOR`.
+
+The version of `libvterm` installed on your system is too old. You should let
+`emacs-libvterm` download `libvterm` for you. If you are compiling from Emacs,
+you can do this by setting:
+```
+emacs-lisp (setq vterm-module-cmake-args "-DUSE_SYSTEM_LIBVTERM=no")
+```
+and compile again. If you are compiling with CMake, use the flag
+`-DUSE_SYSTEM_LIBVTERM=no`.
 
 ### `<C-backspace>` doesn't kill previous word.
 
