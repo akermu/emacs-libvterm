@@ -127,6 +127,10 @@ to work (see,
 Pull requests to improve support for Ubuntu are welcome (e.g., simplyfing the
 installation).
 
+Some releases of Ubuntu (e.g., 18.04) ship with a old version of libvterm that
+can lead to compilation errors. If you experience these errors, see the
+[FAQ](#frequently-asked-questions-and-problems) for a solution.
+
 ## GNU Guix
 
 `vterm` and its dependencies are available in GNU Guix as
@@ -304,8 +308,8 @@ function fish_title
     pwd
 end
 ```
-See [zsh and bash](http://tldp.org/HOWTO/Xterm-Title-4.html) and (fish
-documentations)[https://fishshell.com/docs/current/#programmable-title].
+See [zsh and bash](http://tldp.org/HOWTO/Xterm-Title-4.html) and [fish
+documentations](https://fishshell.com/docs/current/#programmable-title).
 
 ## `vterm-always-compile-module`
 
@@ -559,8 +563,8 @@ open_file_below ~/Documents
 The version of `libvterm` installed on your system is too old. You should let
 `emacs-libvterm` download `libvterm` for you. If you are compiling from Emacs,
 you can do this by setting:
-```
-emacs-lisp (setq vterm-module-cmake-args "-DUSE_SYSTEM_LIBVTERM=no")
+```emacs-lisp
+(setq vterm-module-cmake-args "-DUSE_SYSTEM_LIBVTERM=no")
 ```
 and compile again. If you are compiling with CMake, use the flag
 `-DUSE_SYSTEM_LIBVTERM=no`.
