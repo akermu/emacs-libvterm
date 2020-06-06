@@ -555,8 +555,8 @@ On most GNU/Linux systems, you can read current directory from `/proc`:
   (interactive)
   (when vterm--process
     (let* ((pid (process-id vterm--process))
-           (dir (file-truename (format "/proc/%d/cwd" pid))))
-      (setq-local default-directory dir))))
+           (dir (file-truename (format "/proc/%d/cwd/" pid))))
+      (setq default-directory dir))))
 ```
 A possible application of this function is in combination with `find-file`:
 ```emacs-lisp
