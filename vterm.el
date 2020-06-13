@@ -749,6 +749,11 @@ will invert `vterm-copy-exclude-prompt' for that call."
   (interactive)
   (vterm-send-key "\\" nil nil t))
 
+(defun vterm-send-escape ()
+  "Send `<escape>' to the libvterm."
+  (interactive)
+  (vterm-send-key "<escape>"))
+
 (defun vterm-clear-scrollback ()
   "Send `<clear-scrollback>' to the libvterm."
   (interactive)
