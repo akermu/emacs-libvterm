@@ -924,6 +924,14 @@ void term_finalize(void *object) {
 }
 
 static int osc_callback(const char *command, size_t cmdlen, void *user) {
+  /* osc_callback (OSC = Operating System Command) */
+
+  /* We interpret escape codes that start with "51;" */
+  /* "51;A" sets the current directory */
+  /* "51;A" has also the role of identifying the end of the prompt */
+  /* "51;E" executes elisp code */
+  /* The elisp code is executed in term_redraw */
+
   Term *term = (Term *)user;
   char buffer[cmdlen + 1];
 

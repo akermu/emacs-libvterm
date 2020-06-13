@@ -10,15 +10,13 @@ capable, fast, and it can seamlessly handle large outputs.
 ## Warning
 
 This package is in active development and, while being stable enough to be used
-as a daily-driver, it is currently in early **alpha** stage. This means that
+as a daily-driver, it is currently in **alpha** stage. This means that
 occasionally the public interface will change (for example names of options or
 functions). A list of recent breaking changes is in
 [appendix](#breaking-changes). Moreover, emacs-libvterm deals directly with some
 low-level operations, hence, bugs in the code can lead to segmentation faults
 and crashes. If that happens, please [report the
 problem](https://github.com/akermu/emacs-libvterm/issues/new).
-
-
 
 # Installation
 
@@ -34,11 +32,13 @@ Before installing emacs-libvterm, you need to make sure you have installed
     [#85](https://github.com/akermu/emacs-libvterm/issues/85#issuecomment-491845136))
  4. OPTIONAL: [libvterm](https://github.com/neovim/libvterm) (>= 0.1). This
     library can be found in the official repositories of most distributions
-    (e.g., Arch, Debian, Fedora, Gentoo, openSUSE, Ubuntu). If not available, it
-    will be downloaded during the compilation process. Some distributions (e.g.
-    Ubuntu 18.04) have versions of libvterm that are too old. If you find
-    compilation errors related to `VTERM_COLOR`, you should not use your system
-    libvterm.
+    (e.g., Arch, Debian, Fedora, Gentoo, openSUSE, Ubuntu). Typical names are
+    `libvterm` (Arch, Fedora, Gentoo, openSUSE), or `libvterm-dev` (Debian,
+    Ubuntu). If not available, `libvterm` will be downloaded during the
+    compilation process. Some distributions (e.g. Ubuntu < 20.04, Debian Stable)
+    have versions of `libvterm` that are too old. If you find compilation errors
+    related to `VTERM_COLOR`, you should not use your system libvterm. See
+    [FAQ](#frequently-asked-questions-and-problems) for more details.
 
 ## From MELPA
 
@@ -128,7 +128,7 @@ Pull requests to improve support for Ubuntu are welcome (e.g., simplyfing the
 installation).
 
 Some releases of Ubuntu (e.g., 18.04) ship with a old version of libvterm that
-can lead to compilation errors. If you experience these errors, see the
+can lead to compilation errors. If you have this problem, see the
 [FAQ](#frequently-asked-questions-and-problems) for a solution.
 
 ## GNU Guix
@@ -149,7 +149,7 @@ readme.
 
 For `bash` or `zsh`, put this in your `.zshrc` or `.bashrc`
 ```bash
-function vterm_printf(){
+vterm_printf(){
     if [ -n "$TMUX" ]; then
         # Tell tmux to pass the escape sequences through
         # (Source: http://permalink.gmane.org/gmane.comp.terminal-emulators.tmux.user/1324)
@@ -162,8 +162,9 @@ function vterm_printf(){
     fi
 }
 ```
+This works also for `dash`.
 
-For `fish`   put this in your `~/.config/fish/config.fish`:
+For `fish` put this in your `~/.config/fish/config.fish`:
 ```bash
 function vterm_printf;
     if [ -n "$TMUX" ]
@@ -178,7 +179,6 @@ function vterm_printf;
     end
 end
 ```
-
 
 # Debugging and testing
 
@@ -435,7 +435,6 @@ passed by providing a specific escape sequence. For example, to evaluate
 use
 ``` sh
 printf "\e]51;Emessage \"Hello\!\"\e\\"
-
 # or
 vterm_printf "51;Emessage \"Hello\!\""
 ```
@@ -443,74 +442,19 @@ vterm_printf "51;Emessage \"Hello\!\""
 The commands that are understood are defined in the setting `vterm-eval-cmds`.
 
 As `split-string-and-unquote` is used the parse the passed string, double quotes
-and backslashes need to be escaped via backslash. For instance, bash can replace
-strings internally.
-
+and backslashes need to be escaped via backslash. A convenient shell function to
+automate the substitution is
 ```sh
 vterm_cmd() {
-    if [ -n "$TMUX" ]; then
-        # tell tmux to pass the escape sequences through
-        # (Source: http://permalink.gmane.org/gmane.comp.terminal-emulators.tmux.user/1324)
-        printf "\ePtmux;\e\e]51;E"
-    elif [ "${TERM%%-*}" = "screen" ]; then
-        # GNU screen (screen, screen-256color, screen-256color-bce)
-        printf "\eP\e]51;E"
-    else
-        printf "\e]51;E"
-    fi
-
-    printf "\e]51;E"
-    local r
-    while [[ $# -gt 0 ]]; do
-        r="${1//\\/\\\\}"
-        r="${r//\"/\\\"}"
-        printf '"%s" ' "$r"
-        shift
-    done
-    if [ -n "$TMUX" ]; then
-        # tell tmux to pass the escape sequences through
-        # (Source: http://permalink.gmane.org/gmane.comp.terminal-emulators.tmux.user/1324)
-        printf "\007\e\\"
-    elif [ "${TERM%%-*}" = "screen" ]; then
-        # GNU screen (screen, screen-256color, screen-256color-bce)
-        printf "\007\e\\"
-    else
-        printf "\e\\"
-    fi
-}
-```
-
-However if you are using dash and need a pure POSIX implementation:
-
-```sh
-vterm_cmd() {
-    if [ -n "$TMUX" ]; then
-        # tell tmux to pass the escape sequences through
-        # (Source: http://permalink.gmane.org/gmane.comp.terminal-emulators.tmux.user/1324)
-        printf "\ePtmux;\e\e]51;E"
-    elif [ "${TERM%%-*}" = "screen" ]; then
-        # GNU screen (screen, screen-256color, screen-256color-bce)
-        printf "\eP\e]51;E"
-    else
-        printf "\e]51;E"
-    fi
+    local vterm_elisp
+    vterm_elisp=""
     while [ $# -gt 0 ]; do
-        printf '"%s" ' "$(printf "%s" "$1" | sed -e 's|\\|\\\\|g' -e 's|"|\\"|g')"
+        vterm_elisp="$vterm_elisp""$(printf '"%s" ' "$(printf "%s" "$1" | sed -e 's|\\|\\\\|g' -e 's|"|\\"|g')")"
         shift
     done
-    if [ -n "$TMUX" ]; then
-        # tell tmux to pass the escape sequences through
-        # (Source: http://permalink.gmane.org/gmane.comp.terminal-emulators.tmux.user/1324)
-        printf "\007\e\\"
-    elif [ "${TERM%%-*}" = "screen" ]; then
-        # GNU screen (screen, screen-256color, screen-256color-bce)
-        printf "\007\e\\"
-    else
-        printf "\e\\"
-    fi
+    vterm_printf "51;E$vterm_elisp"
 }
 ```
-
 Now we can write shell functions to call the ones defined in `vterm-eval-cmds`.
 
 ```sh
@@ -558,11 +502,16 @@ open_file_below ~/Documents
 
 ## Frequently Asked Questions and Problems
 
+### How can I automatically close vterm buffers when the process is terminated?
+
+There is an option for that: set `vterm-kill-buffer-on-exit` to `t`.
+
 ### The package does not compile, I have errors related to `VTERM_COLOR`.
 
 The version of `libvterm` installed on your system is too old. You should let
-`emacs-libvterm` download `libvterm` for you. If you are compiling from Emacs,
-you can do this by setting:
+`emacs-libvterm` download `libvterm` for you. You can either uninstall your
+libvterm, or instruct Emacs to ignore the system libvterm. If you are compiling
+from Emacs, you can do this by setting:
 ```emacs-lisp
 (setq vterm-module-cmake-args "-DUSE_SYSTEM_LIBVTERM=no")
 ```
@@ -593,6 +542,28 @@ the correct function to yank in vterm buffers.
 
 (advice-add 'counsel-yank-pop-action :around #'vterm-counsel-yank-pop-action)
 ```
+
+### How can I get the local directory without shell-side configuration?
+
+We recommend that you set up shell-side configuration for reliable directory
+tracking. If you cannot do it, a possible workaround is the following.
+
+On most GNU/Linux systems, you can read current directory from `/proc`:
+```emacs-lisp
+(defun vterm-directory-sync ()
+  "Synchronize current working directory."
+  (interactive)
+  (when vterm--process
+    (let* ((pid (process-id vterm--process))
+           (dir (file-truename (format "/proc/%d/cwd/" pid))))
+      (setq default-directory dir))))
+```
+A possible application of this function is in combination with `find-file`:
+```emacs-lisp
+(advice-add #'find-file :before #'vterm-directory-sync)
+```
+This method does not work on remote machines.
+
 
 ## Related packages
 
