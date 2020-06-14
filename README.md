@@ -459,7 +459,7 @@ Now we can write shell functions to call the ones defined in `vterm-eval-cmds`.
 
 ```sh
 find_file() {
-    vterm_cmd find-file "$(realpath "$@")"
+    vterm_cmd find-file "$(realpath "${@:-.}")"
 }
 
 say() {
@@ -490,7 +490,7 @@ Then add the command in your `.bashrc` file.
 
 ```sh
 open_file_below() {
-    vterm_cmd find-file-below "$(realpath "$@")"
+    vterm_cmd find-file-below "$(realpath "${@:-.}")"
 }
 ```
 
