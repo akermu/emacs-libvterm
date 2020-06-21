@@ -1003,11 +1003,12 @@ If N is negative backward-line from end of buffer."
 
 (defun vterm--get-pwd (&optional linenum)
   "Get working directory at LINENUM."
-  (let ((raw-pwd (vterm--get-pwd-raw
-                  vterm--term
-                  (or linenum (line-number-at-pos)))))
-    (when raw-pwd
-      (vterm--get-directory raw-pwd))))
+  (when vterm--term
+    (let ((raw-pwd (vterm--get-pwd-raw
+                    vterm--term
+                    (or linenum (line-number-at-pos)))))
+      (when raw-pwd
+        (vterm--get-directory raw-pwd)))))
 
 (defun vterm--get-color (index)
   "Get color by index from `vterm-color-palette'.
