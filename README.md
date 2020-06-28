@@ -258,8 +258,9 @@ rendering of colors in some systems.
 
 ## `vterm-kill-buffer-on-exit`
 
-If set to `t`, buffers are killed when the associated process is terminated
-(for example, by logging out the shell).
+If set to `t`, buffers are killed when the associated process is terminated (for
+example, by logging out the shell). Keeping buffers around it is useful if you
+need to copy or manipulate the content.
 
 ## `vterm-module-cmake-args`
 
