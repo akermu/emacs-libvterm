@@ -503,6 +503,16 @@ open_file_below ~/Documents
 
 ## Frequently Asked Questions and Problems
 
+### How can I increase the size of the scrollback?
+
+By default, the scrollback can contain up to 1000 lines per each vterm buffer.
+You can increase this up to 100000 by changing the variable
+`vterm-max-scrollback`. If you want to increase it further, you have to edit the
+file `vterm-module.h`, change the variable `SB_MAX`, and set the new value for
+`vterm-max-scrollback`. The potential maximum memory consumption of vterm
+buffers increases with `vterm-max-scrollback`, so setting `SB_MAX` to extreme
+values may lead to system instabilities and crashes.
+ 
 ### How can I automatically close vterm buffers when the process is terminated?
 
 There is an option for that: set `vterm-kill-buffer-on-exit` to `t`.
