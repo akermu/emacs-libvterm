@@ -1003,11 +1003,12 @@ If N is negative backward-line from end of buffer."
 
 (defun vterm--get-pwd (&optional linenum)
   "Get working directory at LINENUM."
-  (let ((raw-pwd (vterm--get-pwd-raw
-                  vterm--term
-                  (or linenum (line-number-at-pos)))))
-    (when raw-pwd
-      (vterm--get-directory raw-pwd))))
+  (when vterm--term
+    (let ((raw-pwd (vterm--get-pwd-raw
+                    vterm--term
+                    (or linenum (line-number-at-pos)))))
+      (when raw-pwd
+        (vterm--get-directory raw-pwd)))))
 
 (defun vterm--get-color (index)
   "Get color by index from `vterm-color-palette'.
@@ -1161,12 +1162,14 @@ Effectively toggle between the two positions."
 (defun vterm-reset-cursor-point ()
   "Make sure the cursor at the right position."
   (interactive)
-  (vterm--reset-point vterm--term))
+  (when vterm--term
+    (vterm--reset-point vterm--term)))
 
 (defun vterm--get-cursor-point ()
   "Get term cursor position."
-  (save-excursion
-    (vterm-reset-cursor-point)))
+  (when vterm--term
+    (save-excursion
+      (vterm-reset-cursor-point))))
 
 (defun vterm--remove-fake-newlines ()
   "Filter out injected newlines were injected when rendering the terminal.
