@@ -598,13 +598,15 @@ typically used to copy text from vterm buffers."
   :group 'vterm
   :lighter " VTermCopy"
   :keymap vterm-copy-mode-map
-  (if vterm-copy-mode
-      (progn                            ;enable vterm-copy-mode
-        (use-local-map nil)
-        (vterm-send-stop))
-    (vterm-reset-cursor-point)
-    (use-local-map vterm-mode-map)
-    (vterm-send-start)))
+  (if (equal major-mode 'vterm-mode)
+      (if vterm-copy-mode
+          (progn                            ;enable vterm-copy-mode
+            (use-local-map nil)
+            (vterm-send-stop))
+        (vterm-reset-cursor-point)
+        (use-local-map vterm-mode-map)
+        (vterm-send-start))
+    (user-error "You cannot enable vterm-copy-mode outside vterm buffers")))
 
 (defun vterm-copy-mode-done (arg)
   "Save the active region or line to the kill ring and exit `vterm-copy-mode'.
