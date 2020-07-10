@@ -27,18 +27,32 @@
 
 ;;; Commentary:
 ;;
-;; This Emacs module implements a bridge to libvterm to display a terminal in a
-;; Emacs buffer.
+;; Emacs-libvterm (vterm) is fully-fledged terminal emulator based on an
+;; external library (libvterm) loaded as a dynamic module.  As a result of using
+;; compiled code (instead of elisp), emacs-libvterm is fully capable, fast, and
+;; it can seamlessly handle large outputs.
 
 ;;; Installation
 
-;; And add this to your `init.el`:
+;; Emacs-libvterm requires support for loading modules.  You can check if your
+;; Emacs supports modules by inspecting the variable module-file-suffix.  If it
+;; nil, than, you need to recompile Emacs or obtain a copy of Emacs with this
+;; option enabled.
 
-;; ```
-;; (add-to-list 'load-path "path/to/emacs-libvterm")
-;; (require 'vterm)
-;; ```
+;; Emacs-libvterm requires CMake and libvterm.  If libvterm is not available,
+;; emacs-libvterm will downloaded and compiled.  In this case, libtool is
+;; needed.
 
+;; The reccomended way to install emacs-libvterm is from MELPA.
+
+;;; Usage
+
+;; To open a terminal, simply use the command M-x vterm.
+
+;;; Tips and tricks
+
+;; Adding some shell-side configuration enables a large set of additional
+;; features, including, directory tracking, prompt recognition, message passing.
 
 ;;; Code:
 
@@ -157,18 +171,21 @@ the module."
   :type 'number
   :group 'vterm)
 
-(defcustom vterm-kill-buffer-on-exit nil
-  "Should a vterm buffer be killed when the attached process is terminated?
+(defcustom vterm-kill-buffer-on-exit t
+  "If not nil vterm buffers are killed when the attached process is terminated.
 
 If `vterm-kill-buffer-on-exit' is set to t, when the process
-associated to a vterm buffer quits, the buffer is killed.
-When nil, the buffer will still be available as if it were in
+associated to a vterm buffer quits, the buffer is killed.  When
+nil, the buffer will still be available as if it were in
 `fundamental-mode'."
   :type  'boolean
   :group 'vterm)
 
 (define-obsolete-variable-alias 'vterm-clear-scrollback
   'vterm-clear-scrollback-when-clearing "0.0.1")
+
+(define-obsolete-variable-alias 'vterm-use-vterm-prompt
+  'vterm-use-vterm-prompt-detection-method "0.0.1")
 
 (defcustom vterm-clear-scrollback-when-clearing nil
   "If not nil `vterm-clear' clears both screen and scrollback.
@@ -283,11 +300,11 @@ rendered as normal ones."
   :group 'vterm)
 
 (defcustom vterm-copy-exclude-prompt t
-  "Should the prompt be excluded from a line copy?"
+  "When not nil the prompt is not included by `vterm-copy-mode-done'."
   :type 'boolean
   :group 'vterm)
 
-(defcustom vterm-use-vterm-prompt t
+(defcustom vterm-use-vterm-prompt-detection-method t
   "Should we use the vterm prompt tracker or the search from `term-prompt-regexp'?"
   :type 'boolean
   :group 'vterm)
@@ -445,6 +462,8 @@ The units are seconds.")
                        #'vterm--sentinel))))
 
   ;; Change major-mode is not allowed
+  ;; Vterm interfaces with an underlying process. Changing the major
+  ;; mode can break this, leading to segmentation faults.
   (add-hook 'change-major-mode-hook
             (lambda () (interactive)
                (user-error "You cannot change major mode in vterm buffers")) nil t)
@@ -483,8 +502,8 @@ Optional argument RESET clears all the errors."
     (goto-char pt)
     (compilation-next-error-function n reset)))
 
-;; We have many functions defined by vterm-define-key. Later, we will bind some
-;; of the functions. If the following is not evaluated during compilation, the compiler
+;; We have many functions defined by vterm-define-key.  Later, we will bind some
+;; of the functions.  If the following is not evaluated during compilation, the compiler
 ;; will complain that some functions are not defined (eg, vterm-send-C-c)
 (eval-and-compile
   (defmacro vterm-define-key (key)
@@ -594,7 +613,11 @@ Exceptions are defined by `vterm-keymap-exceptions'."
 When `vterm-copy-mode' is enabled, the terminal will not display
 additional output received from the underlying process and will
 behave similarly to buffer in `fundamental-mode'.  This mode is
-typically used to copy text from vterm buffers."
+typically used to copy text from vterm buffers.
+
+A conventient way to exit `vterm-copy-mode' is with
+`vterm-copy-mode-done', which copies the selected text and exit
+`vterm-copy-mode'."
   :group 'vterm
   :lighter " VTermCopy"
   :keymap vterm-copy-mode-map
@@ -620,7 +643,7 @@ will invert `vterm-copy-exclude-prompt' for that call."
   (interactive "P")
   (unless vterm-copy-mode
     (user-error "This command is effective only in vterm-copy-mode"))
-  (unless (region-active-p)
+  (unless (use-region-p)
     (goto-char (vterm--get-beginning-of-line))
     ;; Are we excluding the prompt?
     (if (or (and vterm-copy-exclude-prompt (not arg))
@@ -644,7 +667,7 @@ will invert `vterm-copy-exclude-prompt' for that call."
         (vterm-send-key key shift meta ctrl)))))
 
 (defun vterm-send-key (key &optional shift meta ctrl)
-  "Sends KEY to libvterm with optional modifiers SHIFT, META and CTRL."
+  "Send KEY to libvterm with optional modifiers SHIFT, META and CTRL."
   (when vterm--term
     (let ((inhibit-redisplay t)
           (inhibit-read-only t))
@@ -654,7 +677,7 @@ will invert `vterm-copy-exclude-prompt' for that call."
       (setq vterm--redraw-immididately t))))
 
 (defun vterm-send (key)
-  "Sends KEY to libvterm.  KEY can be anything `kbd' understands."
+  "Send KEY to libvterm.  KEY can be anything `kbd' understands."
   (let* ((event (listify-key-sequence (kbd key)))
          (modifiers (event-modifiers event))
          (base (event-basic-type event)))
@@ -1080,7 +1103,7 @@ in README."
 (defun vterm-next-prompt (n)
   "Move to end of Nth next prompt in the buffer."
   (interactive "p")
-  (if (and vterm-use-vterm-prompt
+  (if (and vterm-use-vterm-prompt-detection-method
            (vterm--prompt-tracking-enabled-p))
       (let ((pt (point))
             (promp-pt (vterm--get-prompt-point)))
@@ -1093,7 +1116,7 @@ in README."
 (defun vterm-previous-prompt (n)
   "Move to end of Nth previous prompt in the buffer."
   (interactive "p")
-  (if (and vterm-use-vterm-prompt
+  (if (and vterm-use-vterm-prompt-detection-method
            (vterm--prompt-tracking-enabled-p))
       (let ((pt (point))
             (prompt-pt (vterm--get-prompt-point)))
@@ -1134,7 +1157,7 @@ More information see `vterm--prompt-tracking-enabled-p' and
   (let ((end-point (vterm--get-end-of-line))
         prompt-point)
     (save-excursion
-      (if (and vterm-use-vterm-prompt
+      (if (and vterm-use-vterm-prompt-detection-method
                (vterm--prompt-tracking-enabled-p))
           (if (get-text-property end-point 'vterm-prompt)
               end-point
