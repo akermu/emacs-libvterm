@@ -1,4 +1,4 @@
-;;; vterm.el --- This package implements a terminal via libvterm -*- lexical-binding: t; -*-
+;;; vterm.el --- Fully-featured terminal emulator -*- lexical-binding: t; -*-
 
 ;; Copyright (C) 2017-2020 by Lukas Fürmetz & Contributors
 ;;
