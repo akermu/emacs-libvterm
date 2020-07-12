@@ -300,12 +300,24 @@ rendered as normal ones."
   :group 'vterm)
 
 (defcustom vterm-copy-exclude-prompt t
-  "When not nil the prompt is not included by `vterm-copy-mode-done'."
+  "When not-nil, the prompt is not included by `vterm-copy-mode-done'."
   :type 'boolean
   :group 'vterm)
 
 (defcustom vterm-use-vterm-prompt-detection-method t
-  "Should we use the vterm prompt tracker or the search from `term-prompt-regexp'?"
+  "When not-nil, the prompt is detected through the shell.
+
+Vterm needs to know where the shell prompt is to enable all the
+available features.  There are two supported ways to do this.
+First, the shell can inform vterm on the location of the prompt.
+This requires shell-side configuration: the escape code 51;A is
+used to set the current directory and prompt location.  This
+detection method is the most-reliable.  To use it, you have
+to change your shell prompt to print 51;A.
+
+The second method is using a regular expression. This method does
+not require any shell-side configuration. See
+`term-prompt-regexp', for more information."
   :type 'boolean
   :group 'vterm)
 

@@ -38,15 +38,16 @@ For the long answer, let us discuss the differences between `eshell`, `shell`,
   directly manipulate the output using escape codes. Hence, many interactive
   applications (like the one aforementioned) work with `term`. However, `term`
   and `ansi-term` do not implement all the escapes codes needed, so some
-  programs do not work properly. Moreover, `term` has performance inferior
+  programs do not work properly. Moreover, `term` has inferior performance
   compared to standalone terminals, especially with large bursts of output.
 - `vterm`: like `term` it is a terminal emulator. Unlike `term`, the core of
   `vterm` is an external library written in C, `libvterm`. For this reason,
   `vterm` outperforms `term` and has a nearly universal compatibility with
   terminal applications.
 
-Therefore, vterm is not for you if you are using Windows, or if you cannot set
-up Emacs with support for modules.
+Vterm is not for you if you are using Windows, or if you cannot set up Emacs
+with support for modules. Otherwise, you should try vterm, as it provides a
+superior terminal experience in Emacs.
 
 Using `vterm` is like using Gnome Terminal inside Emacs: Vterm is fully-featured
 and fast, but is not as well integrated in Emacs as `eshell` (yet), so some of
