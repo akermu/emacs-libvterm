@@ -26,7 +26,7 @@ command-line tools.
 For the long answer, let us discuss the differences between `eshell`, `shell`,
 `term` and `vterm`:
 - `eshell`: it is a shell completely implemented in Emacs Lisp. It is
-  well-integrated in Emacs and it runs on Windows. It does not command line
+  well-integrated in Emacs and it runs on Windows. It does not support command line
   tools that require terminal manipulation capabilities (e.g., `ncdu`, `nmtui`,
   ...).
 - `shell`: it interfaces with a standard shell (e.g., `bash`). It reads an input
