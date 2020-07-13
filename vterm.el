@@ -1141,7 +1141,7 @@ More information see `vterm--prompt-tracking-enabled-p' and
             (setq prompt-point (previous-single-property-change end-point 'vterm-prompt))
             (when prompt-point (setq prompt-point (1- prompt-point))))
         (goto-char end-point)
-        (if (search-backward-regexp term-prompt-regexp)
+        (if (search-backward-regexp term-prompt-regexp nil t)
             (goto-char (match-end 0))
           (vterm--get-beginning-of-line))))))
 
