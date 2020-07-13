@@ -18,7 +18,7 @@ low-level operations, hence, bugs can lead to segmentation faults and crashes.
 If that happens, please [report the
 problem](https://github.com/akermu/emacs-libvterm/issues/new).
 
-# Given that eshell, shell, and (ansi-)term are Emacs built-in, why should I use vterm?
+## Given that eshell, shell, and (ansi-)term are Emacs built-in, why should I use vterm?
 
 The short answer is: unparalleled performance and compatibility with standard
 command-line tools.
