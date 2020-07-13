@@ -14,9 +14,47 @@ as a daily-driver, it is currently in **alpha** stage. This means that
 occasionally the public interface will change (for example names of options or
 functions). A list of recent breaking changes is in
 [appendix](#breaking-changes). Moreover, emacs-libvterm deals directly with some
-low-level operations, hence, bugs in the code can lead to segmentation faults
-and crashes. If that happens, please [report the
+low-level operations, hence, bugs can lead to segmentation faults and crashes.
+If that happens, please [report the
 problem](https://github.com/akermu/emacs-libvterm/issues/new).
+
+# Given that eshell, shell, and (ansi-)term are Emacs built-in, why should I use vterm?
+
+The short answer is: unparalleled performance and compatibility with standard
+command-line tools.
+
+For the long answer, let us discuss the differences between `eshell`, `shell`,
+`term` and `vterm`:
+- `eshell`: it is a shell completely implemented in Emacs Lisp. It is
+  well-integrated in Emacs and it runs on Windows. It does not command line
+  tools that require terminal manipulation capabilities (e.g., `ncdu`, `nmtui`,
+  ...).
+- `shell`: it interfaces with a standard shell (e.g., `bash`). It reads an input
+  from Emacs, sends it to the shell, and reports back the output from the shell.
+  As such, like `eshell`, it does not support interactive commands, especially
+  those that directly handle how the output should be displayed (e.g., `htop`).
+- `term`: it is a terminal emulator written in elisp. `term` runs a shell
+  (similarly to other terminal emulators like Gnome Terminal) and programs can
+  directly manipulate the output using escape codes. Hence, many interactive
+  applications (like the one aforementioned) work with `term`. However, `term`
+  and `ansi-term` do not implement all the escapes codes needed, so some
+  programs do not work properly. Moreover, `term` has inferior performance
+  compared to standalone terminals, especially with large bursts of output.
+- `vterm`: like `term` it is a terminal emulator. Unlike `term`, the core of
+  `vterm` is an external library written in C, `libvterm`. For this reason,
+  `vterm` outperforms `term` and has a nearly universal compatibility with
+  terminal applications.
+
+Vterm is not for you if you are using Windows, or if you cannot set up Emacs
+with support for modules. Otherwise, you should try vterm, as it provides a
+superior terminal experience in Emacs.
+
+Using `vterm` is like using Gnome Terminal inside Emacs: Vterm is fully-featured
+and fast, but is not as well integrated in Emacs as `eshell` (yet), so some of
+the editing keybinding you are used to using may not work. For example,
+`evil-mode` is currently not supported (though, users can enable VI emulation in
+their shells). This is because keys are sent directly to the shell. We are
+constantly working to improve this.
 
 # Installation
 
@@ -258,8 +296,9 @@ rendering of colors in some systems.
 
 ## `vterm-kill-buffer-on-exit`
 
-If set to `t`, buffers are killed when the associated process is terminated
-(for example, by logging out the shell).
+If set to `t`, buffers are killed when the associated process is terminated (for
+example, by logging out the shell). Keeping buffers around it is useful if you
+need to copy or manipulate the content.
 
 ## `vterm-module-cmake-args`
 
@@ -274,11 +313,14 @@ available with `cmake -LA` in the build directory.
 Controls whether or not to exclude the prompt when copying a line in
 `vterm-copy-mode`. Using the universal prefix before calling
 `vterm-copy-mode-done` will invert the value for that call, allowing you to
-temporarily override the setting.
+temporarily override the setting. When a prompt is not found, the whole line is
+copied.
 
-The variable `vterm-copy-use-vterm-prompt` determines whether to use the vterm
-prompt tracking, if false it use the regexp in `vterm-copy-prompt-regexp` to
-search for the prompt. If not found, it copies the whole line.
+## `vterm-use-vterm-prompt-detection-method`
+
+The variable `vterm-use-vterm-prompt-detection-method` determines whether to use
+the vterm prompt tracking, if false it use the regexp in
+`vterm-copy-prompt-regexp` to search for the prompt.
 
 ## `vterm-buffer-name-string`
 
@@ -502,6 +544,16 @@ open_file_below ~/Documents
 
 ## Frequently Asked Questions and Problems
 
+### How can I increase the size of the scrollback?
+
+By default, the scrollback can contain up to 1000 lines per each vterm buffer.
+You can increase this up to 100000 by changing the variable
+`vterm-max-scrollback`. If you want to increase it further, you have to edit the
+file `vterm-module.h`, change the variable `SB_MAX`, and set the new value for
+`vterm-max-scrollback`. The potential maximum memory consumption of vterm
+buffers increases with `vterm-max-scrollback`, so setting `SB_MAX` to extreme
+values may lead to system instabilities and crashes.
+ 
 ### How can I automatically close vterm buffers when the process is terminated?
 
 There is an option for that: set `vterm-kill-buffer-on-exit` to `t`.
@@ -564,7 +616,21 @@ A possible application of this function is in combination with `find-file`:
 ```
 This method does not work on remote machines.
 
+### When evil-mode is enabled, the cursor moves back in normal state, and this messes directory tracking
 
+`evil-collection` provides a solution for this problem. If you do not want to
+use `evil-collection`, you can add the following code:
+```emacs-lisp
+(defun evil-collection-vterm-escape-stay ()
+  "Go back to normal state but don't move cursor backwards.
+Moving cursor backwards is the default vim behavior but
+it is not appropriate in some cases like terminals."
+  (setq-local evil-move-cursor-back nil))
+
+(add-hook 'vterm-mode-hook #'evil-collection-vterm-escape-stay)
+```
+
+  
 ## Related packages
 
 - [vterm-toggle](https://github.com/jixiuf/vterm-toggle): Toggles between a
@@ -574,6 +640,15 @@ This method does not work on remote machines.
 ## Appendix
 
 ### Breaking changes
+
+Obsolete variables will be removed in version 0.1.
+
+#### July 2020
+
+* `vterm-use-vterm-prompt` was renamed to `vterm-use-vterm-prompt-detection-method`.
+* `vterm-kill-buffer-on-exit` is set to `t` by default.
+
+#### April 2020
 
 * `vterm-clear-scrollback` was renamed to `vterm-clear-scrollback-when-clearning`.
 * `vterm-set-title-functions` was removed. In its place, there is a new custom
