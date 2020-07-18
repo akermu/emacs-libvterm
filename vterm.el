@@ -104,7 +104,7 @@ the executable."
   (when (vterm-module--cmake-is-available)
     (let* ((vterm-directory
             (shell-quote-argument
-             (file-name-directory (locate-library "vterm"))))
+             (file-name-directory (find-library-name "vterm"))))
            (make-commands
             (concat
              "cd " vterm-directory "; \
