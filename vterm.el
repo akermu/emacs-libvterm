@@ -708,13 +708,35 @@ will invert `vterm-copy-exclude-prompt' for that call."
   (interactive)
   (vterm-send-key "<stop>"))
 
+(defvar vterm-history-save t)
+(defvar vterm-history-file "~/.emacs.d/vterm_history")
+
 (defun vterm-send-return ()
   "Send `C-m' to the libvterm."
   (interactive)
   (when vterm--term
+    (when (and vterm-history-save (not process-running-child-p))
+      (let* ((beg (vterm--get-prompt-point))
+             (end (vterm--get-end-of-line))
+             (string (string-trim (buffer-substring-no-properties beg end)))
+             (file vterm-history))
+        (write-region (concat string "\n") nil file t 0)))
     (if (vterm--get-icrnl vterm--term)
         (process-send-string vterm--process "\C-j")
       (process-send-string vterm--process "\C-m"))))
+
+(defun vterm-history ()
+  (interactive)
+  (completing-read "Command: "
+                   (with-current-buffer
+                       (find-file-noselect vterm-history-file)
+                     (split-string
+                      (save-restriction
+                        (widen)
+                        (buffer-substring-no-properties
+                         (point-min)
+                         (point-max)))
+                      "\n" t))))
 
 (defun vterm-send-tab ()
   "Send `<tab>' to the libvterm."
