@@ -1142,6 +1142,14 @@ emacs_value Fvterm_get_pwd(emacs_env *env, ptrdiff_t nargs, emacs_value args[],
   Term *term = env->get_user_ptr(env, args[0]);
   int linenum = env->extract_integer(env, args[1]);
   int row = linenr_to_row(term, linenum);
+  if (row < 1) {
+    /* temporary workaround for
+       https://github.com/akermu/emacs-libvterm/issues/316
+       remove when fixed
+    */
+    fprintf(stderr, "invalid row %d normalized to 1\n", row);
+    row = 1;
+  }
   char *dir = get_row_directory(term, row);
 
   return dir ? env->make_string(env, dir, strlen(dir)) : Qnil;
