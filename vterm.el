@@ -97,7 +97,7 @@ the executable."
     (error "Vterm needs CMake to be compiled.  Please, install CMake"))
   t)
 
-(declare-function find-library-name "find-func")
+(autoload 'find-library-name "find-func")
 ;;;###autoload
 (defun vterm-module-compile ()
   "Compile vterm-module."
