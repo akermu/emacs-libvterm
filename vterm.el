@@ -97,7 +97,6 @@ the executable."
     (error "Vterm needs CMake to be compiled.  Please, install CMake"))
   t)
 
-(autoload 'find-library-name "find-func")
 ;;;###autoload
 (defun vterm-module-compile ()
   "Compile vterm-module."
@@ -105,7 +104,7 @@ the executable."
   (when (vterm-module--cmake-is-available)
     (let* ((vterm-directory
             (shell-quote-argument
-             (file-name-directory (find-library-name "vterm"))))
+             (file-name-directory (locate-library "vterm.el" t))))
            (make-commands
             (concat
              "cd " vterm-directory "; \
