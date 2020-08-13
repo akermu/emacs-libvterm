@@ -438,6 +438,112 @@ Improves performance when receiving large bursts of data.
 If nil, never delay.
 The units are seconds.")
 
+;;; Keybindings
+
+;; We have many functions defined by vterm-define-key.  Later, we will bind some
+;; of the functions.  If the following is not evaluated during compilation, the compiler
+;; will complain that some functions are not defined (eg, vterm-send-C-c)
+(eval-and-compile
+  (defmacro vterm-define-key (key)
+    "Define a command that sends KEY with modifiers C and M to vterm."
+    (declare (indent defun)
+             (doc-string 3))
+    `(defun ,(intern (format "vterm-send-%s" key))()
+       ,(format "Sends %s to the libvterm."  key)
+       (interactive)
+       (vterm-send-key ,(char-to-string (get-byte (1- (length key)) key)) nil
+                       ,(string-prefix-p "M-" key)
+                       ,(string-prefix-p "C-" key))))
+
+  (mapc (lambda (key)
+          (eval `(vterm-define-key ,key)))
+        (cl-loop for prefix in '("C-" "M-")
+                 append (cl-loop for char from ?a to ?z
+                                 for key = (format "%s%c" prefix char)
+                                 collect key))))
+
+;; Function keys and most of C- and M- bindings
+(defun vterm--exclude-keys (map exceptions)
+  "Remove EXCEPTIONS from the keys bound by `vterm-bind-keys'.
+
+Exceptions are defined by `vterm-keymap-exceptions'."
+  (mapc (lambda (key)
+          (define-key map (kbd key) nil))
+        exceptions)
+  (mapc (lambda (key)
+          (define-key map (kbd key) #'vterm--self-insert))
+        (cl-loop for number from 1 to 12
+                 for key = (format "<f%i>" number)
+                 unless (member key exceptions)
+                 collect key))
+  (mapc (lambda (key)
+          (define-key map (kbd key)
+            (intern (format "vterm-send-%s" key))))
+        (cl-loop for prefix in '("C-" "M-")
+                 append (cl-loop for char from ?a to ?z
+                                 for key = (format "%s%c" prefix char)
+                                 unless (member key exceptions)
+                                 collect key))))
+
+(defvar vterm-mode-map
+  (let ((map (make-sparse-keymap)))
+    (vterm--exclude-keys map vterm-keymap-exceptions)
+    (define-key map (kbd "M-<")                 #'vterm--self-insert)
+    (define-key map (kbd "M->")                 #'vterm--self-insert)
+    (define-key map [tab]                       #'vterm-send-tab)
+    (define-key map (kbd "TAB")                 #'vterm-send-tab)
+    (define-key map [backtab]                   #'vterm--self-insert)
+    (define-key map [backspace]                 #'vterm-send-backspace)
+    (define-key map (kbd "DEL")                 #'vterm-send-backspace)
+    (define-key map [delete]                    #'vterm-send-delete)
+    (define-key map [M-backspace]               #'vterm-send-meta-backspace)
+    (define-key map (kbd "M-DEL")               #'vterm-send-meta-backspace)
+    (define-key map [return]                    #'vterm-send-return)
+    (define-key map (kbd "RET")                 #'vterm-send-return)
+    (define-key map [left]                      #'vterm-send-left)
+    (define-key map [right]                     #'vterm-send-right)
+    (define-key map [up]                        #'vterm-send-up)
+    (define-key map [down]                      #'vterm-send-down)
+    (define-key map [prior]                     #'vterm-send-prior)
+    (define-key map [next]                      #'vterm-send-next)
+    (define-key map [home]                      #'vterm--self-insert)
+    (define-key map [end]                       #'vterm--self-insert)
+    (define-key map [escape]                    #'vterm--self-insert)
+    (define-key map [remap yank]                #'vterm-yank)
+    (define-key map [remap yank-pop]            #'vterm-yank-pop)
+    (define-key map [remap mouse-yank-primary]  #'vterm-yank-primary)
+    (define-key map (kbd "C-SPC")               #'vterm--self-insert)
+    (define-key map (kbd "S-SPC")               #'vterm-send-space)
+    (define-key map (kbd "C-_")                 #'vterm--self-insert)
+    (define-key map (kbd "C-/")                 #'vterm-undo)
+    (define-key map (kbd "M-.")                 #'vterm-send-meta-dot)
+    (define-key map (kbd "M-,")                 #'vterm-send-meta-comma)
+    (define-key map (kbd "C-c C-y")             #'vterm--self-insert)
+    (define-key map (kbd "C-c C-c")             #'vterm-send-C-c)
+    (define-key map (kbd "C-c C-l")             #'vterm-clear-scrollback)
+    (define-key map (kbd "C-l")                 #'vterm-clear)
+    (define-key map (kbd "C-\\")                #'vterm-send-ctrl-slash)
+    (define-key map (kbd "C-c C-g")             #'vterm-send-C-g)
+    (define-key map (kbd "C-c C-u")             #'vterm-send-C-u)
+    (define-key map [remap self-insert-command] #'vterm--self-insert)
+    (define-key map (kbd "C-c C-r")             #'vterm-reset-cursor-point)
+    (define-key map (kbd "C-c C-n")             #'vterm-next-prompt)
+    (define-key map (kbd "C-c C-p")             #'vterm-previous-prompt)
+    (define-key map (kbd "C-c C-t")             #'vterm-copy-mode)
+    map))
+
+(defvar vterm-copy-mode-map
+  (let ((map (make-sparse-keymap)))
+    (define-key map (kbd "C-c C-t")        #'vterm-copy-mode)
+    (define-key map [return]               #'vterm-copy-mode-done)
+    (define-key map (kbd "RET")            #'vterm-copy-mode-done)
+    (define-key map (kbd "C-c C-r")        #'vterm-reset-cursor-point)
+    (define-key map (kbd "C-a")            #'vterm-beginning-of-line)
+    (define-key map (kbd "C-e")            #'vterm-end-of-line)
+    (define-key map (kbd "C-c C-n")        #'vterm-next-prompt)
+    (define-key map (kbd "C-c C-p")        #'vterm-previous-prompt)
+    map))
+
 ;;; Mode
 
 (define-derived-mode vterm-mode fundamental-mode "VTerm"
@@ -528,110 +634,6 @@ Optional argument RESET clears all the errors."
       (setq default-directory pwd))
     (goto-char pt)
     (compilation-next-error-function n reset)))
-
-;;; Keybindings
-
-;; We have many functions defined by vterm-define-key.  Later, we will bind some
-;; of the functions.  If the following is not evaluated during compilation, the compiler
-;; will complain that some functions are not defined (eg, vterm-send-C-c)
-(eval-and-compile
-  (defmacro vterm-define-key (key)
-    "Define a command that sends KEY with modifiers C and M to vterm."
-    (declare (indent defun)
-             (doc-string 3))
-    `(defun ,(intern (format "vterm-send-%s" key))()
-       ,(format "Sends %s to the libvterm."  key)
-       (interactive)
-       (vterm-send-key ,(char-to-string (get-byte (1- (length key)) key)) nil
-                       ,(string-prefix-p "M-" key)
-                       ,(string-prefix-p "C-" key))))
-
-  (mapc (lambda (key)
-          (eval `(vterm-define-key ,key)))
-        (cl-loop for prefix in '("C-" "M-")
-                 append (cl-loop for char from ?a to ?z
-                                 for key = (format "%s%c" prefix char)
-                                 collect key))))
-
-;; Function keys and most of C- and M- bindings
-(defun vterm--exclude-keys (exceptions)
-  "Remove EXCEPTIONS from the keys bound by `vterm-bind-keys'.
-
-Exceptions are defined by `vterm-keymap-exceptions'."
-  (mapc (lambda (key)
-          (define-key vterm-mode-map (kbd key) nil))
-        exceptions)
-  (mapc (lambda (key)
-          (define-key vterm-mode-map (kbd key) #'vterm--self-insert))
-        (cl-loop for number from 1 to 12
-                 for key = (format "<f%i>" number)
-                 unless (member key exceptions)
-                 collect key))
-  (mapc (lambda (key)
-          (define-key vterm-mode-map (kbd key)
-            (intern (format "vterm-send-%s" key))))
-        (cl-loop for prefix in '("C-" "M-")
-                 append (cl-loop for char from ?a to ?z
-                                 for key = (format "%s%c" prefix char)
-                                 unless (member key exceptions)
-                                 collect key))))
-
-(vterm--exclude-keys vterm-keymap-exceptions)
-
-(define-key vterm-mode-map (kbd "M-<")                 #'vterm--self-insert)
-(define-key vterm-mode-map (kbd "M->")                 #'vterm--self-insert)
-(define-key vterm-mode-map [tab]                       #'vterm-send-tab)
-(define-key vterm-mode-map (kbd "TAB")                 #'vterm-send-tab)
-(define-key vterm-mode-map [backtab]                   #'vterm--self-insert)
-(define-key vterm-mode-map [backspace]                 #'vterm-send-backspace)
-(define-key vterm-mode-map (kbd "DEL")                 #'vterm-send-backspace)
-(define-key vterm-mode-map [delete]                    #'vterm-send-delete)
-(define-key vterm-mode-map [M-backspace]               #'vterm-send-meta-backspace)
-(define-key vterm-mode-map (kbd "M-DEL")               #'vterm-send-meta-backspace)
-(define-key vterm-mode-map [return]                    #'vterm-send-return)
-(define-key vterm-mode-map (kbd "RET")                 #'vterm-send-return)
-(define-key vterm-mode-map [left]                      #'vterm-send-left)
-(define-key vterm-mode-map [right]                     #'vterm-send-right)
-(define-key vterm-mode-map [up]                        #'vterm-send-up)
-(define-key vterm-mode-map [down]                      #'vterm-send-down)
-(define-key vterm-mode-map [prior]                     #'vterm-send-prior)
-(define-key vterm-mode-map [next]                      #'vterm-send-next)
-(define-key vterm-mode-map [home]                      #'vterm--self-insert)
-(define-key vterm-mode-map [end]                       #'vterm--self-insert)
-(define-key vterm-mode-map [escape]                    #'vterm--self-insert)
-(define-key vterm-mode-map [remap yank]                #'vterm-yank)
-(define-key vterm-mode-map [remap yank-pop]            #'vterm-yank-pop)
-(define-key vterm-mode-map [remap mouse-yank-primary]  #'vterm-yank-primary)
-(define-key vterm-mode-map (kbd "C-SPC")               #'vterm--self-insert)
-(define-key vterm-mode-map (kbd "S-SPC")               #'vterm-send-space)
-(define-key vterm-mode-map (kbd "C-_")                 #'vterm--self-insert)
-(define-key vterm-mode-map (kbd "C-/")                 #'vterm-undo)
-(define-key vterm-mode-map (kbd "M-.")                 #'vterm-send-meta-dot)
-(define-key vterm-mode-map (kbd "M-,")                 #'vterm-send-meta-comma)
-(define-key vterm-mode-map (kbd "C-c C-y")             #'vterm--self-insert)
-(define-key vterm-mode-map (kbd "C-c C-c")             #'vterm-send-C-c)
-(define-key vterm-mode-map (kbd "C-c C-l")             #'vterm-clear-scrollback)
-(define-key vterm-mode-map (kbd "C-l")                 #'vterm-clear)
-(define-key vterm-mode-map (kbd "C-\\")                #'vterm-send-ctrl-slash)
-(define-key vterm-mode-map (kbd "C-c C-g")             #'vterm-send-C-g)
-(define-key vterm-mode-map (kbd "C-c C-u")             #'vterm-send-C-u)
-(define-key vterm-mode-map [remap self-insert-command] #'vterm--self-insert)
-
-(define-key vterm-mode-map (kbd "C-c C-r")             #'vterm-reset-cursor-point)
-(define-key vterm-mode-map (kbd "C-c C-n")             #'vterm-next-prompt)
-(define-key vterm-mode-map (kbd "C-c C-p")             #'vterm-previous-prompt)
-
-(define-key vterm-mode-map (kbd "C-c C-t")             #'vterm-copy-mode)
-
-(defvar vterm-copy-mode-map (make-sparse-keymap))
-(define-key vterm-copy-mode-map (kbd "C-c C-t")        #'vterm-copy-mode)
-(define-key vterm-copy-mode-map [return]               #'vterm-copy-mode-done)
-(define-key vterm-copy-mode-map (kbd "RET")            #'vterm-copy-mode-done)
-(define-key vterm-copy-mode-map (kbd "C-c C-r")        #'vterm-reset-cursor-point)
-(define-key vterm-copy-mode-map (kbd "C-a")            #'vterm-beginning-of-line)
-(define-key vterm-copy-mode-map (kbd "C-e")            #'vterm-end-of-line)
-(define-key vterm-copy-mode-map (kbd "C-c C-n")        #'vterm-next-prompt)
-(define-key vterm-copy-mode-map (kbd "C-c C-p")        #'vterm-previous-prompt)
 
 ;;; Copy Mode
 
