@@ -60,7 +60,7 @@
   (error "VTerm needs module support.  Please compile Emacs with
   the --with-modules option!"))
 
-;; Compilation of the module
+;;; Compilation of the module
 
 (defcustom vterm-module-cmake-args ""
   "Arguments given to CMake to compile vterm-module.
@@ -135,6 +135,8 @@ the executable."
         (require 'vterm-module))
     (error "Vterm will not work until `vterm-module' is compiled!")))
 
+;;; Dependencies
+
 ;; Silence compiler warnings by informing it of what functions are defined
 (declare-function display-line-numbers-update-width "display-line-numbers")
 
@@ -156,6 +158,8 @@ the executable."
 (require 'color)
 (require 'compile)
 (require 'face-remap)
+
+;;; Options
 
 (defcustom vterm-shell shell-file-name
   "The shell that gets run in the vterm."
@@ -326,6 +330,8 @@ not require any shell-side configuration. See
   :type 'boolean
   :group 'vterm)
 
+;;; Faces
+
 (defface vterm-color-default
   `((t :inherit default))
   "The default normal color and bright color.
@@ -401,6 +407,8 @@ Only foreground is used."
 Only background is used."
   :group 'vterm)
 
+;;; Variables
+
 (defvar vterm-color-palette
   [vterm-color-black
    vterm-color-red
@@ -429,6 +437,8 @@ Only background is used."
 Improves performance when receiving large bursts of data.
 If nil, never delay.
 The units are seconds.")
+
+;;; Mode
 
 (define-derived-mode vterm-mode fundamental-mode "VTerm"
   "Major mode for vterm buffer."
@@ -519,6 +529,8 @@ Optional argument RESET clears all the errors."
     (goto-char pt)
     (compilation-next-error-function n reset)))
 
+;;; Keybindings
+
 ;; We have many functions defined by vterm-define-key.  Later, we will bind some
 ;; of the functions.  If the following is not evaluated during compilation, the compiler
 ;; will complain that some functions are not defined (eg, vterm-send-C-c)
@@ -540,7 +552,6 @@ Optional argument RESET clears all the errors."
                  append (cl-loop for char from ?a to ?z
                                  for key = (format "%s%c" prefix char)
                                  collect key))))
-
 
 ;; Function keys and most of C- and M- bindings
 (defun vterm--exclude-keys (exceptions)
@@ -567,7 +578,6 @@ Exceptions are defined by `vterm-keymap-exceptions'."
 
 (vterm--exclude-keys vterm-keymap-exceptions)
 
-;; Keybindings
 (define-key vterm-mode-map (kbd "M-<")                 #'vterm--self-insert)
 (define-key vterm-mode-map (kbd "M->")                 #'vterm--self-insert)
 (define-key vterm-mode-map [tab]                       #'vterm-send-tab)
@@ -623,6 +633,7 @@ Exceptions are defined by `vterm-keymap-exceptions'."
 (define-key vterm-copy-mode-map (kbd "C-c C-n")        #'vterm-next-prompt)
 (define-key vterm-copy-mode-map (kbd "C-c C-p")        #'vterm-previous-prompt)
 
+;;; Copy Mode
 
 (define-minor-mode vterm-copy-mode
   "Toggle `vterm-copy-mode'.
@@ -671,6 +682,8 @@ will invert `vterm-copy-exclude-prompt' for that call."
     (goto-char (vterm--get-end-of-line)))
   (kill-ring-save (region-beginning) (region-end))
   (vterm-copy-mode -1))
+
+;;; Commands
 
 (defun vterm--self-insert ()
   "Send invoking key to libvterm."
@@ -863,6 +876,8 @@ Optional argument PASTE-P paste-p."
       (vterm--update vterm--term "<end_paste>" nil nil nil)))
   (setq vterm--redraw-immididately t))
 
+;;; Internal
+
 (defun vterm--invalidate ()
   "The terminal buffer is invalidated, the buffer needs redrawing."
   (if (and (not vterm--redraw-immididately)
@@ -906,6 +921,8 @@ Argument BUFFER the terminal buffer."
             (when (cl-member (selected-window) windows :test #'eq)
               (set-window-hscroll (selected-window) 0))))))))
 
+;;; Entry Points
+
 ;;;###autoload
 (defun vterm (&optional buffer-name)
   "Create a new vterm.
@@ -929,6 +946,8 @@ be set to BUFFER-NAME, otherwise it will be `vterm'"
     (with-current-buffer buffer
       (vterm-mode))
     (pop-to-buffer buffer)))
+
+;;; Internal
 
 (defun vterm--flush-output (output)
   "Send the virtual terminal's OUTPUT to the shell."
