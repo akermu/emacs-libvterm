@@ -104,12 +104,7 @@ the executable."
   (when (vterm-module--cmake-is-available)
     (let* ((vterm-directory
             (shell-quote-argument
-             ;; NOTE: This is a workaround to fix an issue with how the Emacs
-             ;; feature/native-comp branch changes the result of
-             ;; `(locate-library "vterm")'. See emacs-devel thread
-             ;; https://lists.gnu.org/archive/html/emacs-devel/2020-07/msg00306.html
-             ;; for a discussion.
-             (file-name-directory (locate-library "vterm.el" t))))
+             (file-name-directory (locate-library "vterm"))))
            (make-commands
             (concat
              "cd " vterm-directory "; \
