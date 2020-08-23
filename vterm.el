@@ -216,7 +216,7 @@ If you use a keybinding with a prefix-key, add that prefix-key to
 this list.  Note that after doing so that prefix-key cannot be sent
 to the terminal anymore.
 
-The mapping is done by the macro `vterm-bind-key', and the
+The mapping is done by the macro `vterm-define-key', and the
 function `vterm--exclude-keys' removes the keybindings defined in
 `vterm-keymap-exceptions'."
   :type '(repeat string)
@@ -464,7 +464,7 @@ The units are seconds.")
 
 ;; Function keys and most of C- and M- bindings
 (defun vterm--exclude-keys (map exceptions)
-  "Remove EXCEPTIONS from the keys bound by `vterm-bind-keys'.
+  "Remove EXCEPTIONS from the keys bound by `vterm-define-keys'.
 
 Exceptions are defined by `vterm-keymap-exceptions'."
   (mapc (lambda (key)
