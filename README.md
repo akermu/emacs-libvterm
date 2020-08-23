@@ -486,6 +486,8 @@ The commands that are understood are defined in the setting `vterm-eval-cmds`.
 As `split-string-and-unquote` is used the parse the passed string, double quotes
 and backslashes need to be escaped via backslash. A convenient shell function to
 automate the substitution is
+
+`bash` or `zsh`:
 ```sh
 vterm_cmd() {
     local vterm_elisp
@@ -497,6 +499,17 @@ vterm_cmd() {
     vterm_printf "51;E$vterm_elisp"
 }
 ```
+`fish`:
+```sh
+function vterm_cmd --description 'Run an emacs command that\'s been defined in vterm-eval-cmds'
+    set -l vterm_elisp ()
+    for arg in $argv
+        set -a vterm_elisp (printf '"%s" ' (string replace -a -r '([\\\\"])' '\\\\\\\\$1' $arg))
+    end
+    vterm_printf '51;E'(string join '' $vterm_elisp)
+end
+```
+
 Now we can write shell functions to call the ones defined in `vterm-eval-cmds`.
 
 ```sh
