@@ -919,6 +919,7 @@ void term_finalize(void *object) {
   }
 
   free(term->sb_buffer);
+  free(term->lines);
   vterm_free(term->vt);
   free(term);
 }
