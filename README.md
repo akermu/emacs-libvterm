@@ -522,7 +522,18 @@ say() {
 }
 ```
 
-This can be used inside `vterm` as
+Or for `fish`:
+```fish
+function find_file
+    vterm_cmd find-file (realpath "$argv")
+end
+
+function say
+    vterm_cmd message "%s" "$argv"
+end
+```
+
+This newly defined `find_file` function can now be used inside `vterm` as
 
 ```sh
 find_file name_of_file_in_local_directory
