@@ -434,9 +434,8 @@ Only background is used."
 (defvar vterm-timer-delay 0.1
   "Delay for refreshing the buffer after receiving updates from libvterm.
 
-Improves performance when receiving large bursts of data.
-If nil, never delay.
-The units are seconds.")
+A larger delary improves performance when receiving large bursts
+of data.  If nil, never delay.  The units are seconds.")
 
 ;;; Keybindings
 
@@ -588,7 +587,7 @@ Exceptions are defined by `vterm-keymap-exceptions'."
            :connection-type 'pty
            :filter #'vterm--filter
            ;; The sentinel is needed if there are exit functions or if
-           ;; vterm-kill-buffer-on-exit is set to t. In this latter case,
+           ;; vterm-kill-buffer-on-exit is set to t.  In this latter case,
            ;; vterm--sentinel will kill the buffer
            :sentinel (when (or vterm-exit-functions
                                vterm-kill-buffer-on-exit)

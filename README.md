@@ -177,9 +177,9 @@ The package can be installed with `guix package -i emacs-vterm`.
 
 ## Shell-side configuration
 
-Some of the most useful features in `vterm` (e.g.,
-[directory-tracking and prompt-tracking](#directory-tracking-and-prompt-tracking) or
-[message passing](#message-passing)) require shell-side configurations. The main goal of
+Some of the most useful features in `vterm` (e.g., [directory-tracking and
+prompt-tracking](#directory-tracking-and-prompt-tracking) or [message
+passing](#message-passing)) require shell-side configurations. The main goal of
 these additional functions is to enable the shell to send information to `vterm`
 via properly escaped sequences. A function that helps in this task,
 `vterm_printf`, is defined below. This function is widely used throughout this

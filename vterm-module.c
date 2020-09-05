@@ -1250,7 +1250,7 @@ int emacs_module_init(struct emacs_runtime *ert) {
   // Exported functions
   emacs_value fun;
   fun =
-      env->make_function(env, 4, 6, Fvterm_new, "Allocates a new vterm.", NULL);
+      env->make_function(env, 4, 6, Fvterm_new, "Allocate a new vterm.", NULL);
   bind_function(env, "vterm--new", fun);
 
   fun = env->make_function(env, 1, 5, Fvterm_update,
@@ -1266,11 +1266,11 @@ int emacs_module_init(struct emacs_runtime *ert) {
   bind_function(env, "vterm--write-input", fun);
 
   fun = env->make_function(env, 3, 3, Fvterm_set_size,
-                           "Sets the size of the terminal.", NULL);
+                           "Set the size of the terminal.", NULL);
   bind_function(env, "vterm--set-size", fun);
 
   fun = env->make_function(env, 2, 2, Fvterm_set_pty_name,
-                           "Sets the name of the pty.", NULL);
+                           "Set the name of the pty.", NULL);
   bind_function(env, "vterm--set-pty-name", fun);
   fun = env->make_function(env, 2, 2, Fvterm_get_pwd,
                            "Get the working directory of at line n.", NULL);
@@ -1280,7 +1280,7 @@ int emacs_module_init(struct emacs_runtime *ert) {
   bind_function(env, "vterm--reset-point", fun);
 
   fun = env->make_function(env, 1, 1, Fvterm_get_icrnl,
-                           "Gets the icrnl state of the pty", NULL);
+                           "Get the icrnl state of the pty", NULL);
   bind_function(env, "vterm--get-icrnl", fun);
 
   provide(env, "vterm-module");
