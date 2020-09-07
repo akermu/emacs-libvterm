@@ -52,4 +52,6 @@ vterm_prompt_end() {
     vterm_printf "51;A$(whoami)@$(hostname):$(pwd)";
 }
 setopt PROMPT_SUBST
-PROMPT=$PROMPT'%{$(vterm_prompt_end)%}'
+if [[ "$INSIDE_EMACS" = 'vterm' ]]; then
+    PROMPT=$PROMPT'%{$(vterm_prompt_end)%}'
+fi

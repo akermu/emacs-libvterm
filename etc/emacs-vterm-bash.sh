@@ -53,4 +53,6 @@ PROMPT_COMMAND='echo -ne "\033]0;\h:\w\007"'
 vterm_prompt_end(){
     vterm_printf "51;A$(whoami)@$(hostname):$(pwd)"
 }
-PS1=$PS1'\[$(vterm_prompt_end)\]'
+if [[ "$INSIDE_EMACS" = 'vterm' ]]; then
+    PS1=$PS1'\[$(vterm_prompt_end)\]'
+fi
