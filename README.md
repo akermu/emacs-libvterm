@@ -657,21 +657,60 @@ A possible application of this function is in combination with `find-file`:
 ```
 This method does not work on remote machines.
 
+### How can I get the directory tracking in a more understandable way?
+
+If you looked at the reccomended way to set-up directory tracking, you will have
+noticed that it requires printing obscure code like `\e]2;%m:%2~\a` (unless you
+are using `fish`).
+
+There is another way to achieve this behavior. Define a shell function, on a
+local host you can simply use
+
+``` sh
+vterm_set_directory() {
+    vterm_cmd update-pwd "$PWD/"
+}
+```
+On a remote one, use instead
+``` sh
+vterm_set_directory() {
+    vterm_cmd update-pwd "/-:""$USER""@""$HOSTNAME"":""$PWD/"
+}
+```
+Then, for `zsh`, add this function to the `chpwd` hook:
+
+``` sh
+autoload -U add-zsh-hook
+add-zsh-hook -Uz chpwd (){ vterm_set_directory }
+```
+For `bash`, append it to the prompt:
+
+``` sh
+PROMPT_COMMAND="$PROMPT_COMMAND;vterm_set_directory"
+```
+Finally, add `update-pwd` to the list of commands that Emacs
+is allowed to execute from vterm:
+
+``` emacs-lisp
+(add-to-list 'vterm-eval-cmds '("update-pwd" (lambda (path) (setq default-directory path))))
+```
+
 ### When evil-mode is enabled, the cursor moves back in normal state, and this messes directory tracking
 
 `evil-collection` provides a solution for this problem. If you do not want to
 use `evil-collection`, you can add the following code:
+
 ```emacs-lisp
 (defun evil-collection-vterm-escape-stay ()
-  "Go back to normal state but don't move cursor backwards.
-Moving cursor backwards is the default vim behavior but
-it is not appropriate in some cases like terminals."
-  (setq-local evil-move-cursor-back nil))
+"Go back to normal state but don't move
+cursor backwards. Moving cursor backwards is the default vim behavior but it is
+not appropriate in some cases like terminals."
+(setq-local evil-move-cursor-back nil))
 
 (add-hook 'vterm-mode-hook #'evil-collection-vterm-escape-stay)
 ```
 
-  
+
 ## Related packages
 
 - [vterm-toggle](https://github.com/jixiuf/vterm-toggle): Toggles between a
