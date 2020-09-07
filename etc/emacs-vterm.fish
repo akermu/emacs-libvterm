@@ -34,6 +34,18 @@ function fish_title
     pwd
 end
 
+# With vterm_cmd you can execute Emacs commands directly from the shell.
+# For example, vterm_cmd message "HI" will print "HI".
+# To enable new commands, you have to customize Emacs's variable
+# vterm-eval-cmds.
+function vterm_cmd --description 'Run an Emacs command among the ones defined in vterm-eval-cmds.'
+    set -l vterm_elisp ()
+    for arg in $argv
+        set -a vterm_elisp (printf '"%s" ' (string replace -a -r '([\\\\"])' '\\\\\\\\$1' $arg))
+    end
+    vterm_printf '51;E'(string join '' $vterm_elisp)
+end
+
 # Sync directory and host in the shell with Emacs's current directory.
 # You may need to manually specify the hostname instead of $(hostname) in case
 # $(hostname) does not return the correct string to connect to the server.
@@ -43,7 +55,9 @@ end
 function vterm_prompt_end;
     vterm_printf '51;A'(whoami)'@'(hostname)':'(pwd)
 end
-functions -c fish_prompt vterm_old_fish_prompt
+
+# We are going to add a portion to the prompt, so we copy the old one
+functions --copy fish_prompt vterm_old_fish_prompt
 
 function fish_prompt --description 'Write out the prompt; do not replace this. Instead, put this at end of your file.'
     # Remove the trailing newline from the original prompt. This is done
