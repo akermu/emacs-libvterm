@@ -213,17 +213,11 @@ the point up."
   "Exceptions for `vterm-keymap'.
 
 If you use a keybinding with a prefix-key, add that prefix-key to
-this list.  Note that after doing so that prefix-key cannot be sent
-to the terminal anymore.
-
-The mapping is done by the macro `vterm-define-key', and the
-function `vterm--exclude-keys' removes the keybindings defined in
-`vterm-keymap-exceptions'."
+this list.  Note that after doing so that prefix-key cannot be
+sent to the terminal anymore, and if you have a running vterm
+session, you will need to restart `vterm-mode' in the terminal
+buffer in order to have the exceptions to take effect."
   :type '(repeat string)
-  :set (lambda (sym val)
-         (set sym val)
-         (when (fboundp 'vterm--exclude-keys)
-           (vterm--exclude-keys val)))
   :group 'vterm)
 
 (defcustom vterm-exit-functions nil
@@ -439,54 +433,70 @@ of data.  If nil, never delay.  The units are seconds.")
 
 ;;; Keybindings
 
-;; We have many functions defined by vterm-define-key.  Later, we will bind some
-;; of the functions.  If the following is not evaluated during compilation, the compiler
-;; will complain that some functions are not defined (eg, vterm-send-C-c)
+;; How do we deal with keybindings?
+;;
+;; There are two groups of keybindings: those that are sent to the terminal,
+;; and those that are captured by Emacs.  Most keybindings are in the first
+;; category, with the exceptions defined in the variable
+;; vterm-keymap-exceptions.  We will bind all the keys in the first group with
+;; special functions, and leave the other ones not bound in vterm-mode-map.
+;;
+;; The important functions are: vterm-define-key and vterm--bind-keys.
+;;
+;; The first takes a key with a modifier and creates a function vterm-send-KEY.
+;; For example, if key is C-p, the function will define a new function
+;; vterm-send-C-p that does what it suggests.
+;;
+;; When vterm.el is evaluated, a cl-loop will loop over all the keys with
+;; modifiers in the alphabet and call vterm-define-key.  Note, here we ignore
+;; the exceptions in vterm-keymap-exceptions.  Those are taken care for when
+;; vterm--bind-keys or vterm-mode is called.
+;;
+;; The second function, vterm--bind-keys, assigns:
+;; 1. The <f1-12> keys to vterm--self-insert (so that they are sent to vterm)
+;; 2. All the keys in the alphabet with modifier, except those in
+;; vterm-keymap-exceptions, to the corresponding command defined by
+;; vterm-define-key.
+;; vterm--bind-keys is called when vterm-mode-map is defined.
+;;
+
+;; If the following is not evaluated during compilation, the compiler will
+;; complain that some functions are not defined (eg, vterm-send-C-c)
 (eval-and-compile
   (defmacro vterm-define-key (key)
     "Define a command that sends KEY with modifiers C and M to vterm."
     (declare (indent defun)
              (doc-string 3))
     `(defun ,(intern (format "vterm-send-%s" key))()
-       ,(format "Sends %s to the libvterm."  key)
+       ,(format "Send %s to the libvterm."  key)
        (interactive)
        (vterm-send-key ,(char-to-string (get-byte (1- (length key)) key)) nil
                        ,(string-prefix-p "M-" key)
                        ,(string-prefix-p "C-" key))))
 
-  (mapc (lambda (key)
-          (eval `(vterm-define-key ,key)))
-        (cl-loop for prefix in '("C-" "M-")
-                 append (cl-loop for char from ?a to ?z
-                                 for key = (format "%s%c" prefix char)
-                                 collect key))))
+  (cl-loop for prefix in '("C-" "M-")
+           do (cl-loop for char from ?a to ?z
+                       for key = (format "%s%c" prefix char)
+                       do (eval `(vterm-define-key ,key)))))
 
-;; Function keys and most of C- and M- bindings
-(defun vterm--exclude-keys (map exceptions)
-  "Remove EXCEPTIONS from the keys bound by `vterm-define-keys'.
+(defun vterm--bind-keys (map exceptions)
+  "Bind function keys and keys defined by `vterm-define-key'.
 
-Exceptions are defined by `vterm-keymap-exceptions'."
-  (mapc (lambda (key)
-          (define-key map (kbd key) nil))
-        exceptions)
-  (mapc (lambda (key)
-          (define-key map (kbd key) #'vterm--self-insert))
-        (cl-loop for number from 1 to 12
-                 for key = (format "<f%i>" number)
-                 unless (member key exceptions)
-                 collect key))
-  (mapc (lambda (key)
-          (define-key map (kbd key)
-            (intern (format "vterm-send-%s" key))))
-        (cl-loop for prefix in '("C-" "M-")
-                 append (cl-loop for char from ?a to ?z
-                                 for key = (format "%s%c" prefix char)
-                                 unless (member key exceptions)
-                                 collect key))))
+Bind keys to MAP except for those in EXCEPTIONS."
+  (cl-loop for number from 1 to 12
+           for key = (format "<f%i>" number)
+           unless (member key exceptions)
+           do (define-key map (kbd key) #'vterm--self-insert))
+  (cl-loop for prefix in '("C-" "M-")
+           do (cl-loop for char from ?a to ?z
+                       for key = (format "%s%c" prefix char)
+                       unless (member key exceptions)
+                       do (define-key map (kbd key)
+                            (intern (format "vterm-send-%s" key))))))
 
 (defvar vterm-mode-map
   (let ((map (make-sparse-keymap)))
-    (vterm--exclude-keys map vterm-keymap-exceptions)
+    (vterm--bind-keys map vterm-keymap-exceptions)
     (define-key map (kbd "M-<")                 #'vterm--self-insert)
     (define-key map (kbd "M->")                 #'vterm--self-insert)
     (define-key map [tab]                       #'vterm-send-tab)
@@ -547,6 +557,11 @@ Exceptions are defined by `vterm-keymap-exceptions'."
 
 (define-derived-mode vterm-mode fundamental-mode "VTerm"
   "Major mode for vterm buffer."
+
+  ;; Remove keys in vterm-keymap-exceptions from vterm-mode-map
+  (cl-loop for exception in vterm-keymap-exceptions
+           do (define-key vterm-mode-map (kbd exception) nil))
+
   (buffer-disable-undo)
   (and (boundp 'display-line-numbers)
        (let ((font-height (expt text-scale-mode-step text-scale-mode-amount)))
