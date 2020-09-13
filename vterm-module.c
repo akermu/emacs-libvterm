@@ -232,9 +232,11 @@ static int is_end_of_prompt(Term *term, int end_col, int row, int col) {
   }
   return 0;
 }
-static size_t get_col_offset(Term *term, int row, int end_col) {
+
+static void goto_col(Term *term, emacs_env *env, int row, int end_col) {
   int col = 0;
   size_t offset = 0;
+  size_t beyond_eol = 0;
 
   int height;
   int width;
@@ -250,11 +252,16 @@ static size_t get_col_offset(Term *term, int row, int end_col) {
     } else {
       if (is_eol(term, term->width, row, col)) {
         offset += cell.width;
+        beyond_eol += cell.width;
       }
     }
     col += cell.width;
   }
-  return offset;
+
+  forward_char(env, env->make_integer(env, end_col - offset));
+  emacs_value space = env->make_string(env, " ", 1);
+  for (int i = 0 ; i < beyond_eol ; i += 1)
+    insert(env, space);
 }
 
 static void refresh_lines(Term *term, emacs_env *env, int start_row,
@@ -478,8 +485,7 @@ static void adjust_topline(Term *term, emacs_env *env) {
    */
 
   goto_line(env, pos.row - term->height);
-  size_t offset = get_col_offset(term, pos.row, pos.col);
-  forward_char(env, env->make_integer(env, pos.col - offset));
+  goto_col(term, env, pos.row, pos.col);
 
   emacs_value windows = get_buffer_window_list(env);
   emacs_value swindow = selected_window(env);
@@ -1369,8 +1375,7 @@ emacs_value Fvterm_reset_cursor_point(emacs_env *env, ptrdiff_t nargs,
   Term *term = env->get_user_ptr(env, args[0]);
   int line = row_to_linenr(term, term->cursor.row);
   goto_line(env, line);
-  size_t offset = get_col_offset(term, term->cursor.row, term->cursor.col);
-  forward_char(env, env->make_integer(env, term->cursor.col - offset));
+  goto_col(term, env, term->cursor.row, term->cursor.col);
   return point(env);
 }
 
