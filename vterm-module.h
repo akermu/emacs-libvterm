@@ -38,6 +38,10 @@ enum {
   VTERM_PROP_CURSOR_NOT_VISIBLE = 5,
 };
 
+/*  c , p , q , s , 0 , 1 , 2 , 3 , 4 , 5 , 6 , and 7  */
+/* clipboard, primary, secondary, select, or cut buffers 0 through 7 */
+#define SELECTION_TARGET_MAX 12
+
 typedef struct Cursor {
   int row, col;
   int cursor_type;
@@ -74,6 +78,11 @@ typedef struct Term {
 
   char *elisp_code;
   bool elisp_code_changed;
+
+  /*  c , p , q , s , 0 , 1 , 2 , 3 , 4 , 5 , 6 , and 7  */
+  /* clipboard, primary, secondary, select, or cut buffers 0 through 7 */
+  char selection_target[SELECTION_TARGET_MAX];
+  char *selection_data;
 
   /* the size of dirs almost = window height, value = directory of that line */
   LineInfo **lines;

@@ -331,6 +331,26 @@ The variable `vterm-use-vterm-prompt-detection-method` determines whether to use
 the vterm prompt tracking, if false it use the regexp in
 `vterm-copy-prompt-regexp` to search for the prompt.
 
+## `vterm-enable-manipulate-selection-data-by-osc52`
+
+Vterm support copy text to emacs kill ring and system clipboard by using OSC 52.
+See https://invisible-island.net/xterm/ctlseqs/ctlseqs.html for more info about OSC 52.
+For example: send 'blabla' to kill ring: printf "\033]52;c;$(printf "%s" "blabla" | base64)\a"
+
+tmux can share its copy buffer to terminals bysupporting osc52(like iterm2 xterm),
+you can enable this feature for tmux by :
+set -g set-clipboard on         #osc 52 copy paste share with iterm
+set -ga terminal-overrides ',xterm*:XT:Ms=\E]52;%p1%s;%p2%s\007'
+set -ga terminal-overrides ',screen*:XT:Ms=\E]52;%p1%s;%p2%s\007'
+
+The clipboard querying/clearing functionality offered by OSC 52 is not implemented here,
+And for security reason, this feature is disabled by default."
+
+This feature need the new way of handling strings with a struct `VTermStringFragment`
+in libvterm. You'd better compile emacs-libvterm with `cmake -DUSE_SYSTEM_LIBVTERM=no ..`.
+If you don't do that, when  the content you want to copied is too long, it would be truncated
+by bug of libvterm.
+
 ## `vterm-buffer-name-string`
 
 When `vterm-buffer-name-string` is not nil, vterm renames automatically its own
