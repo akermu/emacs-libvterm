@@ -269,6 +269,22 @@ information on the how to configure the shell."
   :type 'string
   :group 'vterm)
 
+(defcustom vterm-enable-manipulate-selection-data-by-osc52 nil
+  "Support OSC 52 MANIPULATE SELECTION DATA.
+
+Support copy text to emacs kill ring and system clipboard by using OSC 52.
+For example: send base64 encoded 'foo' to kill ring: echo -en '\e]52;c;Zm9v\a',
+tmux can share its copy buffer to terminals by supporting osc52(like iterm2 xterm),
+you can enable this feature for tmux by :
+set -g set-clipboard on         #osc 52 copy paste share with iterm
+set -ga terminal-overrides ',xterm*:XT:Ms=\E]52;%p1%s;%p2%s\007'
+set -ga terminal-overrides ',screen*:XT:Ms=\E]52;%p1%s;%p2%s\007'
+
+The clipboard querying/clearing functionality offered by OSC 52 is not implemented here,
+And for security reason, this feature is disabled by default."
+  :type 'boolean
+  :group 'vterm)
+
 ;; TODO: Improve doc string, it should not point to the readme but it should
 ;;       be self-contained.
 (defcustom vterm-eval-cmds '(("find-file" find-file)
@@ -921,6 +937,31 @@ Argument BUFFER the terminal buffer."
           (unless (zerop (window-hscroll))
             (when (cl-member (selected-window) windows :test #'eq)
               (set-window-hscroll (selected-window) 0))))))))
+
+(defun vterm--selection (targets data)
+  "OSC 52 Manipulate Selection Data.
+Search Manipulate Selection Data in
+ https://invisible-island.net/xterm/ctlseqs/ctlseqs.html ."
+  (when vterm-enable-manipulate-selection-data-by-osc52
+    (unless (or (string-equal data "?")
+                (string-empty-p data))
+      (let ((decoded-data (decode-coding-string
+                           (base64-decode-string data) locale-coding-system))
+            (select-enable-clipboard select-enable-clipboard)
+            (select-enable-primary select-enable-primary))
+        ;; https://invisible-island.net/xterm/ctlseqs/ctlseqs.html
+        ;; c , p , q , s , 0 , 1 , 2 , 3 , 4 , 5 , 6 , and 7
+        ;; clipboard, primary, secondary, select, or cut buffers 0 through 7
+        (unless (string-empty-p targets)
+          (setq select-enable-clipboard nil)
+          (setq select-enable-primary nil))
+        (when (cl-find ?c targets)
+          (setq select-enable-clipboard t))
+        (when (cl-find ?p targets)
+          (setq select-enable-primary t))
+
+        (kill-new decoded-data)
+        (message "kill-ring is updated by vterm OSC 52(Manipulate Selection Data)")))))
 
 ;;; Entry Points
 

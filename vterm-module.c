@@ -578,6 +578,15 @@ static void term_redraw(Term *term, emacs_env *env) {
     free(term->elisp_code);
     term->elisp_code = NULL;
   }
+  if (term->selection_data) {
+    emacs_value selection_target = env->make_string(
+        env, &term->selection_target[0], strlen(&term->selection_target[0]));
+    emacs_value selection_data = env->make_string(env, term->selection_data,
+                                                  strlen(term->selection_data));
+    vterm_selection(env, selection_target, selection_data);
+    free(term->selection_data);
+    term->selection_data = NULL;
+  }
 
   term->is_invalidated = false;
 }
@@ -938,6 +947,10 @@ void term_finalize(void *object) {
     free(term->cmd_buffer);
     term->cmd_buffer = NULL;
   }
+  if (term->selection_data) {
+    free(term->selection_data);
+    term->selection_data = NULL;
+  }
 
   for (int i = 0; i < term->lines_len; i++) {
     if (term->lines[i] != NULL) {
@@ -995,6 +1008,37 @@ static int handle_osc_cmd_51(Term *term, char subCmd, char *buffer) {
   }
   return 0;
 }
+static int handle_osc_cmd_52(Term *term, char *buffer) {
+  /* OSC 52 ; Pc ; Pd BEL */
+  /* Manipulate Selection Data  */
+  /* https://invisible-island.net/xterm/ctlseqs/ctlseqs.html */
+  /* test by printf "\033]52;c;$(printf "%s" "blabla" | base64)\a" */
+
+  for (int i = 0; i < SELECTION_TARGET_MAX; i++) { /* reset Pc */
+    term->selection_target[i] = 0;
+  }
+  int selection_target_idx = 0;
+  size_t cmdlen = strlen(buffer);
+
+  for (int i = 0; i < cmdlen; i++) {
+    /* OSC 52 ; Pc ; Pd BEL */
+    if (buffer[i] == ';') { /* find the second ";" */
+      term->selection_data = malloc(cmdlen - i);
+      strcpy(term->selection_data, &buffer[i + 1]);
+      break;
+    }
+    if (selection_target_idx < SELECTION_TARGET_MAX) {
+      /* c , p , q , s , 0 , 1 , 2 , 3 , 4 , 5 , 6 , and 7 */
+      /* for clipboard, primary, secondary, select, or cut buffers 0 through 7
+       * respectively */
+      term->selection_target[selection_target_idx] = buffer[i];
+      selection_target_idx++;
+    } else { /* len of Pc should not >12 just ignore this cmd,am I wrong? */
+      return 0;
+    }
+  }
+  return 1;
+}
 static int handle_osc_cmd(Term *term, int cmd, char *buffer) {
   if (cmd == 51) {
     char subCmd = '0';
@@ -1002,7 +1046,10 @@ static int handle_osc_cmd(Term *term, int cmd, char *buffer) {
       return 0;
     }
     subCmd = buffer[0];
+    /* ++ skip the subcmd char */
     return handle_osc_cmd_51(term, subCmd, ++buffer);
+  } else if (cmd == 52) {
+    return handle_osc_cmd_52(term, buffer);
   }
   return 0;
 }
@@ -1019,10 +1066,13 @@ static int osc_callback(const char *command, size_t cmdlen, void *user) {
   } else if (cmdlen > 4 && buffer[0] == '5' && buffer[1] == '1' &&
              buffer[2] == ';' && buffer[3] == 'E') {
     return handle_osc_cmd_51(term, 'E', &buffer[4]);
+  } else if (cmdlen > 4 && buffer[0] == '5' && buffer[1] == '2' &&
+             buffer[2] == ';') {
+    /* OSC 52 ; Pc ; Pd BEL */
+    return handle_osc_cmd_52(term, &buffer[3]);
   }
   return 0;
 }
-
 static VTermParserCallbacks parser_callbacks = {
     .text = NULL,
     .control = NULL,
@@ -1042,10 +1092,16 @@ static int osc_callback(int cmd, VTermStringFragment frag, void *user) {
   /* "51;E" executes elisp code */
   /* The elisp code is executed in term_redraw */
 
+  /* "52;[cpqs01234567];data" Manipulate Selection Data */
+  /* I think libvterm has bug ,sometimes when the data is long enough ,the final
+   * fragment is missed */
+  /* printf "\033]52;c;$(printf "%s" $(ruby -e 'print "x"*999999')|base64)\a"
+   */
+
   Term *term = (Term *)user;
 
   if (frag.initial) {
-     /* drop old fragment,because this is a initial fragment */
+    /* drop old fragment,because this is a initial fragment */
     if (term->cmd_buffer) {
       free(term->cmd_buffer);
       term->cmd_buffer = NULL;
@@ -1128,6 +1184,7 @@ emacs_value Fvterm_new(emacs_env *env, ptrdiff_t nargs, emacs_value args[],
   term->directory_changed = false;
   term->elisp_code = NULL;
   term->elisp_code_changed = false;
+  term->selection_data = NULL;
 
   term->cmd_buffer = NULL;
 
@@ -1337,6 +1394,8 @@ int emacs_module_init(struct emacs_runtime *ert) {
   Fvterm_get_color =
       env->make_global_ref(env, env->intern(env, "vterm--get-color"));
   Fvterm_eval = env->make_global_ref(env, env->intern(env, "vterm--eval"));
+  Fvterm_selection =
+      env->make_global_ref(env, env->intern(env, "vterm--selection"));
 
   // Exported functions
   emacs_value fun;
