@@ -548,6 +548,8 @@ This newly defined `find_file` function can now be used inside `vterm` as
 ```sh
 find_file name_of_file_in_local_directory
 ```
+If you call `find_file` without specifying any file (you just execute `find_file` in your shell),
+`dired` will open with the current directory.
 
 As an example, say you like having files opened below the current window. You
 could add the command to do it on the lisp side like so:
