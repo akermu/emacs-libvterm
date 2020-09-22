@@ -171,6 +171,7 @@ In Ubuntu 20.04 CMake (v3.16.3-1ubuntu1) and Libtool can be installed with
 ```sh
 sudo apt install cmake
 sudo apt install libtool
+sudo apt install libtool-bin
 ```
 
 ### 18.04
