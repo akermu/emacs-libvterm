@@ -137,9 +137,46 @@ Or, with `use-package`:
 ```
 
 ## vterm and Ubuntu
-
+### 20.04
 Using `vterm` on Ubuntu requires additional steps. The latest LTS version
-(18.04) ships with a version of CMake that is too old for `vterm` and GNU
+(20.04) ships without CMake installed and GNU Emacs is not compiled with support for dynamical module loading.
+
+
+It is possible to install GNU Emacs with module support from Kevin Kelley's PPA.
+The binary in Ubuntu Emacs Lisp PPA is currently broken and leads to segmentation faults
+(see [#185](https://github.com/akermu/emacs-libvterm/issues/185#issuecomment-562237077)).
+In case Emacs is already on the system, you need to purge it before proceeding:
+
+
+with the following commands.
+```sh
+sudo add-apt-repository ppa:kelleyk/emacs
+sudo apt update
+sudo apt --purge remove emacs
+sudo apt install emacs27
+```
+
+If you get an error about emacs27_common:
+```sh
+Errors were encountered while processing:
+ /tmp/apt-dpkg-install-RVK8CA/064-emacs27-common_27.1~1.git86d8d76aa3-kk2+20.04_all.deb
+```
+run
+```sh
+sudo apt --purge remove emacs-common
+sudo apt --fix-broken install
+```
+
+In Ubuntu 20.04 CMake (v3.16.3-1ubuntu1) and Libtool can be installed with
+```sh
+sudo apt install cmake
+sudo apt install libtool
+```
+
+### 18.04
+
+Using `vterm` on Ubuntu 18.04 requires additional steps.
+18.04 ships with a version of CMake that is too old for `vterm` and GNU
 Emacs is not compiled with support for dynamical module loading.
 
 It is possible to install GNU Emacs with module support from Kevin Kelley's PPA.
@@ -157,6 +194,7 @@ A way to install a recent version of CMake (>= 3.11) is with linuxbrew.
 ```sh
 brew install cmake
 ```
+
 
 In some cases, `/bin/sh` needs to be relinked to `/bin/bash` for the compilation
 to work (see,
