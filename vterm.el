@@ -481,7 +481,7 @@ Only background is used."
 (defvar-local vterm--insert-function (symbol-function #'insert))
 (defvar-local vterm--delete-char-function (symbol-function #'delete-char))
 (defvar-local vterm--delete-region-function (symbol-function #'delete-region))
-
+(defvar-local vterm--undecoded-bytes nil)
 
 (defvar vterm-timer-delay 0.1
   "Delay for refreshing the buffer after receiving updates from libvterm.
@@ -652,6 +652,8 @@ Exceptions are defined by `vterm-keymap-exceptions'."
                                        "LINES"
                                        "COLUMNS")
                                      process-environment))
+        (inhibit-eol-conversion t)
+        (coding-system-for-read 'binary)
         (process-adaptive-read-buffering nil)
         (width (max (- (window-body-width) (vterm--get-margin-width))
                     vterm-min-window-width)))
@@ -1108,7 +1110,8 @@ Search Manipulate Selection Data in
   (when vterm-enable-manipulate-selection-data-by-osc52
     (unless (or (string-equal data "?")
                 (string-empty-p data))
-      (let ((decoded-data (decode-coding-string
+      (let* ((inhibit-eol-conversion t)
+            (decoded-data (decode-coding-string
                            (base64-decode-string data) locale-coding-system))
             (select-enable-clipboard select-enable-clipboard)
             (select-enable-primary select-enable-primary))
@@ -1187,17 +1190,99 @@ value of `vterm-buffer-name'."
 (defun vterm--flush-output (output)
   "Send the virtual terminal's OUTPUT to the shell."
   (process-send-string vterm--process output))
+;; Terminal emulation
+;; This is the standard process filter for term buffers.
+;; It emulates (most of the features of) a VT100/ANSI-style terminal.
+
+;; References:
+;; [ctlseqs]: http://invisible-island.net/xterm/ctlseqs/ctlseqs.html
+;; [ECMA-48]: https://www.ecma-international.org/publications/standards/Ecma-048.htm
+;; [vt100]: https://vt100.net/docs/vt100-ug/chapter3.html
+
+(defconst vterm-control-seq-regexp
+  (concat
+   ;; A control character,
+   "\\(?:[\r\n\000\007\t\b\016\017]\\|"
+   ;; a C1 escape coded character (see [ECMA-48] section 5.3 "Elements
+   ;; of the C1 set"),
+   "\e\\(?:[DM78c]\\|"
+   ;; another Emacs specific control sequence for term.el,
+   "AnSiT[^\n]+\n\\|"
+   ;; another Emacs specific control sequence for vterm.el
+   ;; printf "\e]%s\e\\"
+   "\\][^\e]+\\|"
+   ;; or an escape sequence (section 5.4 "Control Sequences"),
+   "\\[\\([\x30-\x3F]*\\)[\x20-\x2F]*[\x40-\x7E]\\)\\)")
+  "Regexp matching control sequences handled by term.el.")
+
+(defconst vterm-control-seq-prefix-regexp
+  "[\032\e]")
 
 (defun vterm--filter (process input)
   "I/O Event.  Feeds PROCESS's INPUT to the virtual terminal.
 
 Then triggers a redraw from the module."
   (let ((inhibit-redisplay t)
+        (inhibit-eol-conversion t)
         (inhibit-read-only t)
-        (buf (process-buffer process)))
+        (buf (process-buffer process))
+        (i 0)
+        (str-length (length input))
+        decoded-str
+        funny)
     (when (buffer-live-p buf)
       (with-current-buffer buf
-        (vterm--write-input vterm--term input)
+        ;; borrowed from term.el
+        ;; Handle non-control data.  Decode the string before
+        ;; counting characters, to avoid garbling of certain
+        ;; multibyte characters (https://github.com/akermu/emacs-libvterm/issues/394).
+        ;; same bug of term.el https://debbugs.gnu.org/cgi/bugreport.cgi?bug=1006
+        (when vterm--undecoded-bytes
+          (setq input (concat vterm--undecoded-bytes input))
+          (setq vterm--undecoded-bytes nil)
+          (setq str-length (length input)))
+        (while (< i str-length)
+          (setq funny (string-match vterm-control-seq-regexp input i))
+          (let ((ctl-end (if funny (match-end 0)
+                           (setq funny (string-match vterm-control-seq-prefix-regexp input i))
+                           (if funny
+                               (setq vterm--undecoded-bytes
+                                     (substring input funny))
+                             (setq funny str-length))
+                           ;; The control sequence ends somewhere
+                           ;; past the end of this string.
+                           (1+ str-length))))
+            (when (> funny i)
+              ;; Handle non-control data.  Decode the string before
+              ;; counting characters, to avoid garbling of certain
+              ;; multibyte characters (emacs bug#1006).
+              (setq decoded-substring
+                    (decode-coding-string
+                     (substring input i funny)
+                     locale-coding-system t))
+              ;; Check for multibyte characters that ends
+              ;; before end of string, and save it for
+              ;; next time.
+              (when (= funny str-length)
+                (let ((partial 0)
+                      (count (length decoded-substring)))
+                  (while (and (< partial count)
+                              (eq (char-charset (aref decoded-substring
+                                                      (- count 1 partial)))
+                                  'eight-bit))
+                    (cl-incf partial))
+                  (when (> count partial 0)
+                    (setq vterm--undecoded-bytes
+                          (substring decoded-substring (- partial)))
+                    (setq decoded-substring
+                          (substring decoded-substring 0 (- partial)))
+                    (cl-decf str-length partial)
+                    (cl-decf funny partial))))
+              (ignore-errors (vterm--write-input vterm--term decoded-substring))
+              (setq i funny))
+            (when (<= ctl-end str-length)
+              (ignore-errors (vterm--write-input vterm--term (substring input i ctl-end))))
+            (setq i ctl-end)))
         (vterm--update vterm--term)))))
 
 (defun vterm--sentinel (process event)
