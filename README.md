@@ -140,6 +140,11 @@ Or, with `use-package`:
 ### 20.04
 Using `vterm` on Ubuntu requires additional steps. The latest LTS version
 (20.04) ships without CMake installed and Emacs27 is not yet available from Ubuntu's package repository.
+
+The basic steps for getting vterm to work on Ubuntu 20.04 are:
+* Ensure Emacs27 is installed
+* Install cmake, libtool, and libtool-bin
+
 There are a few options for installing Emacs27 on Ubuntu 20.04:
 * Compile Emacs27 from source
 * Install Emacs27 from Snap
@@ -153,7 +158,7 @@ sudo apt --purge remove emacs
 sudo apt autoremove
 ```
 
-#### Install Emacs27 from Kevin Kelley PPA
+#### Installing Emacs27 from Kevin Kelley PPA
 ```sh
 sudo add-apt-repository ppa:kelleyk/emacs
 sudo apt install emacs27
@@ -170,7 +175,7 @@ sudo apt --purge remove emacs-common
 sudo apt --fix-broken install
 ```
 
-#### Or Install Emacs27 from Snap
+#### Installing Emacs27 from Snap
 I hesitate to include SNAP here, because I ran into a number of GTK Theme parsing errors, and Fontconfig errors when I tested it, and reverted to installing from Kevin Kelley's PPA. YMMV
 ```sh
 sudo snap install emacs --classic
