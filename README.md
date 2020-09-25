@@ -139,24 +139,27 @@ Or, with `use-package`:
 ## vterm and Ubuntu
 ### 20.04
 Using `vterm` on Ubuntu requires additional steps. The latest LTS version
-(20.04) ships without CMake installed and GNU Emacs is not compiled with support for dynamical module loading.
+(20.04) ships without CMake installed and Emacs27 is not yet available from Ubuntu's package repository.
+There are a few options for installing Emacs27 on Ubuntu 20.04:
+*Compile Emacs27 from source
+*Install Emacs27 from Snap
+*Install Emacs27 from Kevin Kelley's PPA
 
+In any case, if you have an older Emacs version you will need to purge it before proceeding:
 
-It is possible to install GNU Emacs with module support from Kevin Kelley's PPA.
-The binary in Ubuntu Emacs Lisp PPA is currently broken and leads to segmentation faults
-(see [#185](https://github.com/akermu/emacs-libvterm/issues/185#issuecomment-562237077)).
-In case Emacs is already on the system, you need to purge it before proceeding:
+####Purge Emacs
+```sh
+sudo apt --purge remove emacs
+sudo apt autoremove
+```
 
-
-with the following commands.
+####Install Emacs27 from Kevin Kelley PPA
 ```sh
 sudo add-apt-repository ppa:kelleyk/emacs
-sudo apt update
-sudo apt --purge remove emacs
 sudo apt install emacs27
 ```
 
-If you get an error about emacs27_common:
+#####If you get an error about emacs27_common during the install process:
 ```sh
 Errors were encountered while processing:
  /tmp/apt-dpkg-install-RVK8CA/064-emacs27-common_27.1~1.git86d8d76aa3-kk2+20.04_all.deb
@@ -165,6 +168,12 @@ run
 ```sh
 sudo apt --purge remove emacs-common
 sudo apt --fix-broken install
+```
+
+####Or Install Emacs27 from Snap
+I hesitate to include SNAP here, because I ran into a number of GTK Theme parsing errors, and Fontconfig errors when I tested it, and reverted to installing from Kevin Kelley's PPA. YMMV
+```sh
+sudo snap install emacs --classic
 ```
 
 In Ubuntu 20.04 CMake (v3.16.3-1ubuntu1) and Libtool can be installed with
