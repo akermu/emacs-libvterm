@@ -465,6 +465,9 @@ function fish_prompt --description 'Write out the prompt; do not replace this. I
     vterm_prompt_end
 end
 ```
+Here we are using the function `vterm_printf` that we have discussed above, so make
+sure that this function is defined in your configuration file.
+
 
 Directory tracking works on remote servers too. In case the hostname of your
 remote machine does not match the actual hostname needed to connect to that
