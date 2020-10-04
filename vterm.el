@@ -995,6 +995,11 @@ Argument EVENT process event."
   "Adjust width of window WINDOWS associated to process PROCESS.
 
 `vterm-min-window-width' determines the minimum width allowed."
+  ;; We want `vterm-copy-mode' to resemble a fundamental buffer as much as
+  ;; possible.  Hence, we must not call this function when the minor mode is
+  ;; enabled, otherwise the buffer would be redrawn, messing around with the
+  ;; position of the point.
+  (unless vterm-copy-mode
   (let* ((size (funcall window-adjust-process-window-size-function
                         process windows))
          (width (car size))
@@ -1007,7 +1012,7 @@ Argument EVENT process event."
                (> width 0)
                (> height 0))
       (vterm--set-size vterm--term height width)
-      (cons width height))))
+      (cons width height)))))
 
 (defun vterm--get-margin-width ()
   "Get margin width of vterm buffer when `display-line-numbers-mode' is enabled."
