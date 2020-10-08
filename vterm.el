@@ -558,8 +558,9 @@ Bind keys to MAP except for those in EXCEPTIONS."
 (define-derived-mode vterm-mode fundamental-mode "VTerm"
   "Major mode for vterm buffer."
 
-  ;; Remove keys in vterm-keymap-exceptions from vterm-mode-map
+  ;; Remove keys in vterm-keymap-exceptions from vterm-mode-map unless bound
   (cl-loop for exception in vterm-keymap-exceptions
+           if (null (lookup-key vterm-mode-map exception))
            do (define-key vterm-mode-map (kbd exception) nil))
 
   (buffer-disable-undo)
