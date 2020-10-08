@@ -216,7 +216,11 @@ If you use a keybinding with a prefix-key, add that prefix-key to
 this list.  Note that after doing so that prefix-key cannot be
 sent to the terminal anymore, and if you have a running vterm
 session, you will need to restart `vterm-mode' in the terminal
-buffer in order to have the exceptions to take effect."
+buffer in order to have the exceptions to take effect.
+
+Please note that if a keybinding exists in `vterm-mode-map'
+before a vterm session is launched, adding that binding to this
+variable has no effect."
   :type '(repeat string)
   :group 'vterm)
 

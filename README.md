@@ -298,13 +298,18 @@ Shell to run in a new vterm. It defaults to `$SHELL`.
 
 ## `vterm-keymap-exceptions`
 
-All the keybindings `C-*`, `M-*` are sent to vterm (where `*` is any character),
-except those defined in the list `vterm-keymap-exceptions`. Some of the ones
-excluded by default are `C-x` or `M-x`, which are captured by Emacs instead.
+All the key bindings `C-*`, `M-*` are sent to vterm (where `*` is any
+character), except those defined in the list `vterm-keymap-exceptions`. Some of
+the ones excluded by default are `C-x` or `M-x`, which are captured by Emacs
+instead.
 
 If you customize this variable, the change will be applied to all the new
 `vterm` sessions, so you may need to restart the ones that are currently
 running.
+
+Please note that if you bind keys to `vterm-mode-map` before a `vterm` session
+is launched, your key bindings overrides the same bindings in
+`vterm-keymap-exceptions`.
 
 ## `vterm-term-environment-variable`
 
@@ -381,12 +386,12 @@ avoid this question and always compile the module, set
 
 ## Keybindings
 
-If you want a key to be sent to the terminal, bind it to `vterm--self-insert`,
-or remove it from `vterm-mode-map`. By default, `vterm.el` binds most of the
-`C-<char>` and `M-<char>` keys, `<f1>` through `<f12>` and some special keys
-like `<backspace>` and `<return>`. Sending a keyboard interrupt is bound to `C-c
-C-c`.  You can customize the default keybindings to ignore by customizing
-`vterm-keymap-exceptions`.
+If you want a key to be sent to the terminal, bind it to `vterm--self-insert`, ,
+remove it from or rebind it in `vterm-mode-map`. By default, `vterm.el` binds
+most of the `C-<char>` and `M-<char>` keys, `<f1>` through `<f12>` and some
+special keys like `<backspace>` and `<return>`. Sending a keyboard interrupt is
+bound to `C-c C-c`.  You can customize the default keybindings to ignore by
+customizing `vterm-keymap-exceptions`.
 
 ## Fonts
 
