@@ -223,7 +223,7 @@ function `vterm--exclude-keys' removes the keybindings defined in
   :set (lambda (sym val)
          (set sym val)
          (when (fboundp 'vterm--exclude-keys)
-           (vterm--exclude-keys val)))
+           (vterm--exclude-keys 'vterm-mode-map val)))
   :group 'vterm)
 
 (defcustom vterm-exit-functions nil
