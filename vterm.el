@@ -543,6 +543,7 @@ Exceptions are defined by `vterm-keymap-exceptions'."
     (define-key map (kbd "C-c C-p")        #'vterm-previous-prompt)
     map))
 
+
 ;;; Mode
 
 (define-derived-mode vterm-mode fundamental-mode "VTerm"
@@ -572,6 +573,19 @@ Exceptions are defined by `vterm-keymap-exceptions'."
     (setq-local hscroll-margin 0)
     (setq-local hscroll-step 1)
     (setq-local truncate-lines t)
+
+    ;; Some stty implementations (i.e. that of *BSD) do not support the iutf8 option.
+    ;; to handle that, we run some heuristics to work out if the system supports that
+    ;; option and set the arg string accordingly. This is a gross hack but FreeBSD doesn't
+    ;; seem to want to fix it.
+    ;;
+    ;; See: https://bugs.freebsd.org/bugzilla/show_bug.cgi?id=220009
+    (defvar-local stty-arg-string nil)
+
+    (if (not (string-equal system-type "berkeley-unix"))
+        (setq stty-arg-string "stty -nl sane iutf8 erase ^? rows %d columns %d >/dev/null && exec %s")
+      (setq stty-arg-string "stty -nl sane erase ^? rows %d columns %d >/dev/null && exec %s"))
+
     (add-function :filter-return
                   (local 'filter-buffer-substring-function)
                   #'vterm--filter-buffer-substring)
@@ -580,7 +594,7 @@ Exceptions are defined by `vterm-keymap-exceptions'."
            :name "vterm"
            :buffer (current-buffer)
            :command `("/bin/sh" "-c"
-                      ,(format "stty -nl sane iutf8 erase ^? rows %d columns %d >/dev/null && exec %s"
+                      ,(format stty-arg-string
                                (window-body-height)
                                width vterm-shell))
            :coding 'no-conversion
