@@ -429,7 +429,7 @@ add-zsh-hook -Uz chpwd (){ print -Pn "\e]2;%m:%2~\a" }
 ```
 For `bash`,
 ```bash
-PROMPT_COMMAND='echo -ne "\033]0;\h:\w\007"'
+PROMPT_COMMAND='echo -ne "\033]0;${HOSTNAME}:${PWD}\007"'
 ```
 For `fish`,
 ```fish
