@@ -713,21 +713,25 @@ static emacs_value render_text(emacs_env *env, Term *term, char *buffer,
   int emacs_major_version =
       env->extract_integer(env, symbol_value(env, Qemacs_major_version));
   emacs_value properties;
-  if (emacs_major_version >= 27) {
-    properties =
-        list(env,
-             (emacs_value[]){Qforeground, fg, Qbackground, bg, Qweight, bold,
-                             Qunderline, underline, Qslant, italic, Qreverse,
-                             reverse, Qstrike, strike, Qextend, Qt},
-             16);
-  } else {
-    properties =
-        list(env,
-             (emacs_value[]){Qforeground, fg, Qbackground, bg, Qweight, bold,
-                             Qunderline, underline, Qslant, italic, Qreverse,
-                             reverse, Qstrike, strike},
-             14);
-  }
+  emacs_value props[64]; int props_len = 0;
+  if (env->is_not_nil (env, fg))
+    props[props_len++] = Qforeground, props[props_len++] = fg;
+  if (env->is_not_nil (env, bg))
+    props[props_len++] = Qbackground, props[props_len++] = bg;
+  if (bold != Qnormal)
+    props[props_len++] = Qweight, props[props_len++] = bold;
+  if (underline != Qnil)
+    props[props_len++] = Qunderline, props[props_len++] = underline;
+  if (italic != Qnormal)
+    props[props_len++] = Qslant, props[props_len++] = italic;
+  if (reverse != Qnil)
+    props[props_len++] = Qreverse, props[props_len++] = reverse;
+  if (strike != Qnil)
+    props[props_len++] = Qstrike, props[props_len++] = strike;
+  if (emacs_major_version >= 27)
+    props[props_len++] = Qextend, props[props_len++] = Qt;
+
+  properties = list (env, props, props_len);
 
   put_text_property(env, text, Qface, properties);
 
