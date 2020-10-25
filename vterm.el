@@ -572,6 +572,10 @@ Exceptions are defined by `vterm-keymap-exceptions'."
     (setq-local hscroll-margin 0)
     (setq-local hscroll-step 1)
     (setq-local truncate-lines t)
+
+    ;; Disable all automatic fontification
+    (setq-local font-lock-defaults '(nil t))
+
     (add-function :filter-return
                   (local 'filter-buffer-substring-function)
                   #'vterm--filter-buffer-substring)
