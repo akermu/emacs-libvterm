@@ -366,13 +366,6 @@ not require any shell-side configuration. See
 
 ;;; Faces
 
-(defface vterm-color-default
-  `((t :inherit default))
-  "The default normal color and bright color.
-The foreground color is used as ANSI color 0 and the background
-color is used as ANSI color 7."
-  :group 'vterm)
-
 (defface vterm-color-black
   `((t :inherit term-color-black))
   "Face used to render black color code.
@@ -430,13 +423,13 @@ color is used as ansi color 15."
   :group 'vterm)
 
 (defface vterm-color-underline
-  `((t :inherit vterm-color-default))
+  `((t :inherit default))
   "Face used to render cells with underline attribute.
 Only foreground is used."
   :group 'vterm)
 
 (defface vterm-color-inverse-video
-  `((t :inherit vterm-color-default))
+  `((t :inherit default))
   "Face used to render cells with inverse video attribute.
 Only background is used."
   :group 'vterm)
@@ -1167,8 +1160,6 @@ If N is negative backward-line from end of buffer."
   "Get color by index from `vterm-color-palette'.
 Argument INDEX index of the terminal color.
 Special values for INDEX are:
--1 means default foreground.
--2 for default background.
 -11 foreground for cells with underline attribute, foreground of
 the `vterm-color-underline' face is used in this case.
 -12 background for cells with inverse video attribute, background
@@ -1178,18 +1169,16 @@ of the `vterm-color-inverse-video' face is used in this case."
     (face-foreground
      (elt vterm-color-palette index)
      nil 'default))
-   ((and (>= index 8 ) (< index 16))
+   ((and (>= index 8) (< index 16))
     (face-background
      (elt vterm-color-palette (% index 8))
      nil 'default))
-   ((= index -1)               ;-1 foreground
-    (face-foreground 'vterm-color-default nil 'default))
    ((= index -11)
     (face-foreground 'vterm-color-underline nil 'default))
    ((= index -12)
     (face-background 'vterm-color-inverse-video nil 'default))
-   (t                                   ;-2 background
-    (face-background 'vterm-color-default nil 'default))))
+   (t
+    nil)))
 
 (defun vterm--eval (str)
   "Check if string STR is `vterm-eval-cmds' and execute command.

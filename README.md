@@ -483,7 +483,6 @@ Set the `:foreground` and `:background` attributes of the following faces to a
 color you like. The `:foreground` is ansi color 0-7, the `:background` attribute
 is ansi color 8-15.
 
-- vterm-color-default
 - vterm-color-black
 - vterm-color-red
 - vterm-color-green
