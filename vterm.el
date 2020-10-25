@@ -317,20 +317,28 @@ The need for an explicit map is to avoid arbitrary code execution."
   :group 'vterm)
 
 (defcustom vterm-disable-underline nil
-  "Disable underline for the cells with underline attribute."
+  "When not-nil, underline text properties are ignored.
+
+This means that vterm will render underlined text as if it was not
+underlined."
   :type  'boolean
   :group 'vterm)
 
 (defcustom vterm-disable-inverse-video nil
-  "Disable inverse video for the cells with inverse video attribute."
+  "When not-nil, inverse video text properties are ignored.
+
+This means that vterm will render reversed video text as if it was not
+such."
   :type  'boolean
   :group 'vterm)
 
-(defcustom vterm-disable-bold-font nil
-  "Disable bold fonts or not.
+(define-obsolete-variable-alias 'vterm-disable-bold-font
+  'vterm-disable-bold "0.0.1")
 
-When `vterm-disable-bold-font' is set to t, bold fonts are
-rendered as normal ones."
+(defcustom vterm-disable-bold-font nil
+  "When not-nil, bold text properties are ignored.
+
+This means that vterm will render bold with the default face weight."
   :type  'boolean
   :group 'vterm)
 

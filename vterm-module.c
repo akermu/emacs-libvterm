@@ -700,11 +700,18 @@ static emacs_value render_text(emacs_env *env, Term *term, char *buffer,
 
   emacs_value fg = cell_rgb_color(env, term, cell, true);
   emacs_value bg = cell_rgb_color(env, term, cell, false);
+  /* With vterm-disable-bold-font, vterm-disable-underline,
+   * vterm-disable-inverse-video, users can disable some text properties.
+   * Here, we check whether the text would require adding such properties.
+   * In case it does, and the user does not disable the attribute, we later
+   * append the property to the list props.  If the text does not require
+   * such property, or the user disable it, we set the variable to nil.
+   * Properties that are marked as nil are not added to the text. */
   emacs_value bold =
-      cell->attrs.bold && !term->disable_bold_font ? Qbold : Qnormal;
+      cell->attrs.bold && !term->disable_bold_font ? Qbold : Qnil;
   emacs_value underline =
       cell->attrs.underline && !term->disable_underline ? Qt : Qnil;
-  emacs_value italic = cell->attrs.italic ? Qitalic : Qnormal;
+  emacs_value italic = cell->attrs.italic ? Qitalic : Qnil;
   emacs_value reverse =
       cell->attrs.reverse && !term->disable_inverse_video ? Qt : Qnil;
   emacs_value strike = cell->attrs.strike ? Qt : Qnil;
@@ -718,11 +725,11 @@ static emacs_value render_text(emacs_env *env, Term *term, char *buffer,
     props[props_len++] = Qforeground, props[props_len++] = fg;
   if (env->is_not_nil (env, bg))
     props[props_len++] = Qbackground, props[props_len++] = bg;
-  if (bold != Qnormal)
+  if (bold != Qnil)
     props[props_len++] = Qweight, props[props_len++] = bold;
   if (underline != Qnil)
     props[props_len++] = Qunderline, props[props_len++] = underline;
-  if (italic != Qnormal)
+  if (italic != Qnil)
     props[props_len++] = Qslant, props[props_len++] = italic;
   if (reverse != Qnil)
     props[props_len++] = Qreverse, props[props_len++] = reverse;
@@ -733,7 +740,8 @@ static emacs_value render_text(emacs_env *env, Term *term, char *buffer,
 
   properties = list (env, props, props_len);
 
-  put_text_property(env, text, Qface, properties);
+  if (props_len)
+    put_text_property(env, text, Qface, properties);
 
   return text;
 }

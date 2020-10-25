@@ -459,7 +459,7 @@ C-c`.
 
 ## Fonts
 
-If you would like to change the font or face used in a vterm, use the following code:
+You can change the font (the _face_) used in a vterm with the following code:
 
 ``` emacs
 (add-hook 'vterm-mode-hook
@@ -468,8 +468,14 @@ If you would like to change the font or face used in a vterm, use the following 
                  (buffer-face-mode t)))
 ```
 
-The above would change change the font in vterm buffers to a mono-spaced font
-(the `fixed-pitch` face) if your default font in Emacs is a proportional font.
+Where instead of `'fixed-pitch` you specify the face you want to use. The
+example reported here can be used to force vterm to use a mono-spaced font (the
+`fixed-pitch` face). This is useful when your default font in Emacs is a
+proportional font.
+
+In addition to that, you can disable some text properties (bold, underline,
+reverse video) setting the relative option to `t` (`vterm-disable-bold`,
+`vterm-disable-underline`, or `vterm-disable-inverse-video`).
 
 ## Colors
 
@@ -825,6 +831,11 @@ not appropriate in some cases like terminals."
 ### Breaking changes
 
 Obsolete variables will be removed in version 0.1.
+
+#### October 2020
+
+* `vterm-disable-bold-font` was renamed to `vterm-disable-bold` to uniform it
+   with the other similar options.
 
 #### July 2020
 
