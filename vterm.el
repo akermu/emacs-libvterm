@@ -89,7 +89,7 @@ confirmation before compiling."
   "Name of the buffer used for compiling vterm-module.")
 
 (defun vterm-module--cmake-is-available ()
-  "Return t if cmake is available.
+  "Return t if CMake is available.
 CMake is needed to build vterm, here we check that we can find
 the executable."
 
@@ -129,7 +129,7 @@ the executable."
 ;; If the vterm-module is not compiled yet, compile it
 (unless (require 'vterm-module nil t)
   (if (or vterm-always-compile-module
-            (y-or-n-p "Vterm needs `vterm-module' to work.  Compile it now? "))
+          (y-or-n-p "Vterm needs `vterm-module' to work.  Compile it now? "))
       (progn
         (vterm-module-compile)
         (require 'vterm-module))
@@ -141,16 +141,16 @@ the executable."
 (declare-function display-line-numbers-update-width "display-line-numbers")
 
 ;; Generate this list with:
-;; awk -F\" '/bind_function*/ {print "(declare-function", $2, "\"vterm-module\")"}' vterm-module.c
-(declare-function vterm--new "vterm-module")
-(declare-function vterm--update "vterm-module")
-(declare-function vterm--redraw "vterm-module")
-(declare-function vterm--write-input "vterm-module")
-(declare-function vterm--set-size "vterm-module")
-(declare-function vterm--set-pty-name "vterm-module")
-(declare-function vterm--get-pwd-raw "vterm-module")
-(declare-function vterm--reset-point "vterm-module")
-(declare-function vterm--get-icrnl "vterm-module")
+;; awk -F\" '/bind_function*/ {print "(declare-function", $2, "\"ext:vterm-module\" t t)"}' vterm-module.c
+(declare-function vterm--new "ext:vterm-module" t t)
+(declare-function vterm--update "ext:vterm-module" t t)
+(declare-function vterm--redraw "ext:vterm-module" t t)
+(declare-function vterm--write-input "ext:vterm-module" t t)
+(declare-function vterm--set-size "ext:vterm-module" t t)
+(declare-function vterm--set-pty-name "ext:vterm-module" t t)
+(declare-function vterm--get-pwd-raw "ext:vterm-module" t t)
+(declare-function vterm--reset-point "ext:vterm-module" t t)
+(declare-function vterm--get-icrnl "ext:vterm-module" t t)
 
 (require 'subr-x)
 (require 'cl-lib)
@@ -233,8 +233,8 @@ Each function is called with two arguments: the vterm buffer of
 the process if any, and a string describing the event passed from
 the sentinel.
 
-This hook applies only to new vterms, created after setting this
-value with `add-hook'.
+This hook applies only to new vterm buffers, created after
+setting this value with `add-hook'.
 
 Note that this hook will not work if another package like
 `shell-pop' sets its own sentinel to the `vterm' process."
@@ -324,8 +324,8 @@ used to set the current directory and prompt location.  This
 detection method is the most-reliable.  To use it, you have
 to change your shell prompt to print 51;A.
 
-The second method is using a regular expression. This method does
-not require any shell-side configuration. See
+The second method is using a regular expression.  This method does
+not require any shell-side configuration.  See
 `term-prompt-regexp', for more information."
   :type 'boolean
   :group 'vterm)
@@ -434,7 +434,7 @@ Only background is used."
 (defvar vterm-timer-delay 0.1
   "Delay for refreshing the buffer after receiving updates from libvterm.
 
-A larger delary improves performance when receiving large bursts
+A larger delay improves performance when receiving large bursts
 of data.  If nil, never delay.  The units are seconds.")
 
 ;;; Keybindings
@@ -463,7 +463,7 @@ of data.  If nil, never delay.  The units are seconds.")
 
 ;; Function keys and most of C- and M- bindings
 (defun vterm--exclude-keys (map exceptions)
-  "Remove EXCEPTIONS from the keys bound by `vterm-define-keys'.
+  "Remove EXCEPTIONS from MAP the keys bound by `vterm-define-keys'.
 
 Exceptions are defined by `vterm-keymap-exceptions'."
   (mapc (lambda (key)
@@ -598,7 +598,7 @@ Exceptions are defined by `vterm-keymap-exceptions'."
   ;; mode can break this, leading to segmentation faults.
   (add-hook 'change-major-mode-hook
             (lambda () (interactive)
-               (user-error "You cannot change major mode in vterm buffers")) nil t)
+              (user-error "You cannot change major mode in vterm buffers")) nil t)
 
   (vterm--set-pty-name vterm--term (process-tty-name vterm--process))
   (process-put vterm--process 'adjust-window-size-function
@@ -1021,13 +1021,13 @@ Argument EVENT process event."
       (setq width (+ width (or display-line-numbers-width 0) 4)))
     width))
 
-(defun vterm--delete-lines (line-num count &optional delete-whole-line)
-  "Delete COUNT lines from LINE-NUM.
-If LINE-NUM is negative backward-line from end of buffer.
+(defun vterm--delete-lines (line-number count &optional delete-whole-line)
+  "Delete COUNT lines from LINE-NUMBER.
+If LINE-NUMBER is negative backward-line from end of buffer.
 If option DELETE-WHOLE-LINE is non-nil, then this command kills
 the whole line including its terminating newline"
   (save-excursion
-    (when (vterm--goto-line line-num)
+    (when (vterm--goto-line line-number)
       (delete-region (point) (point-at-eol count))
       (when (and delete-whole-line
                  (looking-at "\n"))
@@ -1266,3 +1266,6 @@ can find them and remove them."
 
 (provide 'vterm)
 ;;; vterm.el ends here
+
+;;; LocalWords: vterm libvterm CMake scrollback arg
+;;; LocalWords: zsh html tldp http whitelisted
