@@ -907,8 +907,22 @@ static void term_process_key(Term *term, emacs_env *env, unsigned char *key,
     vterm_keyboard_key(term->vt, VTERM_KEY_KP_8, modifier);
   } else if (is_key(key, len, "<kp-9>")) {
     vterm_keyboard_key(term->vt, VTERM_KEY_KP_9, modifier);
+  } else if (is_key(key, len, "<kp-add>")) {
+    vterm_keyboard_key(term->vt, VTERM_KEY_KP_PLUS, modifier);
+  } else if (is_key(key, len, "<kp-subtract>")) {
+    vterm_keyboard_key(term->vt, VTERM_KEY_KP_MINUS, modifier);
+  } else if (is_key(key, len, "<kp-multiply>")) {
+    vterm_keyboard_key(term->vt, VTERM_KEY_KP_MULT, modifier);
+  } else if (is_key(key, len, "<kp-divide>")) {
+    vterm_keyboard_key(term->vt, VTERM_KEY_KP_DIVIDE, modifier);
+  } else if (is_key(key, len, "<kp-equal>")) {
+    vterm_keyboard_key(term->vt, VTERM_KEY_KP_EQUAL, modifier);
   } else if (is_key(key, len, "<kp-decimal>")) {
     vterm_keyboard_key(term->vt, VTERM_KEY_KP_PERIOD, modifier);
+  } else if (is_key(key, len, "<kp-separator>")) {
+    vterm_keyboard_key(term->vt, VTERM_KEY_KP_COMMA, modifier);
+  } else if (is_key(key, len, "<kp-enter>")) {
+    vterm_keyboard_key(term->vt, VTERM_KEY_KP_ENTER, modifier);
   } else if (is_key(key, len, "j") && (modifier == VTERM_MOD_CTRL)) {
     vterm_keyboard_unichar(term->vt, '\n', 0);
   } else if (is_key(key, len, "SPC")) {
