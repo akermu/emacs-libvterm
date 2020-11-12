@@ -270,6 +270,14 @@ information on the how to configure the shell."
   :type 'string
   :group 'vterm)
 
+(defcustom vterm-environment nil
+  "List of extra environment variables to the vterm shell processes only.
+
+demo: '(\"env1=v1\" \"env2=v2\")"
+  :type '(repeat string)
+  :group 'vterm)
+
+
 (defcustom vterm-enable-manipulate-selection-data-by-osc52 nil
   "Support OSC 52 MANIPULATE SELECTION DATA.
 
@@ -569,8 +577,11 @@ Exceptions are defined by `vterm-keymap-exceptions'."
        (let ((font-height (expt text-scale-mode-step text-scale-mode-amount)))
          (setq vterm--linenum-remapping
                (face-remap-add-relative 'line-number :height font-height))))
-  (let ((process-environment (append `(,(concat "TERM="
+  (let ((process-environment (append vterm-environment
+                                     `(,(concat "TERM="
                                                 vterm-term-environment-variable)
+                                       ,(concat "EMACS_VTERM_PATH="
+                                                (file-name-directory (find-library-name "vterm")))
                                        "INSIDE_EMACS=vterm"
                                        "LINES"
                                        "COLUMNS")
