@@ -223,7 +223,7 @@ function `vterm--exclude-keys' removes the keybindings defined in
   :set (lambda (sym val)
          (set sym val)
          (when (and (fboundp 'vterm--exclude-keys)
-		    (boundp 'vterm-mode-map))
+            (boundp 'vterm-mode-map))
            (vterm--exclude-keys vterm-mode-map val)))
   :group 'vterm)
 
@@ -512,6 +512,7 @@ Exceptions are defined by `vterm-keymap-exceptions'."
 (defvar vterm-mode-map
   (let ((map (make-sparse-keymap)))
     (vterm--exclude-keys map vterm-keymap-exceptions)
+    (define-key map (kbd "C-]")                 #'vterm--self-insert)
     (define-key map (kbd "M-<")                 #'vterm--self-insert)
     (define-key map (kbd "M->")                 #'vterm--self-insert)
     (define-key map [tab]                       #'vterm-send-tab)
