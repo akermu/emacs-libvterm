@@ -604,6 +604,10 @@ Exceptions are defined by `vterm-keymap-exceptions'."
     (setq-local hscroll-step 1)
     (setq-local truncate-lines t)
 
+
+    ;; Disable all automatic fontification
+    (setq-local font-lock-defaults '(nil t))
+
     ;; Some stty implementations (i.e. that of *BSD) do not support the iutf8 option.
     ;; to handle that, we run some heuristics to work out if the system supports that
     ;; option and set the arg string accordingly. This is a gross hack but FreeBSD doesn't
