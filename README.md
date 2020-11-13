@@ -350,6 +350,12 @@ behavior can be achieved by using the universal prefix (ie, calling `C-u C-l`).
 
 Shell to run in a new vterm. It defaults to `$SHELL`.
 
+## `vterm-environment`
+
+to add more environment variables there is the custom vterm-environment which has
+a similar format than the internal emacs variable process-environment.
+You can check the documentation with C-h v process-environment for more details.
+
 ## `vterm-term-environment-variable`
 
 Value for the `TERM` environment variable. It defaults to `xterm-256color`. If
@@ -662,6 +668,23 @@ The configurations described in earlier sections are combined in
 configuration file. Alternatively, they can be installed system-wide, for
 example in `/etc/bash/bashrc.d/`, `/etc/profile.d/` (for `zsh`), or
 `/etc/fish/conf.d/` for `fish`.
+
+When using vterm Emacs sets the environment variable INSIDE_EMACS in the subshell to ‘vterm’.
+Usually the programs check this variable to determine whether they are running inside emacs.
+
+Vterm also sets an extra variable EMACS_VTERM_PATH to the place where the vterm library is installed.
+This is very useful because when vterm is installed from melpa the Shell-side configuration files are
+in the EMACS_VTERM_PATH inside the /etc sub-directory. After a package update, the directory name changes,
+so, a code like this in your bashrc could be enough to load always the latest version of the file
+from the right loation without coping any file manually.
+
+```
+if [[ "$INSIDE_EMACS" = 'vterm' ]] \
+    && [[ -n ${EMACS_VTERM_PATH} ]] \
+    && [[ -f ${EMACS_VTERM_PATH}/etc/emacs-vterm-bash.sh ]]; then
+	source ${EMACS_VTERM_PATH}/etc/emacs-vterm-bash.sh
+fi
+```
 
 ## Frequently Asked Questions and Problems
 
