@@ -153,6 +153,7 @@ the executable."
 (declare-function vterm--get-icrnl "vterm-module")
 
 (require 'subr-x)
+(require 'find-func)
 (require 'cl-lib)
 (require 'term)
 (require 'color)
