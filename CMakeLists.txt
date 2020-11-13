@@ -3,7 +3,7 @@ include(ExternalProject)
 
 project(emacs-libvterm C)
 
-if(CMAKE_SYSTEM_NAME STREQUAL "FreeBSD")
+if(CMAKE_SYSTEM_NAME STREQUAL "FreeBSD" OR CMAKE_SYSTEM_NAME STREQUAL "OpenBSD" OR CMAKE_SYSTEM_NAME STREQUAL "NetBSD")
    set(LIBVTERM_BUILD_COMMAND "gmake")
 else()
    set(LIBVTERM_BUILD_COMMAND "make")
@@ -36,6 +36,11 @@ if (USE_SYSTEM_LIBVTERM)
   # vterm.h is found.
   if (LIBVTERM_INCLUDE_DIR)
     message(STATUS "System libvterm detected")
+    execute_process(COMMAND  grep -c "VTermStringFragment" "${LIBVTERM_INCLUDE_DIR}/vterm.h" OUTPUT_VARIABLE VTermStringFragmentExists)
+    if (${VTermStringFragmentExists} EQUAL "0")
+#    add_compile_definitions(VTermStringFragmentNotExists)
+    add_definitions(-DVTermStringFragmentNotExists)
+    endif()
   else()
     message(STATUS "System libvterm not found: libvterm will be downloaded and compiled as part of the build process")
   endif()
@@ -58,7 +63,7 @@ else()
 
   ExternalProject_add(libvterm
     GIT_REPOSITORY https://github.com/neovim/libvterm.git
-    GIT_TAG 65dbda3ed214f036ee799d18b2e693a833a0e591
+    GIT_TAG 54c03b21f763fa775a4c0643a9d8326342873179
     CONFIGURE_COMMAND ""
     BUILD_COMMAND ${LIBVTERM_BUILD_COMMAND} "CFLAGS='-fPIC'"
     BUILD_IN_SOURCE ON

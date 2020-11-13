@@ -153,6 +153,7 @@ the executable."
 (declare-function vterm--get-icrnl "vterm-module")
 
 (require 'subr-x)
+(require 'find-func)
 (require 'cl-lib)
 (require 'term)
 (require 'color)
@@ -222,8 +223,9 @@ function `vterm--exclude-keys' removes the keybindings defined in
   :type '(repeat string)
   :set (lambda (sym val)
          (set sym val)
-         (when (fboundp 'vterm--exclude-keys)
-           (vterm--exclude-keys val)))
+         (when (and (fboundp 'vterm--exclude-keys)
+            (boundp 'vterm-mode-map))
+           (vterm--exclude-keys vterm-mode-map val)))
   :group 'vterm)
 
 (defcustom vterm-exit-functions nil
@@ -267,6 +269,30 @@ information on the how to configure the shell."
 (defcustom vterm-term-environment-variable "xterm-256color"
   "TERM value for terminal."
   :type 'string
+  :group 'vterm)
+
+(defcustom vterm-environment nil
+  "List of extra environment variables to the vterm shell processes only.
+
+demo: '(\"env1=v1\" \"env2=v2\")"
+  :type '(repeat string)
+  :group 'vterm)
+
+
+(defcustom vterm-enable-manipulate-selection-data-by-osc52 nil
+  "Support OSC 52 MANIPULATE SELECTION DATA.
+
+Support copy text to emacs kill ring and system clipboard by using OSC 52.
+For example: send base64 encoded 'foo' to kill ring: echo -en '\e]52;c;Zm9v\a',
+tmux can share its copy buffer to terminals by supporting osc52(like iterm2 xterm),
+you can enable this feature for tmux by :
+set -g set-clipboard on         #osc 52 copy paste share with iterm
+set -ga terminal-overrides ',xterm*:XT:Ms=\E]52;%p1%s;%p2%s\007'
+set -ga terminal-overrides ',screen*:XT:Ms=\E]52;%p1%s;%p2%s\007'
+
+The clipboard querying/clearing functionality offered by OSC 52 is not implemented here,
+And for security reason, this feature is disabled by default."
+  :type 'boolean
   :group 'vterm)
 
 ;; TODO: Improve doc string, it should not point to the readme but it should
@@ -487,6 +513,7 @@ Exceptions are defined by `vterm-keymap-exceptions'."
 (defvar vterm-mode-map
   (let ((map (make-sparse-keymap)))
     (vterm--exclude-keys map vterm-keymap-exceptions)
+    (define-key map (kbd "C-]")                 #'vterm--self-insert)
     (define-key map (kbd "M-<")                 #'vterm--self-insert)
     (define-key map (kbd "M->")                 #'vterm--self-insert)
     (define-key map [tab]                       #'vterm-send-tab)
@@ -543,6 +570,7 @@ Exceptions are defined by `vterm-keymap-exceptions'."
     (define-key map (kbd "C-c C-p")        #'vterm-previous-prompt)
     map))
 
+
 ;;; Mode
 
 (define-derived-mode vterm-mode fundamental-mode "VTerm"
@@ -552,8 +580,11 @@ Exceptions are defined by `vterm-keymap-exceptions'."
        (let ((font-height (expt text-scale-mode-step text-scale-mode-amount)))
          (setq vterm--linenum-remapping
                (face-remap-add-relative 'line-number :height font-height))))
-  (let ((process-environment (append `(,(concat "TERM="
+  (let ((process-environment (append vterm-environment
+                                     `(,(concat "TERM="
                                                 vterm-term-environment-variable)
+                                       ,(concat "EMACS_VTERM_PATH="
+                                                (file-name-directory (find-library-name "vterm")))
                                        "INSIDE_EMACS=vterm"
                                        "LINES"
                                        "COLUMNS")
@@ -573,8 +604,21 @@ Exceptions are defined by `vterm-keymap-exceptions'."
     (setq-local hscroll-step 1)
     (setq-local truncate-lines t)
 
+
     ;; Disable all automatic fontification
     (setq-local font-lock-defaults '(nil t))
+
+    ;; Some stty implementations (i.e. that of *BSD) do not support the iutf8 option.
+    ;; to handle that, we run some heuristics to work out if the system supports that
+    ;; option and set the arg string accordingly. This is a gross hack but FreeBSD doesn't
+    ;; seem to want to fix it.
+    ;;
+    ;; See: https://bugs.freebsd.org/bugzilla/show_bug.cgi?id=220009
+    (defvar-local stty-arg-string nil)
+
+    (if (not (string-equal system-type "berkeley-unix"))
+        (setq stty-arg-string "stty -nl sane iutf8 erase ^? rows %d columns %d >/dev/null && exec %s")
+      (setq stty-arg-string "stty -nl sane erase ^? rows %d columns %d >/dev/null && exec %s"))
 
     (add-function :filter-return
                   (local 'filter-buffer-substring-function)
@@ -584,7 +628,7 @@ Exceptions are defined by `vterm-keymap-exceptions'."
            :name "vterm"
            :buffer (current-buffer)
            :command `("/bin/sh" "-c"
-                      ,(format "stty -nl sane iutf8 erase ^? rows %d columns %d >/dev/null && exec %s"
+                      ,(format stty-arg-string
                                (window-body-height)
                                width vterm-shell))
            :coding 'no-conversion
@@ -925,6 +969,31 @@ Argument BUFFER the terminal buffer."
           (unless (zerop (window-hscroll))
             (when (cl-member (selected-window) windows :test #'eq)
               (set-window-hscroll (selected-window) 0))))))))
+
+(defun vterm--selection (targets data)
+  "OSC 52 Manipulate Selection Data.
+Search Manipulate Selection Data in
+ https://invisible-island.net/xterm/ctlseqs/ctlseqs.html ."
+  (when vterm-enable-manipulate-selection-data-by-osc52
+    (unless (or (string-equal data "?")
+                (string-empty-p data))
+      (let ((decoded-data (decode-coding-string
+                           (base64-decode-string data) locale-coding-system))
+            (select-enable-clipboard select-enable-clipboard)
+            (select-enable-primary select-enable-primary))
+        ;; https://invisible-island.net/xterm/ctlseqs/ctlseqs.html
+        ;; c , p , q , s , 0 , 1 , 2 , 3 , 4 , 5 , 6 , and 7
+        ;; clipboard, primary, secondary, select, or cut buffers 0 through 7
+        (unless (string-empty-p targets)
+          (setq select-enable-clipboard nil)
+          (setq select-enable-primary nil))
+        (when (cl-find ?c targets)
+          (setq select-enable-clipboard t))
+        (when (cl-find ?p targets)
+          (setq select-enable-primary t))
+
+        (kill-new decoded-data)
+        (message "kill-ring is updated by vterm OSC 52(Manipulate Selection Data)")))))
 
 ;;; Entry Points
 

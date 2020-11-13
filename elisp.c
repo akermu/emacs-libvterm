@@ -54,6 +54,7 @@ emacs_value Fvterm_invalidate;
 emacs_value Feq;
 emacs_value Fvterm_get_color;
 emacs_value Fvterm_eval;
+emacs_value Fvterm_selection;
 
 /* Set the function cell of the symbol named NAME to SFUN using
    the 'fset' function.  */
@@ -193,4 +194,10 @@ void vterm_invalidate(emacs_env *env) {
 }
 emacs_value vterm_eval(emacs_env *env, emacs_value string) {
   return env->funcall(env, Fvterm_eval, 1, (emacs_value[]){string});
+}
+
+emacs_value vterm_selection(emacs_env *env, emacs_value selection_target,
+                            emacs_value selection_data) {
+  return env->funcall(env, Fvterm_selection, 2,
+                      (emacs_value[]){selection_target, selection_data});
 }

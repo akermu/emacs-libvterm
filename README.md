@@ -137,9 +137,62 @@ Or, with `use-package`:
 ```
 
 ## vterm and Ubuntu
-
+### 20.04
 Using `vterm` on Ubuntu requires additional steps. The latest LTS version
-(18.04) ships with a version of CMake that is too old for `vterm` and GNU
+(20.04) ships without CMake installed and Emacs27 is not yet available from Ubuntu's package repository.
+
+The basic steps for getting vterm to work on Ubuntu 20.04 are:
+* Ensure Emacs27 is installed
+* Install cmake, libtool, and libtool-bin
+
+There are a few options for installing Emacs27 on Ubuntu 20.04:
+* Compile Emacs27 from source
+* Install Emacs27 from Snap
+* Install Emacs27 from Kevin Kelley's PPA
+
+In any case, if you have an older Emacs version you will need to purge it before proceeding:
+
+#### Purge Emacs
+```sh
+sudo apt --purge remove emacs
+sudo apt autoremove
+```
+
+#### Installing Emacs27 from Kevin Kelley PPA
+```sh
+sudo add-apt-repository ppa:kelleyk/emacs
+sudo apt install emacs27
+```
+
+##### If you get an error about emacs27_common during the install process:
+```sh
+Errors were encountered while processing:
+ /tmp/apt-dpkg-install-RVK8CA/064-emacs27-common_27.1~1.git86d8d76aa3-kk2+20.04_all.deb
+```
+run
+```sh
+sudo apt --purge remove emacs-common
+sudo apt --fix-broken install
+```
+
+#### Installing Emacs27 from Snap
+I hesitate to include SNAP here, because I ran into a number of GTK Theme parsing errors, and Fontconfig errors when I tested it, and reverted to installing from Kevin Kelley's PPA. YMMV
+```sh
+sudo snap install emacs --classic
+```
+
+#### Install CMake and Libtool
+In Ubuntu 20.04 CMake (v3.16.3-1ubuntu1) and Libtool can be installed with
+```sh
+sudo apt install cmake
+sudo apt install libtool
+sudo apt install libtool-bin
+```
+
+### 18.04
+
+Using `vterm` on Ubuntu 18.04 requires additional steps.
+18.04 ships with a version of CMake that is too old for `vterm` and GNU
 Emacs is not compiled with support for dynamical module loading.
 
 It is possible to install GNU Emacs with module support from Kevin Kelley's PPA.
@@ -157,6 +210,7 @@ A way to install a recent version of CMake (>= 3.11) is with linuxbrew.
 ```sh
 brew install cmake
 ```
+
 
 In some cases, `/bin/sh` needs to be relinked to `/bin/bash` for the compilation
 to work (see,
@@ -296,6 +350,12 @@ behavior can be achieved by using the universal prefix (ie, calling `C-u C-l`).
 
 Shell to run in a new vterm. It defaults to `$SHELL`.
 
+## `vterm-environment`
+
+to add more environment variables there is the custom vterm-environment which has
+a similar format than the internal emacs variable process-environment.
+You can check the documentation with C-h v process-environment for more details.
+
 ## `vterm-term-environment-variable`
 
 Value for the `TERM` environment variable. It defaults to `xterm-256color`. If
@@ -330,6 +390,26 @@ copied.
 The variable `vterm-use-vterm-prompt-detection-method` determines whether to use
 the vterm prompt tracking, if false it use the regexp in
 `vterm-copy-prompt-regexp` to search for the prompt.
+
+## `vterm-enable-manipulate-selection-data-by-osc52`
+
+Vterm support copy text to emacs kill ring and system clipboard by using OSC 52.
+See https://invisible-island.net/xterm/ctlseqs/ctlseqs.html for more info about OSC 52.
+For example: send 'blabla' to kill ring: printf "\033]52;c;$(printf "%s" "blabla" | base64)\a"
+
+tmux can share its copy buffer to terminals bysupporting osc52(like iterm2 xterm),
+you can enable this feature for tmux by :
+set -g set-clipboard on         #osc 52 copy paste share with iterm
+set -ga terminal-overrides ',xterm*:XT:Ms=\E]52;%p1%s;%p2%s\007'
+set -ga terminal-overrides ',screen*:XT:Ms=\E]52;%p1%s;%p2%s\007'
+
+The clipboard querying/clearing functionality offered by OSC 52 is not implemented here,
+And for security reason, this feature is disabled by default."
+
+This feature need the new way of handling strings with a struct `VTermStringFragment`
+in libvterm. You'd better compile emacs-libvterm with `cmake -DUSE_SYSTEM_LIBVTERM=no ..`.
+If you don't do that, when  the content you want to copied is too long, it would be truncated
+by bug of libvterm.
 
 ## `vterm-buffer-name-string`
 
@@ -588,6 +668,23 @@ The configurations described in earlier sections are combined in
 configuration file. Alternatively, they can be installed system-wide, for
 example in `/etc/bash/bashrc.d/`, `/etc/profile.d/` (for `zsh`), or
 `/etc/fish/conf.d/` for `fish`.
+
+When using vterm Emacs sets the environment variable INSIDE_EMACS in the subshell to ‘vterm’.
+Usually the programs check this variable to determine whether they are running inside emacs.
+
+Vterm also sets an extra variable EMACS_VTERM_PATH to the place where the vterm library is installed.
+This is very useful because when vterm is installed from melpa the Shell-side configuration files are
+in the EMACS_VTERM_PATH inside the /etc sub-directory. After a package update, the directory name changes,
+so, a code like this in your bashrc could be enough to load always the latest version of the file
+from the right loation without coping any file manually.
+
+```
+if [[ "$INSIDE_EMACS" = 'vterm' ]] \
+    && [[ -n ${EMACS_VTERM_PATH} ]] \
+    && [[ -f ${EMACS_VTERM_PATH}/etc/emacs-vterm-bash.sh ]]; then
+	source ${EMACS_VTERM_PATH}/etc/emacs-vterm-bash.sh
+fi
+```
 
 ## Frequently Asked Questions and Problems
 
