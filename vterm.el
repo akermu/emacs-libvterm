@@ -620,18 +620,6 @@ Exceptions are defined by `vterm-keymap-exceptions'."
     ;; Disable all automatic fontification
     (setq-local font-lock-defaults '(nil t))
 
-    ;; Some stty implementations (i.e. that of *BSD) do not support the iutf8 option.
-    ;; to handle that, we run some heuristics to work out if the system supports that
-    ;; option and set the arg string accordingly. This is a gross hack but FreeBSD doesn't
-    ;; seem to want to fix it.
-    ;;
-    ;; See: https://bugs.freebsd.org/bugzilla/show_bug.cgi?id=220009
-    (defvar-local stty-arg-string nil)
-
-    (if (not (string-equal system-type "berkeley-unix"))
-        (setq stty-arg-string "stty -nl sane iutf8 erase ^? rows %d columns %d >/dev/null && exec %s")
-      (setq stty-arg-string "stty -nl sane erase ^? rows %d columns %d >/dev/null && exec %s"))
-
     (add-function :filter-return
                   (local 'filter-buffer-substring-function)
                   #'vterm--filter-buffer-substring)
@@ -639,10 +627,20 @@ Exceptions are defined by `vterm-keymap-exceptions'."
           (make-process
            :name "vterm"
            :buffer (current-buffer)
-           :command `("/bin/sh" "-c"
-                      ,(format stty-arg-string
-                               (window-body-height)
-                               width vterm-shell))
+           :command
+           `("/bin/sh" "-c"
+             ,(format
+	       "stty -nl sane %s erase ^? rows %d columns %d >/dev/null && exec %s"
+               ;; Some stty implementations (i.e. that of *BSD) do not
+               ;; support the iutf8 option.  to handle that, we run some
+               ;; heuristics to work out if the system supports that
+               ;; option and set the arg string accordingly. This is a
+               ;; gross hack but FreeBSD doesn't seem to want to fix it.
+               ;;
+               ;; See: https://bugs.freebsd.org/bugzilla/show_bug.cgi?id=220009
+               (if (eq system-type 'berkeley-unix) "" "iutf8")
+               (window-body-height)
+               width vterm-shell))
            :coding 'no-conversion
            :connection-type 'pty
            :filter #'vterm--filter
