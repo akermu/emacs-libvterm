@@ -159,6 +159,8 @@ the executable."
 (require 'color)
 (require 'compile)
 (require 'face-remap)
+(require 'dabbrev)
+(require 'thingatpt)
 
 ;;; Options
 
@@ -554,6 +556,7 @@ Exceptions are defined by `vterm-keymap-exceptions'."
     (define-key map (kbd "S-SPC")               #'vterm-send-space)
     (define-key map (kbd "C-_")                 #'vterm--self-insert)
     (define-key map (kbd "C-/")                 #'vterm-undo)
+    (define-key map (kbd "M-/")                 #'vterm-dabbrev-expand)
     (define-key map (kbd "M-.")                 #'vterm-send-meta-dot)
     (define-key map (kbd "M-,")                 #'vterm-send-meta-comma)
     (define-key map (kbd "C-c C-y")             #'vterm--self-insert)
@@ -1342,6 +1345,22 @@ can find them and remove them."
     (insert content)
     (vterm--remove-fake-newlines)
     (buffer-string)))
+
+(defun vterm-dabbrev-expand-wrapper ()
+  "Return `dabbrev-expand' result."
+  (save-current-buffer
+    (setq-local buffer-read-only nil)
+    (call-interactively #'dabbrev-expand)
+    (thing-at-point 'symbol)))
+
+;;;###autoload
+(defun vterm-dabbrev-expand ()
+  "Provide similar behavior as `dabbrev-expand'."
+  (interactive)
+  (if (thing-at-point 'symbol)
+      (progn (vterm-send-C-w)
+             (vterm-send-string (vterm-dabbrev-expand-wrapper) t))
+    (vterm-send-string (vterm-dabbrev-expand-wrapper) t)))
 
 (provide 'vterm)
 ;;; vterm.el ends here
