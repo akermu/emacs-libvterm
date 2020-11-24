@@ -548,6 +548,7 @@ Exceptions are defined by `vterm-keymap-exceptions'."
     (define-key map [C-end]                     #'vterm--self-insert)
     (define-key map [escape]                    #'vterm--self-insert)
     (define-key map [remap yank]                #'vterm-yank)
+    (define-key map [remap xterm-paste]         #'vterm-yank)
     (define-key map [remap yank-pop]            #'vterm-yank-pop)
     (define-key map [remap mouse-yank-primary]  #'vterm-yank-primary)
     (define-key map (kbd "C-SPC")               #'vterm--self-insert)
