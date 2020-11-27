@@ -778,7 +778,8 @@ will invert `vterm-copy-exclude-prompt' for that call."
       (when (and (not (symbolp last-input-event)) shift (not meta) (not ctrl))
         (setq key (upcase key)))
       (vterm--update vterm--term key shift meta ctrl)
-      (setq vterm--redraw-immididately t))))
+      (setq vterm--redraw-immididately t)
+       (accept-process-output vterm--process vterm-timer-delay nil t))))
 
 (defun vterm-send (key)
   "Send KEY to libvterm.  KEY can be anything `kbd' understands."
@@ -948,7 +949,8 @@ Optional argument PASTE-P paste-p."
       (vterm--update vterm--term (char-to-string char) nil nil nil))
     (when paste-p
       (vterm--update vterm--term "<end_paste>" nil nil nil)))
-  (setq vterm--redraw-immididately t))
+  (setq vterm--redraw-immididately t)
+  (accept-process-output vterm--process vterm-timer-delay nil t))
 
 ;;; Internal
 
