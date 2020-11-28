@@ -454,6 +454,10 @@ Only background is used."
 (defvar-local vterm--redraw-immididately nil)
 (defvar-local vterm--linenum-remapping nil)
 (defvar-local vterm--prompt-tracking-enabled-p nil)
+(defvar-local vterm--insert-function (symbol-function #'insert))
+(defvar-local vterm--delete-char-function (symbol-function #'delete-char))
+(defvar-local vterm--delete-region-function (symbol-function #'delete-region))
+
 
 (defvar vterm-timer-delay 0.1
   "Delay for refreshing the buffer after receiving updates from libvterm.
@@ -645,7 +649,7 @@ Exceptions are defined by `vterm-keymap-exceptions'."
            :command
            `("/bin/sh" "-c"
              ,(format
-	       "stty -nl sane %s erase ^? rows %d columns %d >/dev/null && exec %s"
+           "stty -nl sane %s erase ^? rows %d columns %d >/dev/null && exec %s"
                ;; Some stty implementations (i.e. that of *BSD) do not
                ;; support the iutf8 option.  to handle that, we run some
                ;; heuristics to work out if the system supports that
@@ -954,6 +958,18 @@ Optional argument PASTE-P paste-p."
 
 ;;; Internal
 
+(defun vterm--delete-region(start end)
+  "A wrapper for `delete-region'."
+  (funcall vterm--delete-region-function start end))
+
+(defun vterm--insert(&rest content)
+  "A wrapper for `insert'."
+  (apply vterm--insert-function content))
+
+(defun vterm--delete-char(n &optional killflag)
+  "A wrapper for `delete-char'."
+  (funcall vterm--delete-char-function n killflag))
+
 (defun vterm--invalidate ()
   "The terminal buffer is invalidated, the buffer needs redrawing."
   (if (and (not vterm--redraw-immididately)
@@ -1123,10 +1139,10 @@ If option DELETE-WHOLE-LINE is non-nil, then this command kills
 the whole line including its terminating newline"
   (save-excursion
     (when (vterm--goto-line line-num)
-      (delete-region (point) (point-at-eol count))
+      (vterm--delete-region (point) (point-at-eol count))
       (when (and delete-whole-line
                  (looking-at "\n"))
-        (delete-char 1)))))
+        (vterm--delete-char 1)))))
 
 (defun vterm--goto-line (n)
   "Go to line N and return true on success.
@@ -1346,12 +1362,13 @@ can find them and remove them."
       (goto-char fake-newline)
       (cl-assert (eq ?\n (char-after)))
       (let ((inhibit-read-only t))
-        (delete-char 1)))))
+        (vterm--delete-char 1)))))
+
 
 (defun vterm--filter-buffer-substring (content)
   "Filter string CONTENT of fake/injected newlines."
   (with-temp-buffer
-    (insert content)
+    (vterm--insert content)
     (vterm--remove-fake-newlines)
     (buffer-string)))
 

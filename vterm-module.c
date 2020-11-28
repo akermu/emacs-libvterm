@@ -1384,7 +1384,7 @@ int emacs_module_init(struct emacs_runtime *ert) {
   Flist = env->make_global_ref(env, env->intern(env, "list"));
   Fnth = env->make_global_ref(env, env->intern(env, "nth"));
   Ferase_buffer = env->make_global_ref(env, env->intern(env, "erase-buffer"));
-  Finsert = env->make_global_ref(env, env->intern(env, "insert"));
+  Finsert = env->make_global_ref(env, env->intern(env, "vterm--insert"));
   Fgoto_char = env->make_global_ref(env, env->intern(env, "goto-char"));
   Fput_text_property =
       env->make_global_ref(env, env->intern(env, "put-text-property"));
