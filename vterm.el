@@ -956,6 +956,72 @@ Optional argument PASTE-P paste-p."
   (setq vterm--redraw-immididately t)
   (accept-process-output vterm--process vterm-timer-delay nil t))
 
+(defun vterm-insert (&rest contents)
+  "Insert the arguments, either strings or characters, at point.
+
+Provide similar behavior as `insert' for vterm."
+  (when vterm--term
+    (vterm--update vterm--term "<start_paste>" nil nil nil)
+    (dolist (c contents)
+      (if (characterp c)
+          (vterm--update vterm--term (char-to-string c) nil nil nil)
+        (dolist (char (string-to-list c))
+          (vterm--update vterm--term (char-to-string char) nil nil nil))))
+    (vterm--update vterm--term "<end_paste>" nil nil nil)
+    (setq vterm--redraw-immididately t)
+    (accept-process-output vterm--process vterm-timer-delay nil t)))
+
+(defun vterm-delete-region (start end)
+  "Delete the text between START and END for vterm. "
+  (when vterm--term
+    (if (vterm-goto-char start)
+        (cl-loop repeat (- end start) do
+                 (vterm-send-delete))
+      (let ((inhibit-read-only nil))
+        (vterm--delete-region start end)))))
+
+(defun vterm-goto-char (pos)
+  "Set point to POSITION for vterm.
+
+The return value is `t' when point moved successfully.
+It will reset to original position if it can't move there."
+  (when (and vterm--term
+             (vterm-cursor-in-command-buffer-p)
+             (vterm-cursor-in-command-buffer-p pos))
+    (let ((moved t)
+          (origin-point (point))
+          pt cursor-pos succ)
+      (vterm-reset-cursor-point)
+      (setq cursor-pos (point))
+      (setq pt cursor-pos)
+      (while (and (> pos pt) moved)
+        (vterm-send-right)
+        (setq moved (not (= pt (point))))
+        (setq pt (point)))
+      (setq pt (point))
+      (setq moved t)
+      (while (and (< pos pt) moved)
+        (vterm-send-left)
+        (setq moved (not (= pt (point))))
+        (setq pt (point)))
+      (setq succ (= pos (point)))
+      (unless succ
+        (vterm-goto-char cursor-pos)
+        (goto-char origin-point))
+      succ)))
+
+(defun vterm-cursor-in-command-buffer-p (&optional pt)
+  "Check whether cursor in command buffer area."
+  (save-excursion
+    (vterm-reset-cursor-point)
+    (let ((promp-pt (vterm--get-prompt-point))
+          eol)
+      (when promp-pt
+        (goto-char promp-pt)
+        (setq eol (vterm--get-end-of-line))
+        (<= promp-pt (or pt (vterm--get-cursor-point)) eol)))))
+
+
 ;;; Internal
 
 (defun vterm--delete-region(start end)
@@ -1371,6 +1437,7 @@ can find them and remove them."
     (vterm--insert content)
     (vterm--remove-fake-newlines)
     (buffer-string)))
+
 
 (provide 'vterm)
 ;;; vterm.el ends here
