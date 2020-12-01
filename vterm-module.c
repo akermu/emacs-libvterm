@@ -1233,11 +1233,11 @@ emacs_value Fvterm_update(emacs_env *env, ptrdiff_t nargs, emacs_value args[],
     unsigned char key[len];
     env->copy_string_contents(env, args[1], (char *)key, &len);
     VTermModifier modifier = VTERM_MOD_NONE;
-    if (env->is_not_nil(env, args[2]))
+    if (nargs > 2 && env->is_not_nil(env, args[2]))
       modifier = modifier | VTERM_MOD_SHIFT;
-    if (env->is_not_nil(env, args[3]))
+    if (nargs > 3 && env->is_not_nil(env, args[3]))
       modifier = modifier | VTERM_MOD_ALT;
-    if (env->is_not_nil(env, args[4]))
+    if (nargs > 4 && env->is_not_nil(env, args[4]))
       modifier = modifier | VTERM_MOD_CTRL;
 
     // Ignore the final zero byte
