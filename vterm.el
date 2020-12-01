@@ -948,11 +948,11 @@ Argument ARG is passed to `yank'"
 Optional argument PASTE-P paste-p."
   (when vterm--term
     (when paste-p
-      (vterm--update vterm--term "<start_paste>" nil nil nil))
+      (vterm--update vterm--term "<start_paste>" ))
     (dolist (char (string-to-list string))
-      (vterm--update vterm--term (char-to-string char) nil nil nil))
+      (vterm--update vterm--term (char-to-string char)))
     (when paste-p
-      (vterm--update vterm--term "<end_paste>" nil nil nil)))
+      (vterm--update vterm--term "<end_paste>")))
   (setq vterm--redraw-immididately t)
   (accept-process-output vterm--process vterm-timer-delay nil t))
 
@@ -961,13 +961,13 @@ Optional argument PASTE-P paste-p."
 
 Provide similar behavior as `insert' for vterm."
   (when vterm--term
-    (vterm--update vterm--term "<start_paste>" nil nil nil)
+    (vterm--update vterm--term "<start_paste>")
     (dolist (c contents)
       (if (characterp c)
-          (vterm--update vterm--term (char-to-string c) nil nil nil)
+          (vterm--update vterm--term (char-to-string c))
         (dolist (char (string-to-list c))
-          (vterm--update vterm--term (char-to-string char) nil nil nil))))
-    (vterm--update vterm--term "<end_paste>" nil nil nil)
+          (vterm--update vterm--term (char-to-string char)))))
+    (vterm--update vterm--term "<end_paste>")
     (setq vterm--redraw-immididately t)
     (accept-process-output vterm--process vterm-timer-delay nil t)))
 
