@@ -1010,18 +1010,6 @@ It will reset to original position if it can't move there."
         (goto-char origin-point))
       succ)))
 
-(defun vterm-cursor-in-command-buffer-p (&optional pt)
-  "Check whether cursor in command buffer area."
-  (save-excursion
-    (vterm-reset-cursor-point)
-    (let ((promp-pt (vterm--get-prompt-point))
-          eol)
-      (when promp-pt
-        (goto-char promp-pt)
-        (setq eol (vterm--get-end-of-line))
-        (<= promp-pt (or pt (vterm--get-cursor-point)) eol)))))
-
-
 ;;; Internal
 
 (defun vterm--delete-region(start end)
@@ -1386,6 +1374,17 @@ More information see `vterm--prompt-tracking-enabled-p' and
 (defun vterm--at-prompt-p ()
   "Return t if the cursor position is at shell prompt."
   (= (point) (or (vterm--get-prompt-point) 0)))
+
+(defun vterm-cursor-in-command-buffer-p (&optional pt)
+  "Check whether cursor in command buffer area."
+  (save-excursion
+    (vterm-reset-cursor-point)
+    (let ((promp-pt (vterm--get-prompt-point))
+          eol)
+      (when promp-pt
+        (goto-char promp-pt)
+        (setq eol (vterm--get-end-of-line))
+        (<= promp-pt (or pt (vterm--get-cursor-point)) eol)))))
 
 (defun vterm-beginning-of-line ()
   "Move point to the beginning of the line.
