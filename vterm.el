@@ -920,7 +920,7 @@ Argument ARG is passed to `yank'."
   (interactive "P")
   (vterm-goto-char (point))
   (let ((inhibit-read-only t))
-    (cl-letf (((symbol-function 'insert) #'vterm-insert))
+    (cl-letf (((symbol-function 'insert-for-yank) #'vterm-insert))
       (yank arg))))
 
 (defun vterm-yank-primary ()
@@ -929,7 +929,7 @@ Argument ARG is passed to `yank'."
   (vterm-goto-char (point))
   (let ((inhibit-read-only t)
         (primary (gui-get-primary-selection)))
-    (cl-letf (((symbol-function 'insert) #'vterm-insert))
+    (cl-letf (((symbol-function 'insert-for-yank) #'vterm-insert))
       (insert-for-yank primary))))
 
 (defun vterm-yank-pop (&optional arg)
@@ -940,7 +940,7 @@ Argument ARG is passed to `yank'"
   (vterm-goto-char (point))
   (let ((inhibit-read-only t)
         (yank-undo-function #'(lambda (_start _end) (vterm-undo))))
-    (cl-letf (((symbol-function 'insert) #'vterm-insert))
+    (cl-letf (((symbol-function 'insert-for-yank) #'vterm-insert))
       (yank-pop arg))))
 
 (defun vterm-send-string (string &optional paste-p)
