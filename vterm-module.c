@@ -264,8 +264,18 @@ static void refresh_lines(Term *term, emacs_env *env, int start_row,
   }
   int i, j;
 
-  char buffer[((end_row - start_row + 1) * end_col) * 4];
+#define PUSH_BUFFER(c) do {     \
+    if (length == capacity) {   \
+      capacity += end_col * 4;  \
+      buffer = realloc(buffer, capacity * sizeof(char));    \
+    }                           \
+    buffer[length] = (c);       \
+    length++;                   \
+  } while (0)
+
+  int capacity = ((end_row - start_row + 1) * end_col) * 4;
   int length = 0;
+  char* buffer = malloc(capacity * sizeof(char));
   VTermScreenCell cell;
   VTermScreenCell lastCell;
   fetch_cell(term, start_row, 0, &lastCell);
@@ -298,19 +308,18 @@ static void refresh_lines(Term *term, emacs_env *env, int start_row,
       if (cell.chars[0] == 0) {
         if (is_eol(term, end_col, i, j)) {
           /* This cell is EOL if this and every cell to the right is black */
-          buffer[length] = '\n';
-          length++;
+          PUSH_BUFFER('\n');
           newline = 1;
           break;
         }
-        buffer[length] = ' ';
-        length++;
+        PUSH_BUFFER(' ');
       } else {
-        unsigned char bytes[4];
-        size_t count = codepoint_to_utf8(cell.chars[0], bytes);
-        for (int k = 0; k < count; k++) {
-          buffer[length] = bytes[k];
-          length++;
+        for (int k = 0; k < VTERM_MAX_CHARS_PER_CELL && cell.chars[k]; ++k) {
+          unsigned char bytes[4];
+          size_t count = codepoint_to_utf8(cell.chars[k], bytes);
+          for (int l = 0; l < count; l++) {
+            PUSH_BUFFER(bytes[l]);
+          }
         }
       }
 
@@ -336,6 +345,9 @@ static void refresh_lines(Term *term, emacs_env *env, int start_row,
   }
   emacs_value text = render_text(env, term, buffer, length, &lastCell);
   insert(env, text);
+
+#undef PUSH_BUFFER
+  free(buffer);
 
   return;
 }
