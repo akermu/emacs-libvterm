@@ -242,7 +242,7 @@ readme.
 For `bash` or `zsh`, put this in your `.zshrc` or `.bashrc`
 ```bash
 vterm_printf(){
-    if [ -n "$TMUX" ]; then
+    if [ -n "$TMUX" ] && ([ "${TERM%%-*}" = "tmux" ] || [ "${TERM%%-*}" = "screen" ] ); then
         # Tell tmux to pass the escape sequences through
         printf "\ePtmux;\e\e]%s\007\e\\" "$1"
     elif [ "${TERM%%-*}" = "screen" ]; then
@@ -258,7 +258,7 @@ This works also for `dash`.
 For `fish` put this in your `~/.config/fish/config.fish`:
 ```bash
 function vterm_printf;
-    if [ -n "$TMUX" ]
+    if begin; [  -n "$TMUX" ]  ; and  string match -q -r "screen|tmux" "$TERM"; end 
         # tell tmux to pass the escape sequences through
         printf "\ePtmux;\e\e]%s\007\e\\" "$argv"
     else if string match -q -- "screen*" "$TERM"
