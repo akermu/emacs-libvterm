@@ -304,39 +304,9 @@ the prompt and not include it in the copy.
 
 `vterm-clear-scrollback` does exactly what the name suggests: it clears the
 current buffer from the data that it is not currently visible.
-`vterm-clear-scrollback` is bound to `C-c C-l`. This function is typically used
-with the `clear` function provided by the shell to clear both screen and
-scrollback. In order to achieve this behavior, you need to add a new shell alias.
+`vterm-clear-scrollback` is bound to `C-c C-l`.
 
-For `zsh`, put this in your `.zshrc`:
-```zsh
-
-if [[ "$INSIDE_EMACS" = 'vterm' ]]; then
-    alias clear='vterm_printf "51;Evterm-clear-scrollback";tput clear'
-fi
-```
-For `bash`, put this in your `.bashrc`:
-```bash
-if [[ "$INSIDE_EMACS" = 'vterm' ]]; then
-    function clear(){
-        vterm_printf "51;Evterm-clear-scrollback";
-        tput clear;
-    }
-fi
-```
-For `fish`:
-```
-if [ "$INSIDE_EMACS" = 'vterm' ]
-    function clear
-        vterm_printf "51;Evterm-clear-scrollback";
-        tput clear;
-    end
-end
-```
-These aliases take advantage of the fact that `vterm` can execute `elisp`
-commands, as explained below.
-
-If it possible to automatically clear the scrollback when the screen is cleared
+It is possible to automatically clear the scrollback when the screen is cleared
 by setting the variable `vterm-clear-scrollback-when-clearing`: When
 `vterm-clear-scrollback-when-clearing` is non nil, `C-l` clears both the screen
 and the scrollback. When is nil, `C-l` only clears the screen. The opposite

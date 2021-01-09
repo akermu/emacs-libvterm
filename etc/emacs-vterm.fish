@@ -15,15 +15,6 @@ function vterm_printf;
     end
 end
 
-# Completely clear the buffer. With this, everything that is not on screen
-# is erased.
-if [ "$INSIDE_EMACS" = 'vterm' ]
-    function clear
-        vterm_printf "51;Evterm-clear-scrollback";
-        tput clear;
-    end
-end
-
 # This is to change the title of the buffer based on information provided by the
 # shell. See, http://tldp.org/HOWTO/Xterm-Title-4.html, for the meaning of the
 # various symbols.
