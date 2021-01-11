@@ -475,6 +475,13 @@ In addition to that, you can disable some text properties (bold, underline,
 reverse video) setting the relative option to `t` (`vterm-disable-bold`,
 `vterm-disable-underline`, or `vterm-disable-inverse-video`).
 
+## Blink cursor
+
+When `vterm-ignore-blink-cursor` is `t`, vterm will ignore request from application to turn on or off cursor blink.
+
+If `nil`, cursor in any window may begin to blink or not blink because `blink-cursor-mode`
+is a global minor mode in Emacs, you can use `M-x blink-cursor-mode` to toggle.
+
 ## Colors
 
 Set the `:foreground` and `:background` attributes of the following faces to a

@@ -26,6 +26,7 @@ emacs_value Qrear_nonsticky;
 emacs_value Qvterm_prompt;
 
 // Emacs functions
+emacs_value Fblink_cursor_mode;
 emacs_value Fsymbol_value;
 emacs_value Flength;
 emacs_value Flist;
@@ -172,8 +173,12 @@ emacs_value selected_window(emacs_env *env) {
   return env->funcall(env, Fselected_window, 0, (emacs_value[]){});
 }
 
-void set_cursor_type(emacs_env *env, emacs_value QCursorType) {
-  env->funcall(env, Fset, 2, (emacs_value[]){Qcursor_type, QCursorType});
+void set_cursor_type(emacs_env *env, emacs_value cursor_type) {
+  env->funcall(env, Fset, 2, (emacs_value[]){Qcursor_type, cursor_type});
+}
+
+void set_cursor_blink(emacs_env *env, bool blink) {
+  env->funcall(env, Fblink_cursor_mode, 1, (emacs_value[]){env->make_integer(env, blink)});
 }
 
 emacs_value vterm_get_color(emacs_env *env, int index) {
