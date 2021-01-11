@@ -339,6 +339,14 @@ This means that vterm will render bold with the default face weight."
   :type  'boolean
   :group 'vterm)
 
+(defcustom vterm-ignore-blink-cursor t
+  "When t, vterm will ignore request from application to turn on or off cursor blink.
+
+If nil, cursor in any window may begin to blink or not blink because `blink-cursor-mode`
+is a global minor mode in Emacs, you can use `M-x blink-cursor-mode` to toggle."
+  :type 'boolean
+  :group 'vterm)
+
 (defcustom vterm-copy-exclude-prompt t
   "When not-nil, the prompt is not included by `vterm-copy-mode-done'."
   :type 'boolean
@@ -627,7 +635,8 @@ Exceptions are defined by `vterm-keymap-exceptions'."
                                   width vterm-max-scrollback
                                   vterm-disable-bold-font
                                   vterm-disable-underline
-                                  vterm-disable-inverse-video))
+                                  vterm-disable-inverse-video
+                                  vterm-ignore-blink-cursor))
     (setq buffer-read-only t)
     (setq-local scroll-conservatively 101)
     (setq-local scroll-margin 0)

@@ -536,26 +536,32 @@ static int term_movecursor(VTermPos new, VTermPos old, int visible,
 }
 
 static void term_redraw_cursor(Term *term, emacs_env *env) {
+  if (term->cursor.cursor_blink_changed) {
+    term->cursor.cursor_blink_changed = false;
+    set_cursor_blink(env, term->cursor.cursor_blink);
+  }
+
   if (term->cursor.cursor_type_changed) {
     term->cursor.cursor_type_changed = false;
-    switch (term->cursor.cursor_type) {
-    case VTERM_PROP_CURSOR_VISIBLE:
-      set_cursor_type(env, Qt);
-      break;
-    case VTERM_PROP_CURSOR_NOT_VISIBLE:
+
+    if (! term->cursor.cursor_visible) {
       set_cursor_type(env, Qnil);
-      break;
-    case VTERM_PROP_CURSOR_BLOCK:
+      return;
+    }
+
+    switch (term->cursor.cursor_type) {
+    case VTERM_PROP_CURSORSHAPE_BLOCK:
       set_cursor_type(env, Qbox);
       break;
-    case VTERM_PROP_CURSOR_UNDERLINE:
+    case VTERM_PROP_CURSORSHAPE_UNDERLINE:
       set_cursor_type(env, Qhbar);
       break;
-    case VTERM_PROP_CURSOR_BAR_LEFT:
+    case VTERM_PROP_CURSORSHAPE_BAR_LEFT:
       set_cursor_type(env, Qbar);
       break;
     default:
-      return;
+      set_cursor_type(env, Qt);
+      break;
     }
   }
 }
@@ -669,18 +675,20 @@ static int term_settermprop(VTermProp prop, VTermValue *val, void *user_data) {
   switch (prop) {
   case VTERM_PROP_CURSORVISIBLE:
     invalidate_terminal(term, term->cursor.row, term->cursor.row + 1);
-    if (val->boolean) {
-      term->cursor.cursor_type = VTERM_PROP_CURSOR_VISIBLE;
-    } else {
-      term->cursor.cursor_type = VTERM_PROP_CURSOR_NOT_VISIBLE;
-    }
+    term->cursor.cursor_visible = val->boolean;
     term->cursor.cursor_type_changed = true;
+    break;
+  case VTERM_PROP_CURSORBLINK:
+    if (term->ignore_blink_cursor)
+      break;
+    invalidate_terminal(term, term->cursor.row, term->cursor.row + 1);
+    term->cursor.cursor_blink = val->boolean;
+    term->cursor.cursor_blink_changed = true;
     break;
   case VTERM_PROP_CURSORSHAPE:
     invalidate_terminal(term, term->cursor.row, term->cursor.row + 1);
     term->cursor.cursor_type = val->number;
     term->cursor.cursor_type_changed = true;
-
     break;
   case VTERM_PROP_TITLE:
 #ifdef VTermStringFragmentNotExists
@@ -1177,6 +1185,7 @@ emacs_value Fvterm_new(emacs_env *env, ptrdiff_t nargs, emacs_value args[],
   int disable_bold_font = env->is_not_nil(env, args[3]);
   int disable_underline = env->is_not_nil(env, args[4]);
   int disable_inverse_video = env->is_not_nil(env, args[5]);
+  int ignore_blink_cursor = env->is_not_nil(env, args[6]);
 
   term->vt = vterm_new(rows, cols);
   vterm_set_utf8(term->vt, 1);
@@ -1203,6 +1212,7 @@ emacs_value Fvterm_new(emacs_env *env, ptrdiff_t nargs, emacs_value args[],
   term->disable_bold_font = disable_bold_font;
   term->disable_underline = disable_underline;
   term->disable_inverse_video = disable_inverse_video;
+  term->ignore_blink_cursor = ignore_blink_cursor;
   emacs_value newline = env->make_string(env, "\n", 1);
   for (int i = 0; i < term->height; i++) {
     insert(env, newline);
@@ -1218,6 +1228,11 @@ emacs_value Fvterm_new(emacs_env *env, ptrdiff_t nargs, emacs_value args[],
 
   term->cursor.row = 0;
   term->cursor.col = 0;
+  term->cursor.cursor_type = -1;
+  term->cursor.cursor_visible = true;
+  term->cursor.cursor_type_changed = false;
+  term->cursor.cursor_blink = false;
+  term->cursor.cursor_blink_changed = false;
   term->directory = NULL;
   term->directory_changed = false;
   term->elisp_code = NULL;
@@ -1391,6 +1406,7 @@ int emacs_module_init(struct emacs_runtime *ert) {
   Qcursor_type = env->make_global_ref(env, env->intern(env, "cursor-type"));
 
   // Functions
+  Fblink_cursor_mode = env->make_global_ref(env, env->intern(env, "blink-cursor-mode"));
   Fsymbol_value = env->make_global_ref(env, env->intern(env, "symbol-value"));
   Flength = env->make_global_ref(env, env->intern(env, "length"));
   Flist = env->make_global_ref(env, env->intern(env, "list"));
@@ -1438,7 +1454,7 @@ int emacs_module_init(struct emacs_runtime *ert) {
   // Exported functions
   emacs_value fun;
   fun =
-      env->make_function(env, 4, 6, Fvterm_new, "Allocate a new vterm.", NULL);
+      env->make_function(env, 4, 7, Fvterm_new, "Allocate a new vterm.", NULL);
   bind_function(env, "vterm--new", fun);
 
   fun = env->make_function(env, 1, 5, Fvterm_update,

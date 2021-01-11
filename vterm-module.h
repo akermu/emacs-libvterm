@@ -30,14 +30,6 @@ typedef struct ScrollbackLine {
   VTermScreenCell cells[];
 } ScrollbackLine;
 
-enum {
-  VTERM_PROP_CURSOR_BLOCK = VTERM_PROP_CURSORSHAPE_BLOCK,
-  VTERM_PROP_CURSOR_UNDERLINE = VTERM_PROP_CURSORSHAPE_UNDERLINE,
-  VTERM_PROP_CURSOR_BAR_LEFT = VTERM_PROP_CURSORSHAPE_BAR_LEFT,
-  VTERM_PROP_CURSOR_VISIBLE = 4,
-  VTERM_PROP_CURSOR_NOT_VISIBLE = 5,
-};
-
 /*  c , p , q , s , 0 , 1 , 2 , 3 , 4 , 5 , 6 , and 7  */
 /* clipboard, primary, secondary, select, or cut buffers 0 through 7 */
 #define SELECTION_TARGET_MAX 12
@@ -45,7 +37,10 @@ enum {
 typedef struct Cursor {
   int row, col;
   int cursor_type;
+  bool cursor_visible;
+  bool cursor_blink;
   bool cursor_type_changed;
+  bool cursor_blink_changed;
 } Cursor;
 
 typedef struct Term {
@@ -94,6 +89,7 @@ typedef struct Term {
   bool disable_bold_font;
   bool disable_underline;
   bool disable_inverse_video;
+  bool ignore_blink_cursor;
 
   char *cmd_buffer;
 
