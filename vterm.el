@@ -122,7 +122,9 @@ the executable."
              cd -"))
            (buffer (get-buffer-create vterm-install-buffer-name)))
       (pop-to-buffer buffer)
-      (if (zerop (call-process "sh" nil buffer t "-c" make-commands))
+      (compilation-mode)
+      (if (zerop (let ((inhibit-read-only t))
+                   (call-process "sh" nil buffer t "-c" make-commands)))
           (message "Compilation of `emacs-libvterm' module succeeded")
         (error "Compilation of `emacs-libvterm' module failed!")))))
 
