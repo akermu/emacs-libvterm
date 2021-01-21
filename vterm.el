@@ -539,6 +539,14 @@ Exceptions are defined by `vterm-keymap-exceptions'."
                                  unless (member key exceptions)
                                  collect key))))
 
+(defun vterm-xterm-paste (event)
+  "Handle xterm paste EVENT in vterm."
+  (interactive "e")
+  (with-temp-buffer
+    (xterm-paste event)
+    (kill-new (buffer-string)))
+  (vterm-yank))
+
 (defvar vterm-mode-map
   (let ((map (make-sparse-keymap)))
     (vterm--exclude-keys map vterm-keymap-exceptions)
@@ -576,7 +584,7 @@ Exceptions are defined by `vterm-keymap-exceptions'."
     (define-key map [C-end]                     #'vterm--self-insert)
     (define-key map [escape]                    #'vterm--self-insert)
     (define-key map [remap yank]                #'vterm-yank)
-    (define-key map [remap xterm-paste]         #'vterm-yank)
+    (define-key map [remap xterm-paste]         #'vterm-xterm-paste)
     (define-key map [remap yank-pop]            #'vterm-yank-pop)
     (define-key map [remap mouse-yank-primary]  #'vterm-yank-primary)
     (define-key map (kbd "C-SPC")               #'vterm--self-insert)
