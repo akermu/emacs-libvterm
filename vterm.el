@@ -56,6 +56,8 @@
 
 ;;; Code:
 
+(require 'term/xterm)
+
 (unless module-file-suffix
   (error "VTerm needs module support.  Please compile Emacs with
   the --with-modules option!"))
