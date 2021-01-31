@@ -797,6 +797,7 @@ will invert `vterm-copy-exclude-prompt' for that call."
 
 (defun vterm-send-key (key &optional shift meta ctrl)
   "Send KEY to libvterm with optional modifiers SHIFT, META and CTRL."
+  (deactivate-mark)
   (when vterm--term
     (let ((inhibit-redisplay t)
           (inhibit-read-only t))
@@ -829,6 +830,7 @@ will invert `vterm-copy-exclude-prompt' for that call."
 (defun vterm-send-return ()
   "Send `C-m' to the libvterm."
   (interactive)
+  (deactivate-mark)
   (when vterm--term
     (if (vterm--get-icrnl vterm--term)
         (process-send-string vterm--process "\C-j")
@@ -939,6 +941,7 @@ prefix argument ARG or with \\[universal-argument]."
 
 Argument ARG is passed to `yank'."
   (interactive "P")
+  (deactivate-mark)
   (vterm-goto-char (point))
   (let ((inhibit-read-only t))
     (cl-letf (((symbol-function 'insert-for-yank) #'vterm-insert))
