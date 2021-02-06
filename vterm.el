@@ -1431,7 +1431,8 @@ Effectively toggle between the two positions."
   "Make sure the cursor at the right position."
   (interactive)
   (when vterm--term
-    (vterm--reset-point vterm--term)))
+    (let ((inhibit-read-only t))
+      (vterm--reset-point vterm--term))))
 
 (defun vterm--get-cursor-point ()
   "Get term cursor position."
