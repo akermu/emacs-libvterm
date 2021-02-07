@@ -4,7 +4,7 @@
 # function that helps in this task, `vterm_printf`, is defined below.
 
 function vterm_printf;
-    if [ -n "$TMUX" ]
+    if begin; [  -n "$TMUX" ]  ; and  string match -q -r "screen|tmux" "$TERM"; end 
         # tell tmux to pass the escape sequences through
         printf "\ePtmux;\e\e]%s\007\e\\" "$argv"
     else if string match -q -- "screen*" "$TERM"
