@@ -791,8 +791,13 @@ will invert `vterm-copy-exclude-prompt' for that call."
     (let* ((modifiers (event-modifiers last-input-event))
            (shift (memq 'shift modifiers))
            (meta (memq 'meta modifiers))
-           (ctrl (memq 'control modifiers)))
-      (when-let ((key (key-description (vector (event-basic-type last-input-event)))))
+           (ctrl (memq 'control modifiers))
+           (raw-key (event-basic-type last-input-event))
+           (ev-key (if input-method-function
+                       (let ((inhibit-read-only t))
+                         (funcall input-method-function raw-key))
+                     (vector raw-key))))
+      (when-let ((key (key-description ev-key)))
         (vterm-send-key key shift meta ctrl)))))
 
 (defun vterm-send-key (key &optional shift meta ctrl)
