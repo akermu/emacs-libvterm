@@ -788,11 +788,11 @@ will invert `vterm-copy-exclude-prompt' for that call."
   "Send invoking key to libvterm."
   (interactive)
   (when vterm--term
-    (let* ((modifiers (event-modifiers last-input-event))
+    (let* ((modifiers (event-modifiers last-command-event))
            (shift (memq 'shift modifiers))
            (meta (memq 'meta modifiers))
            (ctrl (memq 'control modifiers))
-           (raw-key (event-basic-type last-input-event))
+           (raw-key (event-basic-type last-command-event))
            (ev-key (if input-method-function
                        (let ((inhibit-read-only t))
                          (funcall input-method-function raw-key))
@@ -806,7 +806,7 @@ will invert `vterm-copy-exclude-prompt' for that call."
   (when vterm--term
     (let ((inhibit-redisplay t)
           (inhibit-read-only t))
-      (when (and (not (symbolp last-input-event)) shift (not meta) (not ctrl))
+      (when (and (not (symbolp last-command-event)) shift (not meta) (not ctrl))
         (setq key (upcase key)))
       (vterm--update vterm--term key shift meta ctrl)
       (setq vterm--redraw-immididately t)
