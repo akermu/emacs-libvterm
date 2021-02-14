@@ -30,6 +30,12 @@ typedef struct ScrollbackLine {
   VTermScreenCell cells[];
 } ScrollbackLine;
 
+typedef struct ElispCodeListNode {
+  char* code;
+  size_t code_len;
+  struct ElispCodeListNode* next;
+} ElispCodeListNode;
+
 /*  c , p , q , s , 0 , 1 , 2 , 3 , 4 , 5 , 6 , and 7  */
 /* clipboard, primary, secondary, select, or cut buffers 0 through 7 */
 #define SELECTION_TARGET_MAX 12
@@ -71,8 +77,10 @@ typedef struct Term {
   char *directory;
   bool directory_changed;
 
-  char *elisp_code;
-  bool elisp_code_changed;
+  // Single-linked list of elisp_code.
+  // Newer commands are added at the tail.
+  ElispCodeListNode* elisp_code_first;
+  ElispCodeListNode** elisp_code_p_insert; // pointer to the position where new node should be inserted
 
   /*  c , p , q , s , 0 , 1 , 2 , 3 , 4 , 5 , 6 , and 7  */
   /* clipboard, primary, secondary, select, or cut buffers 0 through 7 */

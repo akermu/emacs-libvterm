@@ -594,14 +594,18 @@ static void term_redraw(Term *term, emacs_env *env) {
         env, env->make_string(env, term->directory, strlen(term->directory)));
     term->directory_changed = false;
   }
-  if (term->elisp_code_changed) {
-    term->elisp_code_changed = false;
-    emacs_value elisp_code =
-        env->make_string(env, term->elisp_code, strlen(term->elisp_code));
+
+  while (term->elisp_code_first) {
+    ElispCodeListNode* node = term->elisp_code_first;
+    emacs_value elisp_code = env->make_string(env, node->code, node->code_len);
     vterm_eval(env, elisp_code);
-    free(term->elisp_code);
-    term->elisp_code = NULL;
+
+    term->elisp_code_first = node->next;
+    free(node->code);
+    free(node);
   }
+  term->elisp_code_p_insert = &term->elisp_code_first;
+
   if (term->selection_data) {
     emacs_value selection_target = env->make_string(
         env, &term->selection_target[0], strlen(&term->selection_target[0]));
@@ -991,10 +995,15 @@ void term_finalize(void *object) {
     free(term->directory);
     term->directory = NULL;
   }
-  if (term->elisp_code) {
-    free(term->elisp_code);
-    term->elisp_code = NULL;
+
+  while (term->elisp_code_first) {
+    ElispCodeListNode* node = term->elisp_code_first;
+    term->elisp_code_first = node->next;
+    free(node->code);
+    free(node);
   }
+  term->elisp_code_p_insert = &term->elisp_code_first;
+
   if (term->cmd_buffer) {
     free(term->cmd_buffer);
     term->cmd_buffer = NULL;
@@ -1053,9 +1062,14 @@ static int handle_osc_cmd_51(Term *term, char subCmd, char *buffer) {
   } else if (subCmd == 'E') {
     /* "51;E" executes elisp code */
     /* The elisp code is executed in term_redraw */
-    term->elisp_code = malloc(strlen(buffer) + 1);
-    strcpy(term->elisp_code, buffer);
-    term->elisp_code_changed = true;
+    ElispCodeListNode* node = malloc(sizeof(ElispCodeListNode));
+    node->code_len = strlen(buffer);
+    node->code = malloc(node->code_len + 1);
+    strcpy(node->code, buffer);
+    node->next = NULL;
+
+    *(term->elisp_code_p_insert) = node;
+    term->elisp_code_p_insert = &(node->next);
     return 1;
   }
   return 0;
@@ -1241,8 +1255,8 @@ emacs_value Fvterm_new(emacs_env *env, ptrdiff_t nargs, emacs_value args[],
   term->cursor.cursor_blink_changed = false;
   term->directory = NULL;
   term->directory_changed = false;
-  term->elisp_code = NULL;
-  term->elisp_code_changed = false;
+  term->elisp_code_first = NULL;
+  term->elisp_code_p_insert = &term->elisp_code_first;
   term->selection_data = NULL;
 
   term->cmd_buffer = NULL;
