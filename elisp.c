@@ -178,7 +178,8 @@ void set_cursor_type(emacs_env *env, emacs_value cursor_type) {
 }
 
 void set_cursor_blink(emacs_env *env, bool blink) {
-  env->funcall(env, Fblink_cursor_mode, 1, (emacs_value[]){env->make_integer(env, blink)});
+  env->funcall(env, Fblink_cursor_mode, 1,
+               (emacs_value[]){env->make_integer(env, blink)});
 }
 
 emacs_value vterm_get_color(emacs_env *env, int index) {
