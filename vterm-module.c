@@ -597,10 +597,10 @@ static void term_redraw(Term *term, emacs_env *env) {
 
   while (term->elisp_code_first) {
     ElispCodeListNode* node = term->elisp_code_first;
+    term->elisp_code_first = node->next;
     emacs_value elisp_code = env->make_string(env, node->code, node->code_len);
     vterm_eval(env, elisp_code);
 
-    term->elisp_code_first = node->next;
     free(node->code);
     free(node);
   }
