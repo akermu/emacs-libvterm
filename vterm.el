@@ -168,6 +168,18 @@ the executable."
   :type 'string
   :group 'vterm)
 
+(defcustom vterm-buffer-name "*vterm*"
+  "The basename used for vterm buffers.
+This is the default name used when running `vterm' or
+`vterm-other-window'.
+
+With a numeric prefix argument to `vterm', the buffer name will
+be the value of this variable followed by the number.  For
+example, with the numeric prefix argument 2, the buffer would be
+named \"*vterm*<2>\"."
+  :type 'string
+  :group 'vterm)
+
 (defcustom vterm-max-scrollback 1000
   "Maximum 'scrollback' value.
 
@@ -1117,28 +1129,58 @@ Search Manipulate Selection Data in
 ;;; Entry Points
 
 ;;;###autoload
-(defun vterm (&optional buffer-name)
-  "Create a new vterm.
+(defun vterm (&optional arg)
+  "Create an interactive Vterm buffer.
+Start a new Vterm session, or switch to an already active
+session.  Return the buffer selected (or created).
 
-If called with an argument BUFFER-NAME, the name of the new buffer will
-be set to BUFFER-NAME, otherwise it will be `vterm'"
-  (interactive)
-  (let ((buffer (generate-new-buffer (or buffer-name "vterm"))))
-    (with-current-buffer buffer
-      (vterm-mode))
-    (pop-to-buffer-same-window buffer)))
+With a nonnumeric prefix arg, create a new session.
+
+With a string prefix arg, create a new session with arg as buffer name.
+
+With a numeric prefix arg (as in `C-u 42 M-x vterm RET'), switch
+to the session with that number, or create it if it doesn't
+already exist.
+
+The buffer name used for Vterm sessions is determined by the
+value of `vterm-buffer-name'."
+  (interactive "P")
+  (vterm--internal #'pop-to-buffer-same-window arg))
 
 ;;;###autoload
-(defun vterm-other-window (&optional buffer-name)
-  "Create a new vterm in another window.
+(defun vterm-other-window (&optional arg)
+  "Create an interactive Vterm buffer in another window.
+Start a new Vterm session, or switch to an already active
+session.  Return the buffer selected (or created).
 
-If called with an argument BUFFER-NAME, the name of the new buffer will
-be set to BUFFER-NAME, otherwise it will be `vterm'"
-  (interactive)
-  (let ((buffer (generate-new-buffer (or buffer-name "vterm"))))
-    (with-current-buffer buffer
-      (vterm-mode))
-    (pop-to-buffer buffer)))
+With a nonnumeric prefix arg, create a new session.
+
+With a string prefix arg, create a new session with arg as buffer name.
+
+With a numeric prefix arg (as in `C-u 42 M-x vterm RET'), switch
+to the session with that number, or create it if it doesn't
+already exist.
+
+The buffer name used for Vterm sessions is determined by the
+value of `vterm-buffer-name'."
+  (interactive "P")
+  (vterm--internal #'pop-to-buffer arg))
+
+(defun vterm--internal (pop-to-buf-fun &optional arg)
+  (cl-assert vterm-buffer-name)
+  (let ((buf (cond ((numberp arg)
+                    (get-buffer-create (format "%s<%d>"
+                                               vterm-buffer-name
+                                               arg)))
+                   ((stringp arg) (generate-new-buffer arg))
+                   (arg (generate-new-buffer vterm-buffer-name))
+                   (t
+                    (get-buffer-create vterm-buffer-name)))))
+    (cl-assert (and buf (buffer-live-p buf)))
+    (with-current-buffer buf
+      (unless (derived-mode-p 'vterm-mode)
+        (vterm-mode)))
+    (funcall pop-to-buf-fun buf)))
 
 ;;; Internal
 
