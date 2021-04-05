@@ -551,6 +551,13 @@ Exceptions are defined by `vterm-keymap-exceptions'."
                  append (cl-loop for char from ?a to ?z
                                  for key = (format "%s%c" prefix char)
                                  unless (member key exceptions)
+                                 collect key)))
+  (mapc (lambda (key)
+          (define-key map (kbd key) 'ignore))
+        (cl-loop for prefix in '("C-M-" "C-M-S-")
+                 append (cl-loop for char from ?a to ?z
+                                 for key = (format "%s%c" prefix char)
+                                 unless (member key exceptions)
                                  collect key))))
 
 (defun vterm-xterm-paste (event)
