@@ -117,7 +117,7 @@ the executable."
              "cd " vterm-directory "; \
              mkdir -p build; \
              cd build; \
-             cmake -G 'Unix Makefiles'"
+             cmake -G 'Unix Makefiles' "
              vterm-module-cmake-args
              " ..; \
              make; \
