@@ -70,12 +70,12 @@
 Currently, vterm defines the following flags (in addition to the
 ones already available in CMake):
 
-`USE_SYSTEM_LIBVTERM'.  Set it to `yes' to use the version of
-libvterm installed on your system.
+`USE_SYSTEM_LIBVTERM'.  Set it to `Off' to use the vendored version of
+libvterm instead of the one installed on your system.
 
 This string is given verbatim to CMake, so it has to have the
 correct syntax.  An example of meaningful value for this variable
-is `-DUSE_SYSTEM_LIBVTERM=yes'."
+is `-DUSE_SYSTEM_LIBVTERM=Off'."
   :type 'string
   :group 'vterm)
 
