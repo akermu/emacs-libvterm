@@ -814,12 +814,16 @@ will invert `vterm-copy-exclude-prompt' for that call."
            (meta (memq 'meta modifiers))
            (ctrl (memq 'control modifiers))
            (raw-key (event-basic-type last-command-event))
-           (ev-key (if input-method-function
-                       (let ((inhibit-read-only t))
-                         (funcall input-method-function raw-key))
-                     (vector raw-key))))
-      (when-let ((key (key-description ev-key)))
-        (vterm-send-key key shift meta ctrl)))))
+           (ev-keys))
+      (if input-method-function
+          (let ((inhibit-read-only t))
+            (setq ev-keys (funcall input-method-function raw-key))
+            (when (listp ev-keys)
+              (dolist (k ev-keys)
+                (when-let ((key (key-description (vector k))))
+                  (vterm-send-key key shift meta ctrl)))))
+        (when-let ((key (key-description (vector raw-key))))
+          (vterm-send-key key shift meta ctrl))))))
 
 (defun vterm-send-key (key &optional shift meta ctrl)
   "Send KEY to libvterm with optional modifiers SHIFT, META and CTRL."
