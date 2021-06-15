@@ -1607,4 +1607,7 @@ can find them and remove them."
 
 
 (provide 'vterm)
+;; Local Variables:
+;; indent-tabs-mode: nil
+;; End:
 ;;; vterm.el ends here
