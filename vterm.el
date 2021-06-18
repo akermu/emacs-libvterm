@@ -133,7 +133,7 @@ the executable."
 ;; If the vterm-module is not compiled yet, compile it
 (unless (require 'vterm-module nil t)
   (if (or vterm-always-compile-module
-            (y-or-n-p "Vterm needs `vterm-module' to work.  Compile it now? "))
+          (y-or-n-p "Vterm needs `vterm-module' to work.  Compile it now? "))
       (progn
         (vterm-module-compile)
         (require 'vterm-module))
@@ -237,7 +237,7 @@ function `vterm--exclude-keys' removes the keybindings defined in
   :set (lambda (sym val)
          (set sym val)
          (when (and (fboundp 'vterm--exclude-keys)
-            (boundp 'vterm-mode-map))
+                    (boundp 'vterm-mode-map))
            (vterm--exclude-keys vterm-mode-map val)))
   :group 'vterm)
 
@@ -691,7 +691,7 @@ Exceptions are defined by `vterm-keymap-exceptions'."
            :command
            `("/bin/sh" "-c"
              ,(format
-           "stty -nl sane %s erase ^? rows %d columns %d >/dev/null && exec %s"
+               "stty -nl sane %s erase ^? rows %d columns %d >/dev/null && exec %s"
                ;; Some stty implementations (i.e. that of *BSD) do not
                ;; support the iutf8 option.  to handle that, we run some
                ;; heuristics to work out if the system supports that
@@ -717,7 +717,7 @@ Exceptions are defined by `vterm-keymap-exceptions'."
   ;; mode can break this, leading to segmentation faults.
   (add-hook 'change-major-mode-hook
             (lambda () (interactive)
-               (user-error "You cannot change major mode in vterm buffers")) nil t)
+              (user-error "You cannot change major mode in vterm buffers")) nil t)
 
   (vterm--set-pty-name vterm--term (process-tty-name vterm--process))
   (process-put vterm--process 'adjust-window-size-function
@@ -835,7 +835,7 @@ will invert `vterm-copy-exclude-prompt' for that call."
         (setq key (upcase key)))
       (vterm--update vterm--term key shift meta ctrl)
       (setq vterm--redraw-immididately t)
-       (accept-process-output vterm--process vterm-timer-delay nil t))))
+      (accept-process-output vterm--process vterm-timer-delay nil t))))
 
 (defun vterm-send (key)
   "Send KEY to libvterm.  KEY can be anything `kbd' understands."
@@ -1122,10 +1122,10 @@ Search Manipulate Selection Data in
     (unless (or (string-equal data "?")
                 (string-empty-p data))
       (let* ((inhibit-eol-conversion t)
-            (decoded-data (decode-coding-string
-                           (base64-decode-string data) locale-coding-system))
-            (select-enable-clipboard select-enable-clipboard)
-            (select-enable-primary select-enable-primary))
+             (decoded-data (decode-coding-string
+                            (base64-decode-string data) locale-coding-system))
+             (select-enable-clipboard select-enable-clipboard)
+             (select-enable-primary select-enable-primary))
         ;; https://invisible-island.net/xterm/ctlseqs/ctlseqs.html
         ;; c , p , q , s , 0 , 1 , 2 , 3 , 4 , 5 , 6 , and 7
         ;; clipboard, primary, secondary, select, or cut buffers 0 through 7
@@ -1330,19 +1330,19 @@ Argument EVENT process event."
   ;; enabled, otherwise the buffer would be redrawn, messing around with the
   ;; position of the point.
   (unless vterm-copy-mode
-  (let* ((size (funcall window-adjust-process-window-size-function
-                        process windows))
-         (width (car size))
-         (height (cdr size))
-         (inhibit-read-only t))
-    (setq width (- width (vterm--get-margin-width)))
-    (setq width (max width vterm-min-window-width))
-    (when (and (processp process)
-               (process-live-p process)
-               (> width 0)
-               (> height 0))
-      (vterm--set-size vterm--term height width)
-      (cons width height)))))
+    (let* ((size (funcall window-adjust-process-window-size-function
+                          process windows))
+           (width (car size))
+           (height (cdr size))
+           (inhibit-read-only t))
+      (setq width (- width (vterm--get-margin-width)))
+      (setq width (max width vterm-min-window-width))
+      (when (and (processp process)
+                 (process-live-p process)
+                 (> width 0)
+                 (> height 0))
+        (vterm--set-size vterm--term height width)
+        (cons width height)))))
 
 (defun vterm--get-margin-width ()
   "Get margin width of vterm buffer when `display-line-numbers-mode' is enabled."
@@ -1607,4 +1607,7 @@ can find them and remove them."
 
 
 (provide 'vterm)
+;; Local Variables:
+;; indent-tabs-mode: nil
+;; End:
 ;;; vterm.el ends here
