@@ -4,11 +4,12 @@
 #include "emacs-module.h"
 #include <inttypes.h>
 #include <stdbool.h>
+#include <limits.h>
 #include <vterm.h>
 
 int plugin_is_GPL_compatible;
 
-#define SB_MAX 100000 // Maximum 'scrollback' value.
+#define SB_MAX INT_MAX // Maximum 'scrollback' value.
 
 #ifndef MIN
 #define MIN(X, Y) ((X) < (Y) ? (X) : (Y))
