@@ -840,7 +840,7 @@ A conventient way to exit `vterm-copy-mode' is with
   (if (equal major-mode 'vterm-mode)
       (if vterm-copy-mode
           (progn                            ;enable vterm-copy-mode
-            (use-local-map nil)
+            (use-local-map vterm-copy-mode-map)
             (vterm-send-stop))
         (vterm-reset-cursor-point)
         (use-local-map vterm-mode-map)
