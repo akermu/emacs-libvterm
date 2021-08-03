@@ -1193,10 +1193,10 @@ value of `vterm-buffer-name'."
                    (t
                     (get-buffer-create vterm-buffer-name)))))
     (cl-assert (and buf (buffer-live-p buf)))
+    (funcall pop-to-buf-fun buf)
     (with-current-buffer buf
       (unless (derived-mode-p 'vterm-mode)
-        (vterm-mode)))
-    (funcall pop-to-buf-fun buf)))
+        (vterm-mode)))))
 
 ;;; Internal
 
