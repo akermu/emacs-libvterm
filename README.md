@@ -427,7 +427,7 @@ add-zsh-hook -Uz chpwd (){ print -Pn "\e]2;%m:%2~\a" }
 ```
 For `bash`,
 ```bash
-PROMPT_COMMAND='echo -ne "\033]0;${HOSTNAME}:${PWD}\007"'
+PROMPT_COMMAND="${PROMPT_COMMAND:+$PROMPT_COMMAND; }"'echo -ne "\033]0;${HOSTNAME}:${PWD}\007"'
 ```
 For `fish`,
 ```fish
@@ -799,7 +799,7 @@ add-zsh-hook -Uz chpwd (){ vterm_set_directory }
 For `bash`, append it to the prompt:
 
 ``` sh
-PROMPT_COMMAND="$PROMPT_COMMAND;vterm_set_directory"
+PROMPT_COMMAND="${PROMPT_COMMAND:+$PROMPT_COMMAND; }vterm_set_directory"
 ```
 Finally, add `update-pwd` to the list of commands that Emacs
 is allowed to execute from vterm:
