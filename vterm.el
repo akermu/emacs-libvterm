@@ -1242,7 +1242,8 @@ value of `vterm-buffer-name'."
     (funcall pop-to-buf-fun buf)
     (with-current-buffer buf
       (unless (derived-mode-p 'vterm-mode)
-        (vterm-mode)))))
+        (vterm-mode)))
+    buf))
 
 ;;; Internal
 
