@@ -385,6 +385,11 @@ not require any shell-side configuration. See
   :type 'boolean
   :group 'vterm)
 
+(defcustom vterm-bookmark-check-dir t
+  "When set to non-nil, also restore directory when restoring a vterm bookmark."
+  :type 'boolean
+  :group 'vterm)
+
 ;;; Faces
 
 (defface vterm-color-black
@@ -739,8 +744,6 @@ Notes down the current directory and buffer name."
     (buf-name . ,(buffer-name))
     (defaults . nil)))
 
-(defcustom vterm-bookmark-check-dir t
-  "When set to non-nil, also restore directory when restoring a vterm bookmark.")
 
 ;;;###autoload
 (defun vterm--bookmark-handler (bmk)
