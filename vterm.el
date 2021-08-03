@@ -726,7 +726,50 @@ Exceptions are defined by `vterm-keymap-exceptions'."
                #'vterm--window-adjust-process-window-size)
   ;; Support to compilation-shell-minor-mode
   ;; Is this necessary? See vterm--compilation-setup
-  (setq next-error-function 'vterm-next-error-function))
+  (setq next-error-function 'vterm-next-error-function)
+  (setq-local bookmark-make-record-function 'vterm--bookmark-make-record))
+
+(defun vterm--bookmark-make-record ()
+  "Create a vterm bookmark.
+
+Notes down the current directory and buffer name."
+  `(nil
+    (handler . vterm--bookmark-handler)
+    (thisdir . ,default-directory)
+    (buf-name . ,(buffer-name))
+    (defaults . nil)))
+
+(defcustom vterm-bookmark-check-dir t
+  "When set to non-nil, also restore directory when restoring a vterm bookmark.")
+
+;;;###autoload
+(defun vterm--bookmark-handler (bmk)
+  "Handler to restore a vterm bookmark BMK.
+
+If a vterm buffer of the same name does not exist, the function will create a
+new vterm buffer of the name. It also checks the current directory and sets
+it to the bookmarked directory if needed."
+  (let* ((thisdir (bookmark-prop-get bmk 'thisdir))
+         (buf-name (bookmark-prop-get bmk 'buf-name))
+         (buf (get-buffer buf-name))
+         (thismode (and buf (with-current-buffer buf major-mode))))
+    ;; create if no such vterm buffer exists
+    (when (or (not buf) (not (eq thismode 'vterm-mode)))
+      (setq buf (generate-new-buffer buf-name))
+      (with-current-buffer buf
+        (when vterm-bookmark-check-dir
+          (setq default-directory thisdir))
+        (vterm-mode)))
+    ;; check the current directory
+    (with-current-buffer buf
+      (when (and vterm-bookmark-check-dir
+                 (not (string-equal default-directory thisdir)))
+        (when vterm-copy-mode
+          (vterm-copy-mode-done))
+        (vterm-insert (concat "cd " thisdir))
+        (vterm-send-return)))
+    ;; set to this vterm buf
+    (set-buffer buf)))
 
 (defun vterm--compilation-setup ()
   "Function to enable the option `compilation-shell-minor-mode' for vterm.
