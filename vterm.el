@@ -664,7 +664,7 @@ Exceptions are defined by `vterm-keymap-exceptions'."
                                        "LINES"
                                        "COLUMNS")
                                      process-environment))
-	;; TODO: Figure out why inhibit is needed for curses to render correctly.
+        ;; TODO: Figure out why inhibit is needed for curses to render correctly.
         (inhibit-eol-conversion nil)
         (coding-system-for-read 'binary)
         (process-adaptive-read-buffering nil)
@@ -710,7 +710,7 @@ Exceptions are defined by `vterm-keymap-exceptions'."
                width vterm-shell))
            ;; :coding 'no-conversion
            :connection-type 'pty
-	   :file-handler t
+           :file-handler t
            :filter #'vterm--filter
            ;; The sentinel is needed if there are exit functions or if
            ;; vterm-kill-buffer-on-exit is set to t.  In this latter case,
