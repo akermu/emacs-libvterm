@@ -168,6 +168,14 @@ the executable."
   :type 'string
   :group 'vterm)
 
+(defcustom vterm-tramp-shells '(("docker" "/bin/sh"))
+  "The shell that gets run in the vterm for tramp.
+
+`vterm-tramp-shells' has to be a list of pairs of the format:
+\(TRAMP-METHOD SHELL)"
+  :type '(alist :key-type string :value-type string)
+  :group 'vterm)
+
 (defcustom vterm-buffer-name "*vterm*"
   "The basename used for vterm buffers.
 This is the default name used when running `vterm' or
@@ -707,7 +715,7 @@ Exceptions are defined by `vterm-keymap-exceptions'."
                ;; See: https://bugs.freebsd.org/bugzilla/show_bug.cgi?id=220009
                (if (eq system-type 'berkeley-unix) "" "iutf8")
                (window-body-height)
-               width vterm-shell))
+               width (vterm--get-shell)))
            ;; :coding 'no-conversion
            :connection-type 'pty
            :file-handler t
@@ -733,6 +741,14 @@ Exceptions are defined by `vterm-keymap-exceptions'."
   ;; Is this necessary? See vterm--compilation-setup
   (setq next-error-function 'vterm-next-error-function)
   (setq-local bookmark-make-record-function 'vterm--bookmark-make-record))
+
+(defun vterm--get-shell ()
+  "Get the shell that gets run in the vterm."
+  (if (ignore-errors (file-remote-p default-directory))
+      (with-parsed-tramp-file-name default-directory nil
+        (or (cadr (assoc method vterm-tramp-shells))
+            vterm-shell))
+    vterm-shell))
 
 (defun vterm--bookmark-make-record ()
   "Create a vterm bookmark.
