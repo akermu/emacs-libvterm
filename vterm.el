@@ -784,7 +784,7 @@ it to the bookmarked directory if needed."
       (when (and vterm-bookmark-check-dir
                  (not (string-equal default-directory thisdir)))
         (when vterm-copy-mode
-          (vterm-copy-mode-done))
+          (vterm-copy-mode-done nil))
         (vterm-insert (concat "cd " thisdir))
         (vterm-send-return)))
     ;; set to this vterm buf
