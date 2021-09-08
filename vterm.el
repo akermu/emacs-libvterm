@@ -307,14 +307,15 @@ demo: '(\"env1=v1\" \"env2=v2\")"
 
 Support copy text to emacs kill ring and system clipboard by using OSC 52.
 For example: send base64 encoded 'foo' to kill ring: echo -en '\e]52;c;Zm9v\a',
-tmux can share its copy buffer to terminals by supporting osc52(like iterm2 xterm),
-you can enable this feature for tmux by :
+tmux can share its copy buffer to terminals by supporting osc52(like iterm2
+ xterm) you can enable this feature for tmux by :
 set -g set-clipboard on         #osc 52 copy paste share with iterm
 set -ga terminal-overrides ',xterm*:XT:Ms=\E]52;%p1%s;%p2%s\007'
 set -ga terminal-overrides ',screen*:XT:Ms=\E]52;%p1%s;%p2%s\007'
 
-The clipboard querying/clearing functionality offered by OSC 52 is not implemented here,
-And for security reason, this feature is disabled by default."
+The clipboard querying/clearing functionality offered by OSC 52 is not
+implemented here,And for security reason, this feature is disabled
+by default."
   :type 'boolean
   :group 'vterm)
 
@@ -366,10 +367,11 @@ This means that vterm will render bold with the default face weight."
   :group 'vterm)
 
 (defcustom vterm-ignore-blink-cursor t
-  "When t, vterm will ignore request from application to turn on or off cursor blink.
+  "When t,vterm will ignore request from application to turn on/off cursor blink.
 
-If nil, cursor in any window may begin to blink or not blink because `blink-cursor-mode`
-is a global minor mode in Emacs, you can use `M-x blink-cursor-mode` to toggle."
+If nil, cursor in any window may begin to blink or not blink because
+`blink-cursor-mode`is a global minor mode in Emacs,
+you can use `M-x blink-cursor-mode` to toggle."
   :type 'boolean
   :group 'vterm)
 
