@@ -233,7 +233,7 @@ the point up."
   :group 'vterm)
 
 (defcustom vterm-keymap-exceptions
-  '("C-c" "C-x" "C-u" "C-g" "C-h" "C-l" "M-x" "M-o" "C-v" "M-v" "C-y" "M-y")
+  '("C-c" "C-x" "C-u" "C-g" "C-h" "C-l" "M-x" "M-o" "C-y" "M-y")
   "Exceptions for `vterm-keymap'.
 
 If you use a keybinding with a prefix-key, add that prefix-key to
