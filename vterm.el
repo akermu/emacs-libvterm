@@ -893,7 +893,7 @@ will invert `vterm-copy-exclude-prompt' for that call."
         (when-let ((key (key-description (vector raw-key))))
           (vterm-send-key key shift meta ctrl))))))
 
-(defun vterm-send-key (key &optional shift meta ctrl)
+(defun vterm-send-key (key &optional shift meta ctrl accept-proc-output)
   "Send KEY to libvterm with optional modifiers SHIFT, META and CTRL."
   (deactivate-mark)
   (when vterm--term
@@ -903,7 +903,8 @@ will invert `vterm-copy-exclude-prompt' for that call."
         (setq key (upcase key)))
       (vterm--update vterm--term key shift meta ctrl)
       (setq vterm--redraw-immididately t)
-      (accept-process-output vterm--process vterm-timer-delay nil t))))
+      (when accept-proc-output
+        (accept-process-output vterm--process vterm-timer-delay nil t)))))
 
 (defun vterm-send (key)
   "Send KEY to libvterm.  KEY can be anything `kbd' understands."
@@ -1098,7 +1099,7 @@ Provide similar behavior as `insert' for vterm."
   (when vterm--term
     (if (vterm-goto-char start)
         (cl-loop repeat (- end start) do
-                 (vterm-send-delete))
+                 (vterm-send-key "<delete>" nil nil nil t))
       (let ((inhibit-read-only nil))
         (vterm--delete-region start end)))))
 
@@ -1117,13 +1118,13 @@ It will reset to original position if it can't move there."
       (setq cursor-pos (point))
       (setq pt cursor-pos)
       (while (and (> pos pt) moved)
-        (vterm-send-right)
+        (vterm-send-key "<right>" nil nil nil t)
         (setq moved (not (= pt (point))))
         (setq pt (point)))
       (setq pt (point))
       (setq moved t)
       (while (and (< pos pt) moved)
-        (vterm-send-left)
+        (vterm-send-key "<left>" nil nil nil t)
         (setq moved (not (= pt (point))))
         (setq pt (point)))
       (setq succ (= pos (point)))
