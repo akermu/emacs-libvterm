@@ -160,6 +160,8 @@ the executable."
 (require 'color)
 (require 'compile)
 (require 'face-remap)
+(require 'tramp)
+(require 'bookmark)
 
 ;;; Options
 
