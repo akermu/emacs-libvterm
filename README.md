@@ -243,8 +243,12 @@ For `bash` or `zsh`, put this in your `.zshrc` or `.bashrc`
 ```bash
 vterm_printf(){
     if [ -n "$TMUX" ] && ([ "${TERM%%-*}" = "tmux" ] || [ "${TERM%%-*}" = "screen" ] ); then
-        # Tell tmux to pass the escape sequences through
-        printf "\ePtmux;\e\e]%s\007\e\\" "$1"
+        # Tell both simple and nested tmux to pass the escape sequences through
+        # There is no easy way to detect nested tmux (expecially over ssh), so
+        # it is more user friendly to enable the nested version by default
+        printf '\ePtmux;\e\ePtmux;\e\e\e\e]%s\a\e\e\\\e\' "$1"
+        # Uncomment the fllowing to enable the simple version:
+        # printf "\ePtmux;\e\e]%s\007\e\\" "$1"
     elif [ "${TERM%%-*}" = "screen" ]; then
         # GNU screen (screen, screen-256color, screen-256color-bce)
         printf "\eP\e]%s\007\e\\" "$1"
