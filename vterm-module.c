@@ -1208,6 +1208,7 @@ emacs_value Fvterm_new(emacs_env *env, ptrdiff_t nargs, emacs_value args[],
   int disable_underline = env->is_not_nil(env, args[4]);
   int disable_inverse_video = env->is_not_nil(env, args[5]);
   int ignore_blink_cursor = env->is_not_nil(env, args[6]);
+  int set_bold_hightbright = env->is_not_nil(env, args[7]);
 
   term->vt = vterm_new(rows, cols);
   vterm_set_utf8(term->vt, 1);
@@ -1216,6 +1217,7 @@ emacs_value Fvterm_new(emacs_env *env, ptrdiff_t nargs, emacs_value args[],
 
   VTermState *state = vterm_obtain_state(term->vt);
   vterm_state_set_unrecognised_fallbacks(state, &parser_callbacks, term);
+  vterm_state_set_bold_highbright(state, set_bold_hightbright);
 
   vterm_screen_reset(term->vts, 1);
   vterm_screen_set_callbacks(term->vts, &vterm_screen_callbacks, term);
@@ -1476,7 +1478,7 @@ int emacs_module_init(struct emacs_runtime *ert) {
   // Exported functions
   emacs_value fun;
   fun =
-      env->make_function(env, 4, 7, Fvterm_new, "Allocate a new vterm.", NULL);
+      env->make_function(env, 4, 8, Fvterm_new, "Allocate a new vterm.", NULL);
   bind_function(env, "vterm--new", fun);
 
   fun = env->make_function(env, 1, 5, Fvterm_update,
