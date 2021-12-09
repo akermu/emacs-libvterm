@@ -366,6 +366,11 @@ This means that vterm will render bold with the default face weight."
   :type  'boolean
   :group 'vterm)
 
+(defcustom vterm-set-bold-hightbright nil
+  "When not-nil, using hightbright colors for bolded text, see #549."
+  :type  'boolean
+  :group 'vterm)
+
 (defcustom vterm-ignore-blink-cursor t
   "When t,vterm will ignore request from application to turn on/off cursor blink.
 
@@ -687,7 +692,8 @@ Exceptions are defined by `vterm-keymap-exceptions'."
                                   vterm-disable-bold-font
                                   vterm-disable-underline
                                   vterm-disable-inverse-video
-                                  vterm-ignore-blink-cursor))
+                                  vterm-ignore-blink-cursor
+                                  vterm-set-bold-hightbright))
     (setq buffer-read-only t)
     (setq-local scroll-conservatively 101)
     (setq-local scroll-margin 0)
