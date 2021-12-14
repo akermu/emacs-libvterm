@@ -12,6 +12,7 @@ endif()
 add_library(vterm-module MODULE vterm-module.c utf8.c elisp.c)
 set_target_properties(vterm-module PROPERTIES
   C_STANDARD 99
+  C_VISIBILITY_PRESET "hidden"
   POSITION_INDEPENDENT_CODE ON
   PREFIX ""
   LIBRARY_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}
