@@ -6,7 +6,22 @@
 #include <stdbool.h>
 #include <vterm.h>
 
-int plugin_is_GPL_compatible;
+// https://gcc.gnu.org/wiki/Visibility
+#if defined _WIN32 || defined __CYGWIN__
+  #ifdef __GNUC__
+    #define VTERM_EXPORT __attribute__ ((dllexport))
+  #else
+    #define VTERM_EXPORT __declspec(dllexport)
+  #endif
+#else
+  #if __GNUC__ >= 4
+    #define VTERM_EXPORT __attribute__ ((visibility ("default")))
+  #else
+    #define VTERM_EXPORT
+  #endif
+#endif
+
+VTERM_EXPORT int plugin_is_GPL_compatible;
 
 #define SB_MAX 100000 // Maximum 'scrollback' value.
 
@@ -147,6 +162,6 @@ emacs_value Fvterm_get_prompt_point(emacs_env *env, ptrdiff_t nargs,
 emacs_value Fvterm_reset_cursor_point(emacs_env *env, ptrdiff_t nargs,
                                       emacs_value args[], void *data);
 
-int emacs_module_init(struct emacs_runtime *ert);
+VTERM_EXPORT int emacs_module_init(struct emacs_runtime *ert);
 
 #endif /* VTERM_MODULE_H */
