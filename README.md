@@ -525,7 +525,9 @@ For `zsh`, put this at the end of your `.zshrc`:
 
 ```zsh
 vterm_prompt_end() {
-    vterm_printf "51;A$(whoami)@$(hostname):$(pwd)";
+    if [[ "$INSIDE_EMACS" = 'vterm' ]]; then
+        vterm_printf "51;A$(whoami)@$(hostname):$(pwd)";
+    fi
 }
 setopt PROMPT_SUBST
 PROMPT=$PROMPT'%{$(vterm_prompt_end)%}'
@@ -535,7 +537,9 @@ For `bash`, put this at the end of your `.bashrc`:
 
 ```bash
 vterm_prompt_end(){
-    vterm_printf "51;A$(whoami)@$(hostname):$(pwd)"
+    if [[ "$INSIDE_EMACS" = 'vterm' ]]; then
+        vterm_printf "51;A$(whoami)@$(hostname):$(pwd)";
+    fi
 }
 PS1=$PS1'\[$(vterm_prompt_end)\]'
 ```
@@ -544,7 +548,9 @@ For `fish`, put this in your `~/.config/fish/config.fish`:
 
 ```fish
 function vterm_prompt_end;
-    vterm_printf '51;A'(whoami)'@'(hostname)':'(pwd)
+    if [ "$INSIDE_EMACS" = 'vterm' ]
+        vterm_printf '51;A'(whoami)'@'(hostname)':'(pwd)
+    end
 end
 functions --copy fish_prompt vterm_old_fish_prompt
 function fish_prompt --description 'Write out the prompt; do not replace this. Instead, put this at end of your file.'
