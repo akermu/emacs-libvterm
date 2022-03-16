@@ -21,7 +21,7 @@ function clear
     vterm_printf "51;Evterm-clear-scrollback";
     tput clear;
 end
-    
+
 # This is to change the title of the buffer based on information provided by the
 # shell. See, http://tldp.org/HOWTO/Xterm-Title-4.html, for the meaning of the
 # various symbols.
