@@ -22,7 +22,7 @@ if [[ "$INSIDE_EMACS" = 'vterm' ]]; then
 fi
 
 # With vterm_cmd you can execute Emacs commands directly from the shell.
-# For example, vterm_cmd message "HI" will print "HI"..
+# For example, vterm_cmd message "HI" will print "HI".
 # To enable new commands, you have to customize Emacs's variable
 # vterm-eval-cmds.
 vterm_cmd() {
