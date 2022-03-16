@@ -17,12 +17,10 @@ function vterm_printf(){
 
 # Completely clear the buffer. With this, everything that is not on screen
 # is erased.
-if [[ "$INSIDE_EMACS" = 'vterm' ]]; then
-    function clear(){
-        vterm_printf "51;Evterm-clear-scrollback";
-        tput clear;
-    }
-fi
+function clear(){
+    vterm_printf "51;Evterm-clear-scrollback";
+    tput clear;
+}
 
 # With vterm_cmd you can execute Emacs commands directly from the shell.
 # For example, vterm_cmd message "HI" will print "HI".
