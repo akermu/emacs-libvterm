@@ -1622,12 +1622,9 @@ More information see `vterm--prompt-tracking-enabled-p' and
   "Check whether cursor in command buffer area."
   (save-excursion
     (vterm-reset-cursor-point)
-    (let ((promp-pt (vterm--get-prompt-point))
-          eol)
+    (let ((promp-pt (vterm--get-prompt-point)))
       (when promp-pt
-        (goto-char promp-pt)
-        (setq eol (vterm--get-end-of-line))
-        (<= promp-pt (or pt (vterm--get-cursor-point)) eol)))))
+        (<= promp-pt (or pt (vterm--get-cursor-point)))))))
 
 (defun vterm-beginning-of-line ()
   "Move point to the beginning of the line.
