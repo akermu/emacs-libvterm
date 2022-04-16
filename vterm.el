@@ -1103,43 +1103,85 @@ Provide similar behavior as `insert' for vterm."
 (defun vterm-delete-region (start end)
   "Delete the text between START and END for vterm. "
   (when vterm--term
-    (if (vterm-goto-char start)
-        (cl-loop repeat (- end start) do
-                 (vterm-send-key "<delete>" nil nil nil t))
-      (let ((inhibit-read-only nil))
-        (vterm--delete-region start end)))))
+    (save-excursion
+      (when (get-text-property start 'vterm-line-wrap)
+        ;; skip over the fake newline when start there.
+        (setq start (1+ start))))
+    ;; count of chars after fake newline removed
+    (let ((count (length (filter-buffer-substring start end))))
+      (if (vterm-goto-char start)
+          (cl-loop repeat count do
+                   (vterm-send-key "<delete>" nil nil nil t))
+        (let ((inhibit-read-only nil))
+          (vterm--delete-region start end))))))
 
 (defun vterm-goto-char (pos)
   "Set point to POSITION for vterm.
 
-The return value is `t' when point moved successfully.
-It will reset to original position if it can't move there."
+The return value is `t' when point moved successfully."
   (when (and vterm--term
              (vterm-cursor-in-command-buffer-p)
              (vterm-cursor-in-command-buffer-p pos))
-    (let ((moved t)
-          (origin-point (point))
-          pt cursor-pos succ)
-      (vterm-reset-cursor-point)
-      (setq cursor-pos (point))
-      (setq pt cursor-pos)
-      (while (and (> pos pt) moved)
-        (vterm-send-key "<right>" nil nil nil t)
-        (setq moved (not (= pt (point))))
-        (setq pt (point)))
-      (setq pt (point))
-      (setq moved t)
-      (while (and (< pos pt) moved)
-        (vterm-send-key "<left>" nil nil nil t)
-        (setq moved (not (= pt (point))))
-        (setq pt (point)))
-      (setq succ (= pos (point)))
-      (unless succ
-        (vterm-goto-char cursor-pos)
-        (goto-char origin-point))
-      succ)))
+    (vterm-reset-cursor-point)
+    (let ((diff (- pos (point))))
+      (cond
+       ((zerop diff) t)                   ;do not need move
+       ((< diff 0)                        ;backward
+        (while (and
+                (vterm--backward-char)
+                (> (point) pos)))
+        (<= (point) pos))
+       (t
+        (while (and (vterm--forward-char)
+                    (< (point) pos)))
+        (>= (point) pos))))))
 
 ;;; Internal
+
+(defun vterm--forward-char ()
+  "Move point 1 character forward ().
+
+the return value is `t' when cursor moved."
+  (vterm-reset-cursor-point)
+  (let ((pt (point)))
+    (vterm-send-key "<right>" nil nil nil t)
+    (cond
+     ((= (point) (1+ pt)) t)
+     ((and (> (point) pt)
+           ;; move over the fake newline
+           (get-text-property (1- (point)) 'vterm-line-wrap))
+      t)
+     ((and (= (point) (+ 4 pt))
+           (looking-back (regexp-quote "^[[C"))) ;escape code for <right>
+      (dotimes (_ 3) (vterm-send-key "<backspace>" nil nil nil t)) ;;delete  "^[[C"
+      nil)
+     ((> (point) (1+ pt))             ;auto suggest
+      (vterm-send-key "_" nil nil t t) ;undo C-_
+      nil)
+     (t nil))))
+
+
+
+(defun vterm--backward-char ()
+  "Move point N characters backward.
+
+Return count of moved characeters."
+  (vterm-reset-cursor-point)
+  (let ((pt (point)))
+    (vterm-send-key "<left>" nil nil nil t)
+    (cond
+     ((= (point) (1- pt)) t)
+     ((and (= (point) (- pt 2))
+           ;; backward cross fake newline
+           (string-equal (buffer-substring-no-properties
+                          (1+ (point)) (+ 2 (point)))
+                         "\n"))
+      t)
+     ((and (= (point) (+ 4 pt))
+           (looking-back (regexp-quote "^[[D"))) ;escape code for <left>
+      (dotimes (_ 3) (vterm-send-key "<backspace>" nil nil nil t)) ;;delete  "^[[D"
+      nil)
+     (t nil))))
 
 (defun vterm--delete-region(start end)
   "A wrapper for `delete-region'."
