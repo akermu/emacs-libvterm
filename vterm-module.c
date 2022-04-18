@@ -339,12 +339,19 @@ static void refresh_lines(Term *term, emacs_env *env, int start_row,
       }
 
       if (!compare_cells(&cell, &lastCell)) {
-        // maybe the trailing whitespace should be rendered togther?
-        emacs_value text = render_text(env, term, buffer, length, &lastCell);
-        insert(env, text);
-        // move the trailing whitespace to the start of buffer
-        memmove(buffer, buffer + length, spacelength);
-        length = 0;
+        if (eol) {
+          emacs_value text = render_text(env, term, buffer, length, &lastCell);
+          insert(env, text);
+          // move the trailing whitespace to the start of buffer
+          memmove(buffer, buffer + length, spacelength);
+          length = 0;
+        } else {
+          emacs_value text =
+              render_text(env, term, buffer, length + spacelength, &lastCell);
+          insert(env, text);
+          spacelength = 0;
+          length = 0;
+        }
       }
       lastCell = cell;
 
