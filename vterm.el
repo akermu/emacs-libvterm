@@ -922,6 +922,23 @@ will invert `vterm-copy-exclude-prompt' for that call."
                     (memq 'meta modifiers)
                     (memq 'control modifiers))))
 
+(defun vterm-send-next-key ()
+  "Read next input event and send it to the libvterm.
+
+With this you can directly send modified keys to applications
+running in the terminal (like Emacs or Nano)."
+  (interactive)
+  (let* ((inhibit-quit t)
+         (event (read-event))
+         (inhibit-quit nil)
+         (modifiers (event-modifiers event))
+         (basic (event-basic-type event)))
+    (if (characterp basic)
+        (vterm-send-key (string basic)
+                        (memq 'shift modifiers)
+                        (memq 'meta modifiers)
+                        (memq 'control modifiers)))))
+  
 (defun vterm-send-start ()
   "Output from the system is started when the system receives START."
   (interactive)
