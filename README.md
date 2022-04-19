@@ -455,6 +455,18 @@ or remove it from `vterm-mode-map`. By default, `vterm.el` binds most of the
 like `<backspace>` and `<return>`. Sending a keyboard interrupt is bound to `C-c
 C-c`.
 
+In order to send a keypress that is already recognized by Emacs, such as `C-g`,
+use the interactive function `vterm-send-next-key`. This can be bound to a key
+in the `vterm-mode-map` like `C-q`, in which case pressing `C-q C-g` will send a
+`C-g` key to the terminal, and so on for other modified keys:
+
+``` emacs
+(define-key vterm-mode-map (kbd "C-q") #'vterm-send-next-key)
+```
+
+This can be useful for controlling an application running in the terminal, such
+as Emacs or Nano.
+
 ## Fonts
 
 You can change the font (the _face_) used in a vterm with the following code:
