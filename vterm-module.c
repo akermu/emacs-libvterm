@@ -201,12 +201,18 @@ static LineInfo *get_lineinfo(Term *term, int row) {
 }
 static bool is_eol(Term *term, int end_col, int row, int col) {
   /* This cell is EOL if this and every cell to the right is black */
-  VTermScreenCell cell;
-  for (int c = col; c < end_col; c++) {
-    fetch_cell(term, row, c, &cell);
-    if (!(!cell.chars[0] || (cell.width == 1 && cell.chars[0] == ' '))) {
+  if (row >= 0) {
+    VTermPos pos = {.row = row, .col = col};
+    return vterm_screen_is_eol(term->vts, pos);
+  }
+
+  ScrollbackLine *sbrow = term->sb_buffer[-row - 1];
+  int c;
+  for (c = col; c < end_col && c < sbrow->cols;) {
+    if (sbrow->cells[c].chars[0]) {
       return 0;
     }
+    c += sbrow->cells[c].width;
   }
   return 1;
 }
@@ -226,8 +232,8 @@ static int is_end_of_prompt(Term *term, int end_col, int row, int col) {
   }
   return 0;
 }
-static void goto_col(Term *term, emacs_env *env, int row, int end_col,
-                     bool insert_beyond_eol) {
+
+static void goto_col(Term *term, emacs_env *env, int row, int end_col) {
   int col = 0;
   size_t offset = 0;
   size_t beyond_eol = 0;
@@ -242,9 +248,6 @@ static void goto_col(Term *term, emacs_env *env, int row, int end_col,
     if (cell.chars[0]) {
       if (cell.width > 1) {
         offset += cell.width - 1;
-      } else if (is_eol(term, term->width, row, col)) {
-        beyond_eol += cell.width;
-        offset += cell.width;
       }
     } else {
       if (is_eol(term, term->width, row, col)) {
@@ -254,15 +257,11 @@ static void goto_col(Term *term, emacs_env *env, int row, int end_col,
     }
     col += cell.width;
   }
-  int n = end_col - offset;
-  if (!insert_beyond_eol)
-    n += beyond_eol;
-  forward_char(env, env->make_integer(env, n));
-  if (insert_beyond_eol) {
-    emacs_value space = env->make_string(env, " ", 1);
-    for (int i = 0; i < beyond_eol; i += 1)
-      insert(env, space);
-  }
+
+  forward_char(env, env->make_integer(env, end_col - offset));
+  emacs_value space = env->make_string(env, " ", 1);
+  for (int i = 0; i < beyond_eol; i += 1)
+    insert(env, space);
 }
 
 static void refresh_lines(Term *term, emacs_env *env, int start_row,
@@ -274,95 +273,53 @@ static void refresh_lines(Term *term, emacs_env *env, int start_row,
 
 #define PUSH_BUFFER(c)                                                         \
   do {                                                                         \
-    if (length + spacelength == capacity) {                                    \
+    if (length == capacity) {                                                  \
       capacity += end_col * 4;                                                 \
       buffer = realloc(buffer, capacity * sizeof(char));                       \
     }                                                                          \
-    if (c == ' ') {                                                            \
-      buffer[length + spacelength] = ' ';                                      \
-      spacelength++;                                                           \
-    } else {                                                                   \
-      /* only increase the line length if the last character is not            \
-       * whitespace*/                                                          \
-      buffer[length + spacelength] = (c);                                      \
-      length += 1 + spacelength;                                               \
-      spacelength = 0;                                                         \
-    }                                                                          \
+    buffer[length] = (c);                                                      \
+    length++;                                                                  \
   } while (0)
 
   int capacity = ((end_row - start_row + 1) * end_col) * 4;
   int length = 0;
-  int spacelength = 0; //  count of trailing whitespace
   char *buffer = malloc(capacity * sizeof(char));
   VTermScreenCell cell;
   VTermScreenCell lastCell;
   fetch_cell(term, start_row, 0, &lastCell);
 
   for (i = start_row; i < end_row; i++) {
-    spacelength = 0;
+
     int newline = 0;
-    int isprompt = 0; // is end of prompt
+    int isprompt = 0;
     for (j = 0; j < end_col; j++) {
       fetch_cell(term, i, j, &cell);
-      // This cell is EOL if this and every cell to the right is black
-      bool eol = is_eol(term, end_col, i, j);
-      if (isprompt) {     // previous cell is prompt
-        if (length > 0) { // if the prompt char is not whitespace
-          emacs_value text = render_text(env, term, buffer, length, &lastCell);
-          insert(env, render_prompt(env, text));
-          memmove(buffer, buffer + length, spacelength);
-          length = 0;
-        } else if (spacelength > 0 && !eol) {
-          // if the prompt char is whitespace and the cell is not at the end of
-          // line, then render the whitespace as prompt
-          emacs_value text =
-              render_text(env, term, buffer, length + spacelength, &lastCell);
-          insert(env, render_prompt(env, text));
-          length = 0;
-          spacelength = 0;
-        } else if (eol) {
-          // trim trailing whitespace at end of line
-          // and the prompt would be rendered after break
-          spacelength = 0;
+      if (isprompt && length > 0) {
+        emacs_value text = render_text(env, term, buffer, length, &lastCell);
+        insert(env, render_prompt(env, text));
+        length = 0;
+      }
+
+      isprompt = is_end_of_prompt(term, end_col, i, j);
+      if (isprompt && length > 0) {
+        insert(env, render_text(env, term, buffer, length, &lastCell));
+        length = 0;
+      }
+
+      if (!compare_cells(&cell, &lastCell)) {
+        emacs_value text = render_text(env, term, buffer, length, &lastCell);
+        insert(env, text);
+        length = 0;
+      }
+
+      lastCell = cell;
+      if (cell.chars[0] == 0) {
+        if (is_eol(term, end_col, i, j)) {
+          /* This cell is EOL if this and every cell to the right is black */
           PUSH_BUFFER('\n');
           newline = 1;
           break;
         }
-      }
-
-      isprompt = is_end_of_prompt(term, end_col, i, j);
-      if (isprompt && length + spacelength > 0) {
-        insert(env,
-               render_text(env, term, buffer, length + spacelength, &lastCell));
-        length = 0;
-        spacelength = 0;
-      }
-
-      if (!compare_cells(&cell, &lastCell)) {
-        if (eol) {
-          emacs_value text = render_text(env, term, buffer, length, &lastCell);
-          insert(env, text);
-          // move the trailing whitespace to the start of buffer
-          memmove(buffer, buffer + length, spacelength);
-          length = 0;
-        } else {
-          emacs_value text =
-              render_text(env, term, buffer, length + spacelength, &lastCell);
-          insert(env, text);
-          spacelength = 0;
-          length = 0;
-        }
-      }
-      lastCell = cell;
-
-      if (eol) {
-        // trim trailing whitespace at end of line
-        spacelength = 0;
-        PUSH_BUFFER('\n');
-        newline = 1;
-        break;
-      }
-      if (cell.chars[0] == 0) {
         PUSH_BUFFER(' ');
       } else {
         for (int k = 0; k < VTERM_MAX_CHARS_PER_CELL && cell.chars[k]; ++k) {
@@ -378,13 +335,11 @@ static void refresh_lines(Term *term, emacs_env *env, int start_row,
         int w = cell.width - 1;
         j = j + w;
       }
-    } // end of range of columns
-    if (isprompt && length + spacelength > 0) {
-      emacs_value text =
-          render_text(env, term, buffer, length + spacelength, &lastCell);
+    }
+    if (isprompt && length > 0) {
+      emacs_value text = render_text(env, term, buffer, length, &lastCell);
       insert(env, render_prompt(env, text));
       length = 0;
-      spacelength = 0;
       isprompt = 0;
     }
 
@@ -392,7 +347,6 @@ static void refresh_lines(Term *term, emacs_env *env, int start_row,
       emacs_value text = render_text(env, term, buffer, length, &lastCell);
       insert(env, text);
       length = 0;
-      spacelength = 0;
       text = render_fake_newline(env, term);
       insert(env, text);
     }
@@ -532,7 +486,7 @@ static void adjust_topline(Term *term, emacs_env *env) {
    */
 
   goto_line(env, pos.row - term->height);
-  goto_col(term, env, pos.row, pos.col, true);
+  goto_col(term, env, pos.row, pos.col);
 
   emacs_value windows = get_buffer_window_list(env);
   emacs_value swindow = selected_window(env);
@@ -1439,7 +1393,7 @@ emacs_value Fvterm_reset_cursor_point(emacs_env *env, ptrdiff_t nargs,
   Term *term = env->get_user_ptr(env, args[0]);
   int line = row_to_linenr(term, term->cursor.row);
   goto_line(env, line);
-  goto_col(term, env, term->cursor.row, term->cursor.col, false);
+  goto_col(term, env, term->cursor.row, term->cursor.col);
   return point(env);
 }
 
@@ -1558,5 +1512,6 @@ int emacs_module_init(struct emacs_runtime *ert) {
   bind_function(env, "vterm--get-icrnl", fun);
 
   provide(env, "vterm-module");
+
   return 0;
 }
