@@ -1169,7 +1169,7 @@ the return value is `t' when cursor moved."
            (get-text-property (1- (point)) 'vterm-line-wrap))
       t)
      ((and (= (point) (+ 4 pt))
-           (looking-back (regexp-quote "^[[C"))) ;escape code for <right>
+           (looking-back (regexp-quote "^[[C") nil)) ;escape code for <right>
       (dotimes (_ 3) (vterm-send-key "<backspace>" nil nil nil t)) ;;delete  "^[[C"
       nil)
      ((> (point) (1+ pt))             ;auto suggest
@@ -1195,7 +1195,7 @@ Return count of moved characeters."
                          "\n"))
       t)
      ((and (= (point) (+ 4 pt))
-           (looking-back (regexp-quote "^[[D"))) ;escape code for <left>
+           (looking-back (regexp-quote "^[[D") nil)) ;escape code for <left>
       (dotimes (_ 3) (vterm-send-key "<backspace>" nil nil nil t)) ;;delete  "^[[D"
       nil)
      (t nil))))
