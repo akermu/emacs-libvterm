@@ -62,6 +62,8 @@
   (error "VTerm needs module support.  Please compile Emacs with
   the --with-modules option!"))
 
+(defvar vterm-copy-mode)
+
 ;;; Compilation of the module
 
 (defcustom vterm-module-cmake-args ""
