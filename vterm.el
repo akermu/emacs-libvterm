@@ -1584,7 +1584,8 @@ the called functions."
          (f (assoc command vterm-eval-cmds)))
     (if f
         (apply (cadr f) args)
-      (message "Failed to find command: %s" command))))
+      (message "Failed to find command: %s.  To execute a command,
+                add it to the `vterm-eval-cmd' list" command))))
 
 ;; TODO: Improve doc string, it should not point to the readme but it should
 ;;       be self-contained.
