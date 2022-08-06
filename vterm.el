@@ -513,37 +513,6 @@ of data.  If nil, never delay.  The units are seconds.")
 
 ;;; Keybindings
 
-;; We have many functions defined by vterm-define-key.  Later, we will bind some
-;; of the functions.  If the following is not evaluated during compilation, the compiler
-;; will complain that some functions are not defined (eg, vterm-send-C-c)
-(eval-and-compile
-  (defmacro vterm-define-key (key)
-    "Define a command that sends KEY with modifiers C and M to vterm."
-    (declare (indent defun)
-             (doc-string 3))
-    `(defun ,(intern (format "vterm-send-%s" key))()
-       ,(format "Sends %s to the libvterm."  key)
-       (interactive)
-       (vterm-send-key ,(char-to-string (get-byte (1- (length key)) key))
-                       ,(let ((case-fold-search nil))
-                          (or (string-match-p "[A-Z]$" key)
-                              (string-match-p "S-" key)))
-                       ,(string-match-p "M-" key)
-                       ,(string-match-p "C-" key))))
-
-  (mapc (lambda (key)
-          (eval `(vterm-define-key ,key)))
-        (cl-loop for prefix in '("M-")
-                 append (cl-loop for char from ?A to ?Z
-                                 for key = (format "%s%c" prefix char)
-                                 collect key)))
-  (mapc (lambda (key)
-          (eval `(vterm-define-key ,key)))
-        (cl-loop for prefix in '("C-" "M-" "C-S-")
-                 append (cl-loop for char from ?a to ?z
-                                 for key = (format "%s%c" prefix char)
-                                 collect key))))
-
 ;; Function keys and most of C- and M- bindings
 (defun vterm--exclude-keys (map exceptions)
   "Remove EXCEPTIONS from the keys bound by `vterm-define-keys'.
@@ -559,16 +528,14 @@ Exceptions are defined by `vterm-keymap-exceptions'."
                  unless (member key exceptions)
                  collect key))
   (mapc (lambda (key)
-          (define-key map (kbd key)
-            (intern (format "vterm-send-%s" key))))
+          (define-key map (kbd key) #'vterm-send-key))
         (cl-loop for prefix in '("M-")
                  append (cl-loop for char from ?A to ?Z
                                  for key = (format "%s%c" prefix char)
                                  unless (member key exceptions)
                                  collect key)))
   (mapc (lambda (key)
-          (define-key map (kbd key)
-            (intern (format "vterm-send-%s" key))))
+          (define-key map (kbd key) #'vterm-send-key))
         (cl-loop for prefix in '("C-" "M-" "C-S-" )
                  append (cl-loop for char from ?a to ?z
                                  for key = (format "%s%c" prefix char)
@@ -607,10 +574,10 @@ Exceptions are defined by `vterm-keymap-exceptions'."
     (define-key map [C-backspace]               #'vterm-send-meta-backspace)
     (define-key map [return]                    #'vterm-send-return)
     (define-key map (kbd "RET")                 #'vterm-send-return)
-    (define-key map [C-left]                    #'vterm-send-M-b)
-    (define-key map [M-left]                    #'vterm-send-M-b)
-    (define-key map [C-right]                   #'vterm-send-M-f)
-    (define-key map [M-right]                   #'vterm-send-M-f)
+    (define-key map [C-left]                    #'vterm-send-key)
+    (define-key map [M-left]                    #'vterm-send-key)
+    (define-key map [C-right]                   #'vterm-send-key)
+    (define-key map [M-right]                   #'vterm-send-key)
     (define-key map [C-up]                      #'vterm-send-up)
     (define-key map [C-down]                    #'vterm-send-down)
     (define-key map [left]                      #'vterm-send-left)
@@ -637,12 +604,12 @@ Exceptions are defined by `vterm-keymap-exceptions'."
     (define-key map (kbd "M-.")                 #'vterm-send-meta-dot)
     (define-key map (kbd "M-,")                 #'vterm-send-meta-comma)
     (define-key map (kbd "C-c C-y")             #'vterm--self-insert)
-    (define-key map (kbd "C-c C-c")             #'vterm-send-C-c)
+    (define-key map (kbd "C-c C-c")             #'vterm-send-key)
     (define-key map (kbd "C-c C-l")             #'vterm-clear-scrollback)
     (define-key map (kbd "C-l")                 #'vterm-clear)
     (define-key map (kbd "C-\\")                #'vterm-send-ctrl-slash)
-    (define-key map (kbd "C-c C-g")             #'vterm-send-C-g)
-    (define-key map (kbd "C-c C-u")             #'vterm-send-C-u)
+    (define-key map (kbd "C-c C-g")             #'vterm-send-key)
+    (define-key map (kbd "C-c C-u")             #'vterm-send-key)
     (define-key map [remap self-insert-command] #'vterm--self-insert)
     (define-key map (kbd "C-c C-r")             #'vterm-reset-cursor-point)
     (define-key map (kbd "C-c C-n")             #'vterm-next-prompt)
@@ -899,8 +866,18 @@ will invert `vterm-copy-exclude-prompt' for that call."
         (when-let ((key (key-description (vector raw-key))))
           (vterm-send-key key shift meta ctrl))))))
 
+(defun vterm-translate-event-to-args (event)
+  "Translate EVENT as args for `vterm-send-key'."
+  (let ((modifiers (event-modifiers event))
+		(base (event-basic-type event)))
+    (list (char-to-string base)
+		  (memq 'shift modifiers)
+		  (memq 'meta modifiers)
+		  (memq 'control modifiers))))
+
 (defun vterm-send-key (key &optional shift meta ctrl accept-proc-output)
   "Send KEY to libvterm with optional modifiers SHIFT, META and CTRL."
+  (interactive (vterm-translate-event-to-args last-command-event))
   (deactivate-mark)
   (when vterm--term
     (let ((inhibit-redisplay t)
@@ -1051,7 +1028,7 @@ prefix argument ARG or with \\[universal-argument]."
        (and vterm-clear-scrollback-when-clearing (not arg))
        (and arg (not vterm-clear-scrollback-when-clearing)))
       (vterm-clear-scrollback))
-  (vterm-send-C-l))
+  (vterm-send-key "l" nil nil :ctrl))
 
 (defun vterm-undo ()
   "Send `C-_' to the libvterm."
