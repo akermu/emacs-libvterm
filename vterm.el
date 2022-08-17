@@ -608,11 +608,13 @@ Exceptions are defined by `vterm-keymap-exceptions'."
     (define-key map [return]                    #'vterm-send-return)
     (define-key map (kbd "RET")                 #'vterm-send-return)
     (define-key map [C-left]                    #'vterm-send-M-b)
-    (define-key map [M-left]                    #'vterm-send-M-b)
+    (define-key map [M-left]                    #'vterm-send-meta-left)
     (define-key map [C-right]                   #'vterm-send-M-f)
-    (define-key map [M-right]                   #'vterm-send-M-f)
+    (define-key map [M-right]                   #'vterm-send-meta-right)
     (define-key map [C-up]                      #'vterm-send-up)
     (define-key map [C-down]                    #'vterm-send-down)
+    (define-key map [M-up]                      #'vterm-send-meta-up)
+    (define-key map [M-down]                    #'vterm-send-meta-down)
     (define-key map [left]                      #'vterm-send-left)
     (define-key map [right]                     #'vterm-send-right)
     (define-key map [up]                        #'vterm-send-up)
@@ -1002,6 +1004,26 @@ running in the terminal (like Emacs or Nano)."
   "Send `<right>' to the libvterm."
   (interactive)
   (vterm-send-key "<right>"))
+
+(defun vterm-send-meta-up ()
+  "Send `M-<up>' to the libvterm."
+  (interactive)
+  (vterm-send-key "<up>" nil t))
+
+(defun vterm-send-meta-down ()
+  "Send `M-<down>' to the libvterm."
+  (interactive)
+  (vterm-send-key "<down>" nil t))
+
+(defun vterm-send-meta-left ()
+  "Send `M-<left>' to the libvterm."
+  (interactive)
+  (vterm-send-key "<left>" nil t))
+
+(defun vterm-send-meta-right ()
+  "Send `M-<right>' to the libvterm."
+  (interactive)
+  (vterm-send-key "<right>" nil t))
 
 (defun vterm-send-prior ()
   "Send `<prior>' to the libvterm."
