@@ -635,7 +635,7 @@ Exceptions are defined by `vterm-keymap-exceptions'."
     (define-key map (kbd "C-SPC")               #'vterm--self-insert)
     (define-key map (kbd "S-SPC")               #'vterm-send-space)
     (define-key map (kbd "C-_")                 #'vterm--self-insert)
-    (define-key map (kbd "C-/")                 #'vterm-undo)
+    (define-key map [remap undo]                #'vterm-undo)
     (define-key map (kbd "M-.")                 #'vterm--self-insert)
     (define-key map (kbd "M-,")                 #'vterm--self-insert)
     (define-key map (kbd "C-c C-y")             #'vterm--self-insert)
