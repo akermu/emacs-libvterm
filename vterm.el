@@ -940,6 +940,12 @@ running in the terminal (like Emacs or Nano)."
                         (memq 'shift modifiers)
                         (memq 'meta modifiers)
                         (memq 'control modifiers)))))
+
+(defun vterm-send-C-k ()
+  "Send `C-k' to the libvterm and copy that region."
+  (interactive)
+  (kill-ring-save (point) (vterm-end-of-line))
+  (vterm-send-key "k" nil nil :ctrl))
   
 (defun vterm-send-start ()
   "Output from the system is started when the system receives START."
