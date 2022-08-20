@@ -887,21 +887,9 @@ will invert `vterm-copy-exclude-prompt' for that call."
   "Send invoking key to libvterm."
   (interactive)
   (when vterm--term
-    (let* ((modifiers (event-modifiers last-command-event))
-           (shift (memq 'shift modifiers))
-           (meta (memq 'meta modifiers))
-           (ctrl (memq 'control modifiers))
-           (raw-key (event-basic-type last-command-event))
-           (ev-keys))
-      (if input-method-function
-          (let ((inhibit-read-only t))
-            (setq ev-keys (funcall input-method-function raw-key))
-            (when (listp ev-keys)
-              (dolist (k ev-keys)
-                (when-let ((key (key-description (vector k))))
-                  (vterm-send-key key shift meta ctrl)))))
-        (when-let ((key (key-description (vector raw-key))))
-          (vterm-send-key key shift meta ctrl))))))
+    (dolist (key (vterm--translate-event-to-args
+                  last-command-event))
+      (apply #'vterm-send-key key))))
 
 (defun vterm-send-key (key &optional shift meta ctrl accept-proc-output)
   "Send KEY to libvterm with optional modifiers SHIFT, META and CTRL."
@@ -909,8 +897,6 @@ will invert `vterm-copy-exclude-prompt' for that call."
   (when vterm--term
     (let ((inhibit-redisplay t)
           (inhibit-read-only t))
-      (when (and (not (symbolp last-command-event)) shift (not meta) (not ctrl))
-        (setq key (upcase key)))
       (vterm--update vterm--term key shift meta ctrl)
       (setq vterm--redraw-immididately t)
       (when accept-proc-output
@@ -918,13 +904,9 @@ will invert `vterm-copy-exclude-prompt' for that call."
 
 (defun vterm-send (key)
   "Send KEY to libvterm.  KEY can be anything `kbd' understands."
-  (let* ((event (listify-key-sequence (kbd key)))
-         (modifiers (event-modifiers event))
-         (base (event-basic-type event)))
-    (vterm-send-key (char-to-string base)
-                    (memq 'shift modifiers)
-                    (memq 'meta modifiers)
-                    (memq 'control modifiers))))
+  (dolist (key (vterm--translate-event-to-args
+                (listify-key-sequence (kbd key))))
+    (apply #'vterm-send-key key)))
 
 (defun vterm-send-next-key ()
   "Read next input event and send it to the libvterm.
@@ -932,17 +914,10 @@ will invert `vterm-copy-exclude-prompt' for that call."
 With this you can directly send modified keys to applications
 running in the terminal (like Emacs or Nano)."
   (interactive)
-  (let* ((inhibit-quit t)
-         (event (read-event))
-         (inhibit-quit nil)
-         (modifiers (event-modifiers event))
-         (basic (event-basic-type event)))
-    (if (characterp basic)
-        (vterm-send-key (string basic)
-                        (memq 'shift modifiers)
-                        (memq 'meta modifiers)
-                        (memq 'control modifiers)))))
-  
+  (dolist (key (vterm--translate-event-to-args
+                (read-event)))
+    (apply #'vterm-send-key key)))
+
 (defun vterm-send-start ()
   "Output from the system is started when the system receives START."
   (interactive)
@@ -1235,6 +1210,31 @@ Return count of moved characeters."
 (defun vterm--delete-char(n &optional killflag)
   "A wrapper for `delete-char'."
   (funcall vterm--delete-char-function n killflag))
+
+(defun vterm--translate-event-to-args (event)
+  "Translate EVENT as list of args for `vterm-send-key'.
+
+When some input method is enabled, one key may generate
+several characters, so the result of this function is a list,
+looks like: ((\"m\" :shift ))"
+  (let* ((modifiers (event-modifiers event))
+         (shift (memq 'shift modifiers))
+         (meta (memq 'meta modifiers))
+         (ctrl (memq 'control modifiers))
+         (raw-key (event-basic-type event))
+         (ev-keys) keys)
+    (if input-method-function
+        (let ((inhibit-read-only t))
+          (setq ev-keys (funcall input-method-function raw-key))
+          (when (listp ev-keys)
+            (dolist (k ev-keys)
+              (when-let ((key (key-description (vector k))))
+                (setq keys (append keys (list (list key shift meta ctrl))))))))
+      (when-let ((key (key-description (vector raw-key))))
+        ;; (when (and (not (symbolp event)) shift (not meta) (not ctrl))
+        ;;   (setq key (upcase key))) ; is this needed?
+        (setq keys  (list (list key shift meta ctrl)))))
+    keys))
 
 (defun vterm--invalidate ()
   "The terminal buffer is invalidated, the buffer needs redrawing."
