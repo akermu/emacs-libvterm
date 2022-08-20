@@ -980,26 +980,6 @@ running in the terminal (like Emacs or Nano)."
   (interactive)
   (vterm-send-key "<right>"))
 
-(defun vterm-send-meta-up ()
-  "Send `M-<up>' to the libvterm."
-  (interactive)
-  (vterm-send-key "<up>" nil t))
-
-(defun vterm-send-meta-down ()
-  "Send `M-<down>' to the libvterm."
-  (interactive)
-  (vterm-send-key "<down>" nil t))
-
-(defun vterm-send-meta-left ()
-  "Send `M-<left>' to the libvterm."
-  (interactive)
-  (vterm-send-key "<left>" nil t))
-
-(defun vterm-send-meta-right ()
-  "Send `M-<right>' to the libvterm."
-  (interactive)
-  (vterm-send-key "<right>" nil t))
-
 (defun vterm-send-prior ()
   "Send `<prior>' to the libvterm."
   (interactive)
