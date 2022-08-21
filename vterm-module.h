@@ -79,6 +79,7 @@ typedef struct Term {
   // window height has increased) and must be deleted from the terminal buffer
   int sb_pending;
   int sb_pending_by_height_decr;
+  bool sb_clear_pending;
   long linenum;
   long linenum_added;
 

@@ -154,6 +154,32 @@ static int term_sb_pop(int cols, VTermScreenCell *cells, void *data) {
   return 1;
 }
 
+static int term_sb_clear(void *data) {
+  Term *term = (Term *)data;
+
+  if (term->sb_clear_pending) {
+    // Another scrollback clear is already pending, so skip this one.
+    return 0;
+  }
+
+  for (int i = 0; i < term->sb_current; i++) {
+    if (term->sb_buffer[i]->info != NULL) {
+      free_lineinfo(term->sb_buffer[i]->info);
+      term->sb_buffer[i]->info = NULL;
+    }
+    free(term->sb_buffer[i]);
+  }
+  free(term->sb_buffer);
+  term->sb_buffer = malloc(sizeof(ScrollbackLine *) * term->sb_size);
+  term->sb_clear_pending = true;
+  term->sb_current = 0;
+  term->sb_pending = 0;
+  term->sb_pending_by_height_decr = 0;
+  invalidate_terminal(term, -1, -1);
+
+  return 0;
+}
+
 static int row_to_linenr(Term *term, int row) {
   return row != INT_MAX ? row + (int)term->sb_current + 1 : INT_MAX;
 }
@@ -436,6 +462,14 @@ static int term_resize(int rows, int cols, void *user_data) {
 static void refresh_scrollback(Term *term, emacs_env *env) {
   int max_line_count = (int)term->sb_current + term->height;
   int del_cnt = 0;
+  if (term->sb_clear_pending) {
+    del_cnt = term->linenum - term->height;
+    if (del_cnt > 0) {
+      delete_lines(env, 1, del_cnt, true);
+      term->linenum -= del_cnt;
+    }
+    term->sb_clear_pending = false;
+  }
   if (term->sb_pending > 0) {
     // This means that either the window height has decreased or the screen
     // became full and libvterm had to push all rows up. Convert the first
@@ -628,6 +662,9 @@ static VTermScreenCallbacks vterm_screen_callbacks = {
     .resize = term_resize,
     .sb_pushline = term_sb_push,
     .sb_popline = term_sb_pop,
+#if !defined(VTermSBClearNotExists)
+    .sb_clear = term_sb_clear,
+#endif
 };
 
 static bool compare_cells(VTermScreenCell *a, VTermScreenCell *b) {
@@ -846,24 +883,11 @@ static void term_flush_output(Term *term, emacs_env *env) {
 }
 
 static void term_clear_scrollback(Term *term, emacs_env *env) {
+  term_sb_clear(term);
   vterm_screen_flush_damage(term->vts);
   term_redraw(term, env);
-  if (term->sb_pending > 0) { // Pending rows must be processed first.
-    return;
-  }
-  for (int i = 0; i < term->sb_current; i++) {
-    if (term->sb_buffer[i]->info != NULL) {
-      free_lineinfo(term->sb_buffer[i]->info);
-      term->sb_buffer[i]->info = NULL;
-    }
-    free(term->sb_buffer[i]);
-  }
-  free(term->sb_buffer);
-  term->sb_buffer = malloc(sizeof(ScrollbackLine *) * term->sb_size);
-  delete_lines(env, 1, term->sb_current, true);
-  term->linenum -= term->sb_current;
-  term->sb_current = 0;
 }
+
 static void term_process_key(Term *term, emacs_env *env, unsigned char *key,
                              size_t len, VTermModifier modifier) {
   if (is_key(key, len, "<clear_scrollback>")) {
@@ -1221,6 +1245,7 @@ emacs_value Fvterm_new(emacs_env *env, ptrdiff_t nargs, emacs_value args[],
   term->sb_size = MIN(SB_MAX, sb_size);
   term->sb_current = 0;
   term->sb_pending = 0;
+  term->sb_clear_pending = false;
   term->sb_pending_by_height_decr = 0;
   term->sb_buffer = malloc(sizeof(ScrollbackLine *) * term->sb_size);
   term->invalid_start = 0;
