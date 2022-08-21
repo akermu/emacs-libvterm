@@ -47,7 +47,10 @@ if (USE_SYSTEM_LIBVTERM)
 #    add_compile_definitions(VTermStringFragmentNotExists)
     add_definitions(-DVTermSelectionMaskNotExists)
     endif()
-
+    execute_process(COMMAND  grep -c "sb_clear" "${LIBVTERM_INCLUDE_DIR}/vterm.h" OUTPUT_VARIABLE VTermSBClearExists)
+    if (${VTermSBClearExists} EQUAL "0")
+      add_definitions(-VTermSBClearNotExists)
+    endif()
   else()
     message(STATUS "System libvterm not found: libvterm will be downloaded and compiled as part of the build process")
   endif()
@@ -70,7 +73,7 @@ else()
 
   ExternalProject_add(libvterm
     GIT_REPOSITORY https://github.com/Sbozzolo/libvterm-mirror.git
-    GIT_TAG 15133bba2c0bce32baabbf91610a2450495fea02
+    GIT_TAG 64f1775952dbe001e989f2ab679563b54f2fca55
     CONFIGURE_COMMAND ""
     BUILD_COMMAND ${LIBVTERM_BUILD_COMMAND} "CFLAGS='-fPIC'"
     BUILD_IN_SOURCE ON
