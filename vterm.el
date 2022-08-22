@@ -1207,10 +1207,12 @@ looks like: ((\"m\" :shift ))"
           (when (listp ev-keys)
             (dolist (k ev-keys)
               (when-let ((key (key-description (vector k))))
+                (when (and (not (symbolp event)) shift (not meta) (not ctrl))
+                  (setq key (upcase key)))
                 (setq keys (append keys (list (list key shift meta ctrl))))))))
       (when-let ((key (key-description (vector raw-key))))
-        ;; (when (and (not (symbolp event)) shift (not meta) (not ctrl))
-        ;;   (setq key (upcase key))) ; is this needed?
+        (when (and (not (symbolp event)) shift (not meta) (not ctrl))
+          (setq key (upcase key)))
         (setq keys  (list (list key shift meta ctrl)))))
     keys))
 
