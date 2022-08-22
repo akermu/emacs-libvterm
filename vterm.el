@@ -1355,7 +1355,7 @@ value of `vterm-buffer-name'."
    "\\(?:[\r\n\000\007\t\b\016\017]\\|"
    ;; a C1 escape coded character (see [ECMA-48] section 5.3 "Elements
    ;; of the C1 set"),
-   "\e\\(?:[DM78c]\\|"
+   "\e\\(?:[DM78c=]\\|"
    ;; another Emacs specific control sequence for term.el,
    "AnSiT[^\n]+\n\\|"
    ;; another Emacs specific control sequence for vterm.el
