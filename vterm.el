@@ -3,7 +3,7 @@
 ;; Copyright (C) 2017-2020 by Lukas Fürmetz & Contributors
 ;;
 ;; Author: Lukas Fürmetz <fuermetz@mailbox.org>
-;; Version: 0.0.1
+;; Version: 0.0.2
 ;; URL: https://github.com/akermu/emacs-libvterm
 ;; Keywords: terminals
 ;; Package-Requires: ((emacs "25.1"))
@@ -523,16 +523,19 @@ of data.  If nil, never delay.  The units are seconds.")
     "Define a command that sends KEY with modifiers C and M to vterm."
     (declare (indent defun)
              (doc-string 3))
-    `(defun ,(intern (format "vterm-send-%s" key))()
-       ,(format "Sends %s to the libvterm."  key)
-       (interactive)
-       (vterm-send-key ,(char-to-string (get-byte (1- (length key)) key))
-                       ,(let ((case-fold-search nil))
-                          (or (string-match-p "[A-Z]$" key)
-                              (string-match-p "S-" key)))
-                       ,(string-match-p "M-" key)
-                       ,(string-match-p "C-" key))))
-
+    `(progn (defun ,(intern (format "vterm-send-%s" key))()
+              ,(format "Sends %s to the libvterm."  key)
+              (interactive)
+              (vterm-send-key ,(char-to-string (get-byte (1- (length key)) key))
+                              ,(let ((case-fold-search nil))
+                                 (or (string-match-p "[A-Z]$" key)
+                                     (string-match-p "S-" key)))
+                              ,(string-match-p "M-" key)
+                              ,(string-match-p "C-" key)))
+            (make-obsolete ',(intern (format "vterm-send-%s" key))
+                           "use `vterm--self-insert' or `vterm-send' or `vterm-send-key'."
+                           "v0.1")))
+  (make-obsolete 'vterm-define-key "" "v0.1")
   (mapc (lambda (key)
           (eval `(vterm-define-key ,key)))
         (cl-loop for prefix in '("M-")
@@ -957,46 +960,55 @@ running in the terminal (like Emacs or Nano)."
   "Send `<up>' to the libvterm."
   (interactive)
   (vterm-send-key "<up>"))
+(make-obsolete 'vterm-send-up 'vterm--self-insert "v0.1")
 
 (defun vterm-send-down ()
   "Send `<down>' to the libvterm."
   (interactive)
   (vterm-send-key "<down>"))
+(make-obsolete 'vterm-send-down 'vterm--self-insert "v0.1")
 
 (defun vterm-send-left ()
   "Send `<left>' to the libvterm."
   (interactive)
   (vterm-send-key "<left>"))
+(make-obsolete 'vterm-send-left 'vterm--self-insert "v0.1")
 
 (defun vterm-send-right ()
   "Send `<right>' to the libvterm."
   (interactive)
   (vterm-send-key "<right>"))
+(make-obsolete 'vterm-send-right 'vterm--self-insert "v0.1")
 
 (defun vterm-send-prior ()
   "Send `<prior>' to the libvterm."
   (interactive)
   (vterm-send-key "<prior>"))
+(make-obsolete 'vterm-send-prior 'vterm--self-insert "v0.1")
 
 (defun vterm-send-next ()
   "Send `<next>' to the libvterm."
   (interactive)
   (vterm-send-key "<next>"))
+(make-obsolete 'vterm-send-next 'vterm--self-insert "v0.1")
 
 (defun vterm-send-meta-dot ()
   "Send `M-.' to the libvterm."
   (interactive)
   (vterm-send-key "." nil t))
+(make-obsolete 'vterm-send-meta-dot 'vterm--self-insert "v0.1")
 
 (defun vterm-send-meta-comma ()
   "Send `M-,' to the libvterm."
   (interactive)
   (vterm-send-key "," nil t))
+(make-obsolete 'vterm-send-meta-comma 'vterm--self-insert "v0.1")
 
 (defun vterm-send-ctrl-slash ()
   "Send `C-\' to the libvterm."
   (interactive)
   (vterm-send-key "\\" nil nil t))
+(make-obsolete 'vterm-send-ctrl-slash 'vterm--self-insert "v0.1")
 
 (defun vterm-send-escape ()
   "Send `<escape>' to the libvterm."
