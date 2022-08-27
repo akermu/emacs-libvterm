@@ -63,8 +63,8 @@ else()
   endif()
 
   ExternalProject_add(libvterm
-    GIT_REPOSITORY https://github.com/neovim/libvterm.git
-    GIT_TAG 54c03b21f763fa775a4c0643a9d8326342873179
+    GIT_REPOSITORY https://github.com/Sbozzolo/libvterm-mirror.git
+    GIT_TAG 15133bba2c0bce32baabbf91610a2450495fea02
     CONFIGURE_COMMAND ""
     BUILD_COMMAND ${LIBVTERM_BUILD_COMMAND} "CFLAGS='-fPIC'"
     BUILD_IN_SOURCE ON

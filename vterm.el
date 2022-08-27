@@ -1245,31 +1245,25 @@ Argument BUFFER the terminal buffer."
             (when (cl-member (selected-window) windows :test #'eq)
               (set-window-hscroll (selected-window) 0))))))))
 
-(defun vterm--selection (targets data)
+;; see VTermSelectionMask in vterm.el
+;; VTERM_SELECTION_CLIPBOARD = (1<<0),
+;; VTERM_SELECTION_PRIMARY   = (1<<1),
+(defconst vterm--selection-clipboard 1)   ;(1<<0)
+(defconst vterm--selection-primary   2)   ;(1<<1)
+(defun vterm--set-selection (mask data)
   "OSC 52 Manipulate Selection Data.
 Search Manipulate Selection Data in
  https://invisible-island.net/xterm/ctlseqs/ctlseqs.html ."
   (when vterm-enable-manipulate-selection-data-by-osc52
-    (unless (or (string-equal data "?")
-                (string-empty-p data))
-      (let* ((inhibit-eol-conversion t)
-             (decoded-data (decode-coding-string
-                            (base64-decode-string data) locale-coding-system))
-             (select-enable-clipboard select-enable-clipboard)
-             (select-enable-primary select-enable-primary))
-        ;; https://invisible-island.net/xterm/ctlseqs/ctlseqs.html
-        ;; c , p , q , s , 0 , 1 , 2 , 3 , 4 , 5 , 6 , and 7
-        ;; clipboard, primary, secondary, select, or cut buffers 0 through 7
-        (unless (string-empty-p targets)
-          (setq select-enable-clipboard nil)
-          (setq select-enable-primary nil))
-        (when (cl-find ?c targets)
-          (setq select-enable-clipboard t))
-        (when (cl-find ?p targets)
-          (setq select-enable-primary t))
-
-        (kill-new decoded-data)
-        (message "kill-ring is updated by vterm OSC 52(Manipulate Selection Data)")))))
+    (let ((select-enable-clipboard select-enable-clipboard)
+          (select-enable-primary select-enable-primary))
+      (setq select-enable-clipboard
+            (logand mask vterm--selection-clipboard))
+      (setq select-enable-primary
+            (logand mask vterm--selection-primary))
+      (kill-new data)
+      (message "kill-ring is updated by vterm OSC 52(Manipulate Selection Data)"))
+    ))
 
 ;;; Entry Points
 
