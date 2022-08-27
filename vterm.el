@@ -562,13 +562,6 @@ Exceptions are defined by `vterm-keymap-exceptions'."
                  collect key))
   (mapc (lambda (key)
           (define-key map (kbd key) #'vterm--self-insert))
-        (cl-loop for prefix in '("M-")
-                 append (cl-loop for char from ?A to ?Z
-                                 for key = (format "%s%c" prefix char)
-                                 unless (member key exceptions)
-                                 collect key)))
-  (mapc (lambda (key)
-          (define-key map (kbd key) #'vterm--self-insert))
         (cl-loop for prefix in '("C-" "M-" "C-S-" )
                  append (cl-loop for char from ?a to ?z
                                  for key = (format "%s%c" prefix char)
