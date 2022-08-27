@@ -848,6 +848,12 @@ not appropriate in some cases like terminals."
 
 Obsolete variables will be removed in version 0.1.
 
+#### August 2022
+* `vterm-send-C-[a-z]` `vterm-send-M-[a-z]` `vterm-define-key`
+ `vterm-send-{up/down/left/right/prior/next/meta-dot/meta-comma/ctrl-slash}`
+ were obsolete, please use `vterm-send` or `vterm-send-key` or
+ `vterm--self-insert` instead.
+
 #### October 2020
 
 * `vterm-disable-bold-font` was renamed to `vterm-disable-bold` to uniform it
