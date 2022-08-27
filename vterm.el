@@ -308,12 +308,12 @@ demo: \\='(\"env1=v1\" \"env2=v2\")"
   "Support OSC 52 MANIPULATE SELECTION DATA.
 
 Support copy text to Emacs kill ring and system clipboard by using OSC 52.
-For example: send base64 encoded \\='foo\\=' to kill ring: echo -en \\='\e]52;c;Zm9v\a\\=',
+For example: send base64 encoded \\='foo\\=' to kill ring: echo -en \\='\\e]52;c;Zm9v\\a\\=',
 tmux can share its copy buffer to terminals by supporting osc52(like iterm2
  xterm) you can enable this feature for tmux by :
 set -g set-clipboard on         #osc 52 copy paste share with iterm
-set -ga terminal-overrides \\=',xterm*:XT:Ms=\E]52;%p1%s;%p2%s\007\\='
-set -ga terminal-overrides \\=',screen*:XT:Ms=\E]52;%p1%s;%p2%s\007\\='
+set -ga terminal-overrides \\=',xterm*:XT:Ms=\\E]52;%p1%s;%p2%s\\007\\='
+set -ga terminal-overrides \\=',screen*:XT:Ms=\\E]52;%p1%s;%p2%s\\007\\='
 
 The clipboard querying/clearing functionality offered by OSC 52 is not
 implemented here,And for security reason, this feature is disabled
