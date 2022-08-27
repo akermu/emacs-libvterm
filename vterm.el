@@ -193,7 +193,7 @@ named \"*vterm*<2>\"."
   :group 'vterm)
 
 (defcustom vterm-max-scrollback 1000
-  "Maximum 'scrollback' value.
+  "Maximum \\='scrollback\\=' value.
 
 The maximum allowed is 100000.  This value can modified by
 changing the SB_MAX variable in vterm-module.h and recompiling
@@ -299,7 +299,7 @@ information on the how to configure the shell."
 (defcustom vterm-environment nil
   "List of extra environment variables to the vterm shell processes only.
 
-demo: '(\"env1=v1\" \"env2=v2\")"
+demo: \\='(\"env1=v1\" \"env2=v2\")"
   :type '(repeat string)
   :group 'vterm)
 
@@ -308,12 +308,12 @@ demo: '(\"env1=v1\" \"env2=v2\")"
   "Support OSC 52 MANIPULATE SELECTION DATA.
 
 Support copy text to Emacs kill ring and system clipboard by using OSC 52.
-For example: send base64 encoded 'foo' to kill ring: echo -en '\e]52;c;Zm9v\a',
+For example: send base64 encoded \\='foo\\=' to kill ring: echo -en \\='\e]52;c;Zm9v\a\\=',
 tmux can share its copy buffer to terminals by supporting osc52(like iterm2
  xterm) you can enable this feature for tmux by :
 set -g set-clipboard on         #osc 52 copy paste share with iterm
-set -ga terminal-overrides ',xterm*:XT:Ms=\E]52;%p1%s;%p2%s\007'
-set -ga terminal-overrides ',screen*:XT:Ms=\E]52;%p1%s;%p2%s\007'
+set -ga terminal-overrides \\=',xterm*:XT:Ms=\E]52;%p1%s;%p2%s\007\\='
+set -ga terminal-overrides \\=',screen*:XT:Ms=\E]52;%p1%s;%p2%s\007\\='
 
 The clipboard querying/clearing functionality offered by OSC 52 is not
 implemented here,And for security reason, this feature is disabled
@@ -1492,7 +1492,7 @@ If option DELETE-WHOLE-LINE is non-nil, then this command kills
 the whole line including its terminating newline"
   (save-excursion
     (when (vterm--goto-line line-num)
-      (vterm--delete-region (point) (point-at-eol count))
+      (vterm--delete-region (point) (line-end-position count))
       (when (and delete-whole-line
                  (looking-at "\n"))
         (vterm--delete-char 1)))))
@@ -1612,7 +1612,7 @@ in README."
             (promp-pt (vterm--get-prompt-point)))
         (when promp-pt (goto-char promp-pt))
         (cl-loop repeat (or n 1) do
-                 (setq pt (next-single-property-change (point-at-bol 2) 'vterm-prompt))
+                 (setq pt (next-single-property-change (line-beginning-position 2) 'vterm-prompt))
                  (when pt (goto-char pt))))
     (term-next-prompt n)))
 
@@ -1716,7 +1716,7 @@ Effectively toggle between the two positions."
 (defun vterm--remove-fake-newlines ()
   "Filter out injected newlines were injected when rendering the terminal.
 
-These newlines were tagged with 'vterm-line-wrap property so we
+These newlines were tagged with \\='vterm-line-wrap property so we
 can find them and remove them."
   (goto-char (point-min))
   (let (fake-newline)
