@@ -58,7 +58,7 @@ extern emacs_value Fvterm_invalidate;
 extern emacs_value Feq;
 extern emacs_value Fvterm_get_color;
 extern emacs_value Fvterm_eval;
-extern emacs_value Fvterm_selection;
+extern emacs_value Fvterm_set_selection;
 
 // Utils
 void bind_function(emacs_env *env, const char *name, emacs_value Sfun);
@@ -93,7 +93,7 @@ void set_directory(emacs_env *env, emacs_value string);
 void vterm_invalidate(emacs_env *env);
 emacs_value vterm_get_color(emacs_env *env, int index);
 emacs_value vterm_eval(emacs_env *env, emacs_value string);
-emacs_value vterm_selection(emacs_env *env, emacs_value selection_target,
-                            emacs_value selection_data);
+emacs_value vterm_set_selection(emacs_env *env, emacs_value selection_target,
+                                emacs_value selection_data);
 
 #endif /* ELISP_H */
