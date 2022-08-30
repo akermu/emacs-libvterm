@@ -305,7 +305,7 @@ demo: \\='(\"env1=v1\" \"env2=v2\")"
 
 
 (defcustom vterm-enable-manipulate-selection-data-by-osc52 nil
-  "Support OSC 52 MANIPULATE SELECTION DATA.
+  "Support OSC 52 MANIPULATE SELECTION DATA(libvterm 0.2 is needed).
 
 Support copy text to Emacs kill ring and system clipboard by using OSC 52.
 For example: send base64 encoded \\='foo\\=' to kill ring: echo -en \\='\\e]52;c;Zm9v\\a\\=',

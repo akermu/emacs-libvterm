@@ -100,9 +100,9 @@ typedef struct Term {
 
   /*  c , p , q , s , 0 , 1 , 2 , 3 , 4 , 5 , 6 , and 7  */
   /* clipboard, primary, secondary, select, or cut buffers 0 through 7 */
-  VTermSelectionMask selection_mask;
+  int selection_mask; /* see VTermSelectionMask in vterm.h */
   char *selection_data;
-  char selection_buf[SELECTION_BUF_LEN]; /* buf for */
+  char selection_buf[SELECTION_BUF_LEN];
 
   /* the size of dirs almost = window height, value = directory of that line */
   LineInfo **lines;

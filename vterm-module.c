@@ -1153,7 +1153,7 @@ static VTermStateFallbacks parser_callbacks = {
     .osc = &osc_callback,
     .dcs = NULL,
 };
-
+#ifndef VTermSelectionMaskNotExists
 static int set_selection(VTermSelectionMask mask, VTermStringFragment frag,
                          void *user) {
   Term *term = (Term *)user;
@@ -1183,6 +1183,7 @@ static VTermSelectionCallbacks selection_callbacks = {
     .set = &set_selection,
     .query = NULL,
 };
+#endif /* VTermSelectionMaskNotExists */
 
 #endif
 
@@ -1206,9 +1207,11 @@ emacs_value Fvterm_new(emacs_env *env, ptrdiff_t nargs, emacs_value args[],
 
   VTermState *state = vterm_obtain_state(term->vt);
   vterm_state_set_unrecognised_fallbacks(state, &parser_callbacks, term);
+
+#ifndef VTermSelectionMaskNotExists
   vterm_state_set_selection_callbacks(state, &selection_callbacks, term,
                                       term->selection_buf, SELECTION_BUF_LEN);
-
+#endif
   vterm_state_set_bold_highbright(state, set_bold_hightbright);
 
   vterm_screen_reset(term->vts, 1);
