@@ -68,7 +68,7 @@ Before installing emacs-libvterm, you need to make sure you have installed
  3. libtool-bin (related issues:
     [#66](https://github.com/akermu/emacs-libvterm/issues/66)
     [#85](https://github.com/akermu/emacs-libvterm/issues/85#issuecomment-491845136))
- 4. OPTIONAL: [libvterm](https://github.com/neovim/libvterm) (>= 0.1). This
+ 4. OPTIONAL: [libvterm](https://github.com/Sbozzolo/libvterm-mirror.git) (>= 0.2). This
     library can be found in the official repositories of most distributions
     (e.g., Arch, Debian, Fedora, Gentoo, openSUSE, Ubuntu). Typical names are
     `libvterm` (Arch, Fedora, Gentoo, openSUSE), or `libvterm-dev` (Debian,
