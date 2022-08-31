@@ -231,7 +231,7 @@ screen in vterm buffers.
 If `vterm-clear-scrollback-when-clearing' is nil, `vterm-clear'
 clears only the screen, so the scrollback is accessible moving
 the point up."
-  :type 'number
+  :type 'boolean
   :group 'vterm)
 
 (defcustom vterm-keymap-exceptions
