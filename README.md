@@ -434,7 +434,7 @@ For `fish`,
 function fish_title
     hostname
     echo ":"
-    pwd
+    prompt_pwd
 end
 ```
 See [zsh and bash](http://tldp.org/HOWTO/Xterm-Title-4.html) and [fish
