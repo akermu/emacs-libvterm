@@ -30,7 +30,7 @@ end
 function fish_title
     hostname
     echo ":"
-    pwd
+    prompt_pwd
 end
 
 # With vterm_cmd you can execute Emacs commands directly from the shell.
