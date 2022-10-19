@@ -563,20 +563,20 @@ Exceptions are defined by `vterm-keymap-exceptions'."
                  for key = (format "<f%i>" number)
                  unless (member key exceptions)
                  collect key))
-  (mapc (lambda (key)
-          (define-key map (kbd key) #'vterm--self-insert))
-        (cl-loop for prefix in '("C-" "M-" "C-S-" )
-                 append (cl-loop for char from ?a to ?z
-                                 for key = (format "%s%c" prefix char)
-                                 unless (member key exceptions)
-                                 collect key)))
-  (mapc (lambda (key)
-          (define-key map (kbd key) 'ignore))
-        (cl-loop for prefix in '("C-M-" "C-M-S-")
-                 append (cl-loop for char from ?a to ?z
-                                 for key = (format "%s%c" prefix char)
-                                 unless (member key exceptions)
-                                 collect key))))
+  (let ((esc-map (lookup-key map "\e"))
+        (i 0)
+        key)
+    (unless esc-map (setq esc-map (make-keymap)))
+    (while (< i 128)
+      (setq key (make-string 1 i))
+      (unless (member (key-description key) exceptions)
+        (define-key map key 'vterm--self-insert))
+      ;; Avoid O and [. They are used in escape sequences for various keys.
+      (unless (or (eq i ?O) (eq i 91))
+        (unless (member (key-description key "\e") exceptions)
+          (define-key esc-map key 'vterm--self-insert-meta)))
+      (setq i (1+ i)))
+    (define-key map "\e" esc-map)))
 
 (defun vterm-xterm-paste (event)
   "Handle xterm paste EVENT in vterm."
@@ -876,6 +876,13 @@ will invert `vterm-copy-exclude-prompt' for that call."
   (vterm-copy-mode -1))
 
 ;;; Commands
+
+(defun vterm--self-insert-meta ()
+  (interactive)
+  (when vterm--term
+    (dolist (key (vterm--translate-event-to-args
+                  last-command-event :meta))
+      (apply #'vterm-send-key key))))
 
 (defun vterm--self-insert ()
   "Send invoking key to libvterm."
@@ -1194,7 +1201,7 @@ Return count of moved characeters."
   "A wrapper for `delete-char'."
   (funcall vterm--delete-char-function n killflag))
 
-(defun vterm--translate-event-to-args (event)
+(defun vterm--translate-event-to-args (event &optional meta)
   "Translate EVENT as list of args for `vterm-send-key'.
 
 When some input method is enabled, one key may generate
@@ -1202,7 +1209,7 @@ several characters, so the result of this function is a list,
 looks like: ((\"m\" :shift ))"
   (let* ((modifiers (event-modifiers event))
          (shift (memq 'shift modifiers))
-         (meta (memq 'meta modifiers))
+         (meta (or meta (memq 'meta modifiers)))
          (ctrl (memq 'control modifiers))
          (raw-key (event-basic-type event))
          (ev-keys) keys)
