@@ -114,7 +114,7 @@ always want to use the vendored version as opposed to the one on you system, set
 
 Build the module with:
 
-``` sh
+```sh
 cd emacs-libvterm
 mkdir -p build
 cd build
@@ -124,7 +124,7 @@ make
 
 And add this to your `init.el`:
 
-``` elisp
+```elisp
 (add-to-list 'load-path "path/to/emacs-libvterm")
 (require 'vterm)
 ```
@@ -153,23 +153,28 @@ There are a few options for installing Emacs27 on Ubuntu 20.04:
 In any case, if you have an older Emacs version you will need to purge it before proceeding:
 
 #### Purge Emacs
+
 ```sh
 sudo apt --purge remove emacs
 sudo apt autoremove
 ```
 
 #### Installing Emacs27 from Kevin Kelley PPA
+
 ```sh
 sudo add-apt-repository ppa:kelleyk/emacs
 sudo apt install emacs27
 ```
 
 ##### If you get an error about emacs27_common during the install process:
+
 ```sh
 Errors were encountered while processing:
  /tmp/apt-dpkg-install-RVK8CA/064-emacs27-common_27.1~1.git86d8d76aa3-kk2+20.04_all.deb
 ```
+
 run
+
 ```sh
 sudo apt --purge remove emacs-common
 sudo apt --fix-broken install
@@ -177,12 +182,14 @@ sudo apt --fix-broken install
 
 #### Installing Emacs27 from Snap
 I hesitate to include SNAP here, because I ran into a number of GTK Theme parsing errors, and Fontconfig errors when I tested it, and reverted to installing from Kevin Kelley's PPA. YMMV
+
 ```sh
 sudo snap install emacs --classic
 ```
 
 #### Install CMake and Libtool
 In Ubuntu 20.04 CMake (v3.16.3-1ubuntu1) and Libtool can be installed with
+
 ```sh
 sudo apt install cmake
 sudo apt install libtool
@@ -200,6 +207,7 @@ The binary in Ubuntu Emacs Lisp PPA is currently broken and leads to segmentatio
 (see [#185](https://github.com/akermu/emacs-libvterm/issues/185#issuecomment-562237077)).
 In case Emacs is already on the system, you need to purge it before proceeding
 with the following commands.
+
 ```sh
 sudo add-apt-repository ppa:kelleyk/emacs
 sudo apt update
@@ -207,6 +215,7 @@ sudo apt-get install emacs26
 ```
 
 A way to install a recent version of CMake (>= 3.11) is with linuxbrew.
+
 ```sh
 brew install cmake
 ```
@@ -240,9 +249,10 @@ via properly escaped sequences. A function that helps in this task,
 readme.
 
 For `bash` or `zsh`, put this in your `.zshrc` or `.bashrc`
-```bash
-vterm_printf(){
-    if [ -n "$TMUX" ] && ([ "${TERM%%-*}" = "tmux" ] || [ "${TERM%%-*}" = "screen" ] ); then
+
+```sh
+vterm_printf() {
+    if [ -n "$TMUX" ] && ([ "${TERM%%-*}" = "tmux" ] || [ "${TERM%%-*}" = "screen" ]); then
         # Tell tmux to pass the escape sequences through
         printf "\ePtmux;\e\e]%s\007\e\\" "$1"
     elif [ "${TERM%%-*}" = "screen" ]; then
@@ -253,10 +263,12 @@ vterm_printf(){
     fi
 }
 ```
+
 This works also for `dash`.
 
 For `fish` put this in your `~/.config/fish/config.fish`:
-```bash
+
+```fish
 function vterm_printf;
     if begin; [  -n "$TMUX" ]  ; and  string match -q -r "screen|tmux" "$TERM"; end 
         # tell tmux to pass the escape sequences through
@@ -309,23 +321,27 @@ with the `clear` function provided by the shell to clear both screen and
 scrollback. In order to achieve this behavior, you need to add a new shell alias.
 
 For `zsh`, put this in your `.zshrc`:
-```zsh
 
+```zsh
 if [[ "$INSIDE_EMACS" = 'vterm' ]]; then
     alias clear='vterm_printf "51;Evterm-clear-scrollback";tput clear'
 fi
 ```
+
 For `bash`, put this in your `.bashrc`:
+
 ```bash
 if [[ "$INSIDE_EMACS" = 'vterm' ]]; then
-    function clear(){
+    function clear() {
         vterm_printf "51;Evterm-clear-scrollback";
         tput clear;
     }
 fi
 ```
+
 For `fish`:
-```
+
+```fish
 if [ "$INSIDE_EMACS" = 'vterm' ]
     function clear
         vterm_printf "51;Evterm-clear-scrollback";
@@ -333,6 +349,7 @@ if [ "$INSIDE_EMACS" = 'vterm' ]
     end
 end
 ```
+
 These aliases take advantage of the fact that `vterm` can execute `elisp`
 commands, as explained below.
 
@@ -420,16 +437,21 @@ to which all the vterm buffers will be named "vterm TITLE".
 This requires some shell-side configuration to print the title. For example to
 set the name "HOSTNAME:PWD", use can you the following:
 
-For `zsh`
+For `zsh`,
+
 ```zsh
 autoload -U add-zsh-hook
 add-zsh-hook -Uz chpwd (){ print -Pn "\e]2;%m:%2~\a" }
 ```
+
 For `bash`,
+
 ```bash
 PROMPT_COMMAND="${PROMPT_COMMAND:+$PROMPT_COMMAND; }"'echo -ne "\033]0;${HOSTNAME}:${PWD}\007"'
 ```
+
 For `fish`,
+
 ```fish
 function fish_title
     hostname
@@ -437,6 +459,7 @@ function fish_title
     prompt_pwd
 end
 ```
+
 See [zsh and bash](http://tldp.org/HOWTO/Xterm-Title-4.html) and [fish
 documentations](https://fishshell.com/docs/current/#programmable-title).
 
@@ -460,7 +483,7 @@ use the interactive function `vterm-send-next-key`. This can be bound to a key
 in the `vterm-mode-map` like `C-q`, in which case pressing `C-q C-g` will send a
 `C-g` key to the terminal, and so on for other modified keys:
 
-``` emacs
+```elisp
 (define-key vterm-mode-map (kbd "C-q") #'vterm-send-next-key)
 ```
 
@@ -471,7 +494,7 @@ as Emacs or Nano.
 
 You can change the font (the _face_) used in a vterm with the following code:
 
-``` emacs
+```elisp
 (add-hook 'vterm-mode-hook
           (lambda ()
             (set (make-local-variable 'buffer-face-mode-face) 'fixed-pitch)
@@ -537,7 +560,7 @@ For `zsh`, put this at the end of your `.zshrc`:
 
 ```zsh
 vterm_prompt_end() {
-    vterm_printf "51;A$(whoami)@$(hostname):$(pwd)";
+    vterm_printf "51;A$(whoami)@$(hostname):$(pwd)"
 }
 setopt PROMPT_SUBST
 PROMPT=$PROMPT'%{$(vterm_prompt_end)%}'
@@ -567,14 +590,15 @@ function fish_prompt --description 'Write out the prompt; do not replace this. I
     vterm_prompt_end
 end
 ```
+
 Here we are using the function `vterm_printf` that we have discussed above, so make
 sure that this function is defined in your configuration file.
-
 
 Directory tracking works on remote servers too. In case the hostname of your
 remote machine does not match the actual hostname needed to connect to that
 server, change `$(hostname)` with the correct one. For example, if the correct
 hostname is `foo` and the username is `bar`, you should have something like
+
 ```bash
 HOSTNAME=foo
 USER=baz
@@ -585,11 +609,14 @@ vterm_printf "51;A$USER@$HOSTNAME:$(pwd)"
 
 `vterm` can read and execute commands. At the moment, a command is
 passed by providing a specific escape sequence. For example, to evaluate
-``` elisp
+
+```elisp
 (message "Hello!")
 ```
+
 use
-``` sh
+
+```sh
 printf "\e]51;Emessage \"Hello\!\"\e\\"
 # or
 vterm_printf "51;Emessage \"Hello\!\""
@@ -602,6 +629,7 @@ and backslashes need to be escaped via backslash. A convenient shell function to
 automate the substitution is
 
 `bash` or `zsh`:
+
 ```sh
 vterm_cmd() {
     local vterm_elisp
@@ -613,8 +641,10 @@ vterm_cmd() {
     vterm_printf "51;E$vterm_elisp"
 }
 ```
+
 `fish`:
-```sh
+
+```fish
 function vterm_cmd --description 'Run an Emacs command among the ones been defined in vterm-eval-cmds.'
     set -l vterm_elisp ()
     for arg in $argv
@@ -637,6 +667,7 @@ say() {
 ```
 
 Or for `fish`:
+
 ```fish
 function find_file
     set -q argv[1]; or set argv[1] "."
@@ -653,13 +684,14 @@ This newly defined `find_file` function can now be used inside `vterm` as
 ```sh
 find_file name_of_file_in_local_directory
 ```
+
 If you call `find_file` without specifying any file (you just execute `find_file` in your shell),
 `dired` will open with the current directory.
 
 As an example, say you like having files opened below the current window. You
 could add the command to do it on the lisp side like so:
 
-``` elisp
+```elisp
 (push (list "find-file-below"
             (lambda (path)
               (if-let* ((buf (find-file-noselect path))
@@ -700,7 +732,7 @@ in the EMACS_VTERM_PATH inside the /etc sub-directory. After a package update, t
 so, a code like this in your bashrc could be enough to load always the latest version of the file
 from the right location without coping any file manually.
 
-```
+```sh
 if [[ "$INSIDE_EMACS" = 'vterm' ]] \
     && [[ -n ${EMACS_VTERM_PATH} ]] \
     && [[ -f ${EMACS_VTERM_PATH}/etc/emacs-vterm-bash.sh ]]; then
@@ -730,16 +762,19 @@ The version of `libvterm` installed on your system is too old. You should let
 `emacs-libvterm` download `libvterm` for you. You can either uninstall your
 libvterm, or instruct Emacs to ignore the system libvterm. If you are compiling
 from Emacs, you can do this by setting:
-```emacs-lisp
+
+```elisp
 (setq vterm-module-cmake-args "-DUSE_SYSTEM_LIBVTERM=no")
 ```
+
 and compile again. If you are compiling with CMake, use the flag
 `-DUSE_SYSTEM_LIBVTERM=no`.
 
 ### `<C-backspace>` doesn't kill previous word.
 
 This can be fixed by rebinding the key to what `C-w` does:
-```emacs-lisp
+
+```elisp
 (define-key vterm-mode-map (kbd "<C-backspace>")
     (lambda () (interactive) (vterm-send-key (kbd "C-w"))))
 ```
@@ -748,7 +783,8 @@ This can be fixed by rebinding the key to what `C-w` does:
 
 Add this piece of code to your configuration file to make `counsel` use
 the correct function to yank in vterm buffers.
-```emacs-lisp
+
+```elisp
 (defun vterm-counsel-yank-pop-action (orig-fun &rest args)
   (if (equal major-mode 'vterm-mode)
       (let ((inhibit-read-only t)
@@ -767,7 +803,8 @@ We recommend that you set up shell-side configuration for reliable directory
 tracking. If you cannot do it, a possible workaround is the following.
 
 On most GNU/Linux systems, you can read current directory from `/proc`:
-```emacs-lisp
+
+```elisp
 (defun vterm-directory-sync ()
   "Synchronize current working directory."
   (interactive)
@@ -776,10 +813,13 @@ On most GNU/Linux systems, you can read current directory from `/proc`:
            (dir (file-truename (format "/proc/%d/cwd/" pid))))
       (setq default-directory dir))))
 ```
+
 A possible application of this function is in combination with `find-file`:
-```emacs-lisp
+
+```elisp
 (advice-add #'find-file :before #'vterm-directory-sync)
 ```
+
 This method does not work on remote machines.
 
 ### How can I get the directory tracking in a more understandable way?
@@ -791,32 +831,37 @@ are using `fish`).
 There is another way to achieve this behavior. Define a shell function, on a
 local host you can simply use
 
-``` sh
+```sh
 vterm_set_directory() {
     vterm_cmd update-pwd "$PWD/"
 }
 ```
+
 On a remote one, use instead
-``` sh
+
+```sh
 vterm_set_directory() {
     vterm_cmd update-pwd "/-:""$USER""@""$HOSTNAME"":""$PWD/"
 }
 ```
+
 Then, for `zsh`, add this function to the `chpwd` hook:
 
-``` sh
+```zsh
 autoload -U add-zsh-hook
 add-zsh-hook -Uz chpwd (){ vterm_set_directory }
 ```
+
 For `bash`, append it to the prompt:
 
-``` sh
+```bash
 PROMPT_COMMAND="${PROMPT_COMMAND:+$PROMPT_COMMAND; }vterm_set_directory"
 ```
+
 Finally, add `update-pwd` to the list of commands that Emacs
 is allowed to execute from vterm:
 
-``` emacs-lisp
+```elisp
 (add-to-list 'vterm-eval-cmds '("update-pwd" (lambda (path) (setq default-directory path))))
 ```
 
@@ -825,7 +870,7 @@ is allowed to execute from vterm:
 `evil-collection` provides a solution for this problem. If you do not want to
 use `evil-collection`, you can add the following code:
 
-```emacs-lisp
+```elisp
 (defun evil-collection-vterm-escape-stay ()
 "Go back to normal state but don't move
 cursor backwards. Moving cursor backwards is the default vim behavior but it is
