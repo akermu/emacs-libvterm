@@ -180,6 +180,12 @@ the executable."
   :type '(alist :key-type string :value-type string)
   :group 'vterm)
 
+(defcustom vterm-fallback-shell "/bin/bash"
+  "The shell that gets run in the vterm if the selected shell is not available."
+  :type 'string
+  :group 'vterm)
+
+
 (defcustom vterm-buffer-name "*vterm*"
   "The basename used for vterm buffers.
 This is the default name used when running `vterm' or
@@ -711,19 +717,10 @@ Exceptions are defined by `vterm-keymap-exceptions'."
            :name "vterm"
            :buffer (current-buffer)
            :command
-           `("/bin/sh" "-c"
-             ,(format
-               "stty -nl sane %s erase ^? rows %d columns %d >/dev/null && exec %s"
-               ;; Some stty implementations (i.e. that of *BSD) do not
-               ;; support the iutf8 option.  to handle that, we run some
-               ;; heuristics to work out if the system supports that
-               ;; option and set the arg string accordingly. This is a
-               ;; gross hack but FreeBSD doesn't seem to want to fix it.
-               ;;
-               ;; See: https://bugs.freebsd.org/bugzilla/show_bug.cgi?id=220009
-               (if (eq system-type 'berkeley-unix) "" "iutf8")
-               (window-body-height)
-               width (vterm--get-shell)))
+           (list
+            "/bin/sh"
+            "-c"
+            (vterm--get-shell-command width (window-body-height)))
            ;; :coding 'no-conversion
            :connection-type 'pty
            :file-handler t
@@ -757,6 +754,38 @@ Exceptions are defined by `vterm-keymap-exceptions'."
         (or (cadr (assoc method vterm-tramp-shells))
             vterm-shell))
     vterm-shell))
+
+(defun vterm--get-shell-command (initial-width initial-height)
+  "Get the command to start the shell returned by `vterm-get-shell'.
+
+INITIAL-WIDTH is the width of the buffer at the time this command is run.
+Likewise, INITIAL-HEIGHT is the height of the buffer at the time this command is
+run."
+  (let ((selected-shell (vterm--get-shell)))
+    (format
+     (concat
+      "stty -nl sane %s erase ^? rows %d columns %d >/dev/null && "
+      "if [ -x \"%s\" ] ; "
+      "then exec \"%s\" ;" ;; shell was found, exec it
+      "else "
+      "echo \"%s\" ; " ;; shell was not found, print a message and exec the fallback
+      "exec \"%s\" ; "
+      "fi")
+     ;; Some stty implementations (i.e. that of *BSD) do not
+     ;; support the iutf8 option.  to handle that, we run some
+     ;; heuristics to work out if the system supports that
+     ;; option and set the arg string accordingly. This is a
+     ;; gross hack but FreeBSD doesn't seem to want to fix it.
+     ;;
+     ;; See: https://bugs.freebsd.org/bugzilla/show_bug.cgi?id=220009
+     (if (eq system-type 'berkeley-unix) "" "iutf8")
+     initial-height
+     initial-width
+     selected-shell
+     selected-shell
+     (format "%s, the configured shell, does not seem to be available, falling back to %s"
+             selected-shell vterm-fallback-shell)
+     vterm-fallback-shell)))
 
 (defun vterm--bookmark-make-record ()
   "Create a vterm bookmark.
