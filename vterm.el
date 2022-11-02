@@ -616,7 +616,7 @@ Exceptions are defined by `vterm-keymap-exceptions'."
     (define-key map [up]                        #'vterm--self-insert)
     (define-key map [down]                      #'vterm--self-insert)
     (define-key map [prior]                     #'vterm--self-insert)
-    (define-key map [S-prior]                   #'vterm--self-insert)
+    (define-key map [S-prior]                   #'scroll-down-command)
     (define-key map [next]                      #'vterm--self-insert)
     (define-key map [S-next]                    #'scroll-up-command)
     (define-key map [home]                      #'vterm--self-insert)
