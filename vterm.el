@@ -755,6 +755,7 @@ Exceptions are defined by `vterm-keymap-exceptions'."
   (if (ignore-errors (file-remote-p default-directory))
       (with-parsed-tramp-file-name default-directory nil
         (or (cadr (assoc method vterm-tramp-shells))
+            (with-connection-local-variables shell-file-name)
             vterm-shell))
     vterm-shell))
 
