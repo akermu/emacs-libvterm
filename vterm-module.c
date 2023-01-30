@@ -1250,6 +1250,7 @@ emacs_value Fvterm_new(emacs_env *env, ptrdiff_t nargs, emacs_value args[],
   term->sb_buffer = malloc(sizeof(ScrollbackLine *) * term->sb_size);
   term->invalid_start = 0;
   term->invalid_end = rows;
+  term->is_invalidated = false;
   term->width = cols;
   term->height = rows;
   term->height_resize = 0;
