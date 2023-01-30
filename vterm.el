@@ -409,6 +409,18 @@ not require any shell-side configuration. See
   :type 'boolean
   :group 'vterm)
 
+(defcustom vterm-copy-mode-remove-fake-newlines nil
+  "When not-nil fake newlines are removed on entering copy mode.
+
+vterm inserts \\='fake\\=' newlines purely for rendering. When using
+vterm-copy-mode these are in conflict with many emacs functions
+like isearch-forward. if this varialbe is not-nil the
+fake-newlines are removed on entering copy-mode and re-inserted
+on leaving copy mode. Also truncate-lines is set to t on entering
+copy-mode and set to nil on leaving."
+  :type 'boolean
+  :group 'vterm)
+
 ;;; Faces
 
 (defface vterm-color-black
@@ -506,6 +518,8 @@ Only background is used."
 (defvar-local vterm--delete-char-function (symbol-function #'delete-char))
 (defvar-local vterm--delete-region-function (symbol-function #'delete-region))
 (defvar-local vterm--undecoded-bytes nil)
+(defvar-local vterm--copy-mode-fake-newlines nil)
+
 
 (defvar vterm-timer-delay 0.1
   "Delay for refreshing the buffer after receiving updates from libvterm.
@@ -833,6 +847,24 @@ Optional argument RESET clears all the errors."
 
 ;;; Copy Mode
 
+(defun vterm--enter-copy-mode ()
+  (use-local-map nil)
+  (vterm-send-stop)
+  (when vterm-copy-mode-remove-fake-newlines
+    (save-excursion
+      (setq truncate-lines nil)
+      (vterm--remove-fake-newlines t))))
+
+
+(defun vterm--exit-copy-mode ()
+  (when vterm-copy-mode-remove-fake-newlines
+    (save-excursion
+      (setq truncate-lines t)
+      (vterm--reinsert-fake-newlines)))
+  (vterm-reset-cursor-point)
+  (use-local-map vterm-mode-map)
+  (vterm-send-start))
+
 (define-minor-mode vterm-copy-mode
   "Toggle `vterm-copy-mode'.
 
@@ -849,12 +881,8 @@ A conventient way to exit `vterm-copy-mode' is with
   :keymap vterm-copy-mode-map
   (if (equal major-mode 'vterm-mode)
       (if vterm-copy-mode
-          (progn                            ;enable vterm-copy-mode
-            (use-local-map nil)
-            (vterm-send-stop))
-        (vterm-reset-cursor-point)
-        (use-local-map vterm-mode-map)
-        (vterm-send-start))
+          (vterm--enter-copy-mode)
+        (vterm--exit-copy-mode))
     (user-error "You cannot enable vterm-copy-mode outside vterm buffers")))
 
 (defun vterm-copy-mode-done (arg)
@@ -1732,26 +1760,57 @@ Effectively toggle between the two positions."
     (save-excursion
       (vterm-reset-cursor-point))))
 
-(defun vterm--remove-fake-newlines ()
+(defun vterm--reinsert-fake-newlines ()
+  "Reinsert fake newline from `vterm--copy-mode-fake-newlines'."
+  (let ((inhibit-read-only t)
+        (inhibit-redisplay t)
+        (fake-newline-text "\n")
+        fake-newline-pos)
+    (add-text-properties 0 1 '(vterm-line-wrap t rear-nonsticky t)
+                         fake-newline-text)
+    (while vterm--copy-mode-fake-newlines
+      (setq fake-newline-pos (car vterm--copy-mode-fake-newlines))
+      (setq vterm--copy-mode-fake-newlines (cdr vterm--copy-mode-fake-newlines))
+      (goto-char fake-newline-pos)
+      (insert fake-newline-text))))
+
+(defun vterm--remove-fake-newlines (&optional remembering-pos-p)
   "Filter out injected newlines were injected when rendering the terminal.
 
 These newlines were tagged with \\='vterm-line-wrap property so we
-can find them and remove them."
-  (goto-char (point-min))
-  (let (fake-newline)
-    (while (setq fake-newline (next-single-property-change (point)
-                                                           'vterm-line-wrap))
-      (goto-char fake-newline)
-      (cl-assert (eq ?\n (char-after)))
-      (let ((inhibit-read-only t))
-        (vterm--delete-char 1)))))
+can find them and remove them.
+If REMEMBERING-POS-P is not nil remembering their positions in a buffer-local
+`vterm--copy-mode-fake-newlines'."
+  (let (fake-newline
+        (inhibit-read-only t)
+        (inhibit-redisplay t))
+    (when remembering-pos-p
+      (setq vterm--copy-mode-fake-newlines nil))
 
+    (goto-char (point-max))
+    (when (and (bolp)
+               (get-text-property (1- (point)) 'vterm-line-wrap))
+      (forward-char -1)
+      (when remembering-pos-p
+        (setq vterm--copy-mode-fake-newlines
+              (cons (point) vterm--copy-mode-fake-newlines)))
+      (vterm--delete-char 1))
+
+    (while (and (not (bobp))
+                (setq fake-newline (previous-single-property-change
+                                    (point) 'vterm-line-wrap)))
+      (goto-char (1- fake-newline))
+      (cl-assert (eq ?\n (char-after)))
+      (when remembering-pos-p
+        (setq vterm--copy-mode-fake-newlines
+              (cons (point) vterm--copy-mode-fake-newlines)))
+      (vterm--delete-char 1))))
 
 (defun vterm--filter-buffer-substring (content)
   "Filter string CONTENT of fake/injected newlines."
   (with-temp-buffer
     (vterm--insert content)
-    (vterm--remove-fake-newlines)
+    (vterm--remove-fake-newlines nil)
     (buffer-string)))
 
 
