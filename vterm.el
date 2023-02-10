@@ -642,6 +642,7 @@ Exceptions are defined by `vterm-keymap-exceptions'."
     (define-key map [remap xterm-paste]         #'vterm-xterm-paste)
     (define-key map [remap yank-pop]            #'vterm-yank-pop)
     (define-key map [remap mouse-yank-primary]  #'vterm-yank-primary)
+    (define-key map [mouse-1]                   #'vterm-mouse-set-point)
     (define-key map (kbd "C-SPC")               #'vterm--self-insert)
     (define-key map (kbd "S-SPC")               #'vterm-send-space)
     (define-key map (kbd "C-_")                 #'vterm--self-insert)
@@ -1111,6 +1112,18 @@ Argument ARG is passed to `yank'"
         (yank-undo-function #'(lambda (_start _end) (vterm-undo))))
     (cl-letf (((symbol-function 'insert-for-yank) #'vterm-insert))
       (yank-pop arg))))
+
+(defun vterm-mouse-set-point (event &optional promote-to-region)
+  "Move point to the position clicked on with the mouse.
+But when clicking to the unused area below the last prompt,
+move the cursor to the prompt area."
+  (interactive "e\np")
+  (let ((pt (mouse-set-point event promote-to-region)))
+    (if (= (count-words pt (point-max)) 0)
+        (vterm-reset-cursor-point)
+      pt))
+  ;; Otherwise it selects text for every other click
+  (keyboard-quit))
 
 (defun vterm-send-string (string &optional paste-p)
   "Send the string STRING to vterm.
