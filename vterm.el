@@ -1789,6 +1789,7 @@ If REMEMBERING-POS-P is not nil remembering their positions in a buffer-local
 
     (goto-char (point-max))
     (when (and (bolp)
+               (not (bobp))
                (get-text-property (1- (point)) 'vterm-line-wrap))
       (forward-char -1)
       (when remembering-pos-p
