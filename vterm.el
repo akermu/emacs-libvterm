@@ -1679,9 +1679,12 @@ in README."
                    (when pt (goto-char (1- pt))))))
     (term-previous-prompt n)))
 
-(defun vterm--get-beginning-of-line ()
-  "Find the start of the line, bypassing line wraps."
+(defun vterm--get-beginning-of-line (&optional pt)
+  "Find the start of the line, bypassing line wraps.
+If PT is specified, find it's beginning of the line instead of the beginning
+of the line at cursor."
   (save-excursion
+    (when pt (goto-char pt))
     (beginning-of-line)
     (while (and (not (bobp))
                 (get-text-property (1- (point)) 'vterm-line-wrap))
@@ -1689,9 +1692,12 @@ in README."
       (beginning-of-line))
     (point)))
 
-(defun vterm--get-end-of-line ()
-  "Find the start of the line, bypassing line wraps."
+(defun vterm--get-end-of-line (&optional pt)
+  "Find the start of the line, bypassing line wraps.
+If PT is specified, find it's end of the line instead of the end
+of the line at cursor."
   (save-excursion
+    (when pt (goto-char pt))
     (end-of-line)
     (while (get-text-property (point) 'vterm-line-wrap)
       (forward-char)
