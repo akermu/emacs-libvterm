@@ -559,6 +559,13 @@ static int term_damage(VTermRect rect, void *data) {
   return 1;
 }
 
+static int term_bell(void *data) {
+  Term *term = data;
+  term->queued_bell = true;
+  invalidate_terminal(data, -1, -1);
+  return 1;
+}
+
 static int term_moverect(VTermRect dest, VTermRect src, void *data) {
   invalidate_terminal(data, MIN(dest.start_row, src.start_row),
                       MAX(dest.end_row, src.end_row));
@@ -617,6 +624,10 @@ static void term_redraw(Term *term, emacs_env *env) {
     term->linenum_added = term->linenum - oldlinenum;
     adjust_topline(term, env);
     term->linenum_added = 0;
+    if (term->queued_bell) {
+      ding(env, Qt);
+      term->queued_bell = false;
+    }
   }
 
   if (term->title_changed) {
@@ -662,6 +673,7 @@ static VTermScreenCallbacks vterm_screen_callbacks = {
     .resize = term_resize,
     .sb_pushline = term_sb_push,
     .sb_popline = term_sb_pop,
+    .bell = term_bell,
 #if !defined(VTermSBClearNotExists)
     .sb_clear = term_sb_clear,
 #endif
@@ -1229,6 +1241,8 @@ emacs_value Fvterm_new(emacs_env *env, ptrdiff_t nargs, emacs_value args[],
 
   term->vts = vterm_obtain_screen(term->vt);
 
+  term->queued_bell = false;
+
   VTermState *state = vterm_obtain_state(term->vt);
   vterm_state_set_unrecognised_fallbacks(state, &parser_callbacks, term);
 
@@ -1459,6 +1473,7 @@ int emacs_module_init(struct emacs_runtime *ert) {
   Fnth = env->make_global_ref(env, env->intern(env, "nth"));
   Ferase_buffer = env->make_global_ref(env, env->intern(env, "erase-buffer"));
   Finsert = env->make_global_ref(env, env->intern(env, "vterm--insert"));
+  Fding = env->make_global_ref(env, env->intern(env, "ding"));
   Fgoto_char = env->make_global_ref(env, env->intern(env, "goto-char"));
   Fput_text_property =
       env->make_global_ref(env, env->intern(env, "put-text-property"));
