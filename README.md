@@ -529,9 +529,7 @@ is a global minor mode in Emacs, you can use `M-x blink-cursor-mode` to toggle.
 
 ## Colors
 
-Set the `:foreground` and `:background` attributes of the following faces to a
-color you like. The `:foreground` is ansi color 0-7, the `:background` attribute
-is ansi color 8-15.
+Customize the following faces to your liking.
 
 - vterm-color-black
 - vterm-color-red
@@ -541,6 +539,14 @@ is ansi color 8-15.
 - vterm-color-magenta
 - vterm-color-cyan
 - vterm-color-white
+- vterm-color-bright-black
+- vterm-color-bright-red
+- vterm-color-bright-green
+- vterm-color-bright-yellow
+- vterm-color-bright-blue
+- vterm-color-bright-magenta
+- vterm-color-bright-cyan
+- vterm-color-bright-white
 
 ## Directory tracking and Prompt tracking
 
