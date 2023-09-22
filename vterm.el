@@ -1654,25 +1654,27 @@ If N is negative backward-line from end of buffer."
       (when raw-pwd
         (vterm--get-directory raw-pwd)))))
 
-(defun vterm--get-color (index)
-  "Get color by index from `vterm-color-palette'.
-Argument INDEX index of the terminal color.
-Special values for INDEX are:
--11 foreground for cells with underline attribute, foreground of
-the `vterm-color-underline' face is used in this case.
--12 background for cells with inverse video attribute, background
-of the `vterm-color-inverse-video' face is used in this case."
-  (cond
-   ((and (>= index 0) (< index 16))
-    (face-foreground
-     (elt vterm-color-palette index)
-     nil 'default))
-   ((= index -11)
-    (face-foreground 'vterm-color-underline nil 'default))
-   ((= index -12)
-    (face-background 'vterm-color-inverse-video nil 'default))
-   (t
-    nil)))
+(defun vterm--get-color (index &rest args)
+  "Get color by INDEX from `vterm-color-palette'.
+
+Special INDEX of -1 is used to represent default colors.  ARGS
+may optionally contain `:underline' or `:inverse-video' for cells
+with underline or inverse video attribute.  If ARGS contains
+`:foreground', use foreground color of the respective face
+instead of background."
+  (let ((foreground    (member :foreground args))
+        (underline     (member :underline args))
+        (inverse-video (member :inverse-video args)))
+    (funcall (if foreground #'face-foreground #'face-background)
+             (cond
+              ((and (>= index 0) (< index 16))
+               (elt vterm-color-palette index))
+              ((and (= index -1) foreground underline)
+               'vterm-color-underline)
+              ((and (= index -1) (not foreground) inverse-video)
+               'vterm-color-inverse-video)
+              (t 'default))
+             nil 'default)))
 
 (defun vterm--eval (str)
   "Check if string STR is `vterm-eval-cmds' and execute command.

@@ -845,18 +845,26 @@ static emacs_value cell_rgb_color(emacs_env *env, Term *term,
                                   VTermScreenCell *cell, bool is_foreground) {
   VTermColor *color = is_foreground ? &cell->fg : &cell->bg;
 
+  int props_len = 0;
+  emacs_value props[3];
+  if (is_foreground)
+    props[props_len++] = Qforeground;
+  if (cell->attrs.underline)
+    props[props_len++] = Qunderline;
+  if (cell->attrs.reverse)
+    props[props_len++] = Qreverse;
+
+  emacs_value args = list(env, props, props_len);
+
   /** NOTE: -10 is used as index offset for special indexes,
    * see C-h f vterm--get-color RET
    */
-  if (VTERM_COLOR_IS_DEFAULT_FG(color)) {
-    return vterm_get_color(env, -1 + (cell->attrs.underline ? -10 : 0));
-  }
-  if (VTERM_COLOR_IS_DEFAULT_BG(color)) {
-    return vterm_get_color(env, -2 + (cell->attrs.reverse ? -10 : 0));
+  if (VTERM_COLOR_IS_DEFAULT_FG(color) || VTERM_COLOR_IS_DEFAULT_BG(color)) {
+    return vterm_get_color(env, -1, args);
   }
   if (VTERM_COLOR_IS_INDEXED(color)) {
     if (color->indexed.idx < 16) {
-      return vterm_get_color(env, color->indexed.idx);
+      return vterm_get_color(env, color->indexed.idx, args);
     } else {
       VTermState *state = vterm_obtain_state(term->vt);
       vterm_state_get_palette_color(state, color->indexed.idx, color);
@@ -1451,6 +1459,7 @@ int emacs_module_init(struct emacs_runtime *ert) {
   Qcursor_type = env->make_global_ref(env, env->intern(env, "cursor-type"));
 
   // Functions
+  Fapply = env->make_global_ref(env, env->intern(env, "apply"));
   Fblink_cursor_mode =
       env->make_global_ref(env, env->intern(env, "blink-cursor-mode"));
   Fsymbol_value = env->make_global_ref(env, env->intern(env, "symbol-value"));
