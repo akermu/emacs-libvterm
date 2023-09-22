@@ -529,7 +529,9 @@ is a global minor mode in Emacs, you can use `M-x blink-cursor-mode` to toggle.
 
 ## Colors
 
-Customize the following faces to your liking.
+Customize the following faces to your liking. It is possible to specify
+different colors for foreground and background via the `:foreground` and
+`:background` attributes.
 
 - vterm-color-black
 - vterm-color-red

@@ -42,6 +42,7 @@ emacs_value Frecenter;
 emacs_value Fset_window_point;
 emacs_value Fwindow_body_height;
 emacs_value Fpoint;
+emacs_value Fapply;
 
 emacs_value Fput_text_property;
 emacs_value Fadd_text_properties;
@@ -182,9 +183,9 @@ void set_cursor_blink(emacs_env *env, bool blink) {
                (emacs_value[]){env->make_integer(env, blink)});
 }
 
-emacs_value vterm_get_color(emacs_env *env, int index) {
+emacs_value vterm_get_color(emacs_env *env, int index, emacs_value args) {
   emacs_value idx = env->make_integer(env, index);
-  return env->funcall(env, Fvterm_get_color, 1, (emacs_value[]){idx});
+  return env->funcall(env, Fapply, 3, (emacs_value[]){ Fvterm_get_color, idx, args });
 }
 
 void set_title(emacs_env *env, emacs_value string) {

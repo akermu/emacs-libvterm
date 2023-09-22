@@ -29,6 +29,7 @@ extern emacs_value Qrear_nonsticky;
 extern emacs_value Qvterm_prompt;
 
 // Emacs functions
+extern emacs_value Fapply;
 extern emacs_value Fblink_cursor_mode;
 extern emacs_value Fsymbol_value;
 extern emacs_value Flength;
@@ -91,7 +92,7 @@ emacs_value selected_window(emacs_env *env);
 void set_title(emacs_env *env, emacs_value string);
 void set_directory(emacs_env *env, emacs_value string);
 void vterm_invalidate(emacs_env *env);
-emacs_value vterm_get_color(emacs_env *env, int index);
+emacs_value vterm_get_color(emacs_env *env, int index, emacs_value args);
 emacs_value vterm_eval(emacs_env *env, emacs_value string);
 emacs_value vterm_set_selection(emacs_env *env, emacs_value selection_target,
                                 emacs_value selection_data);
