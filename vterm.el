@@ -92,44 +92,30 @@ confirmation before compiling."
 (defvar vterm-install-buffer-name " *Install vterm* "
   "Name of the buffer used for compiling vterm-module.")
 
-(defun vterm-module--cmake-is-available ()
-  "Return t if cmake is available.
-CMake is needed to build vterm, here we check that we can find
-the executable."
-
-  (unless (executable-find "cmake")
-    (error "Vterm needs CMake to be compiled.  Please, install CMake"))
-  t)
-
 ;;;###autoload
 (defun vterm-module-compile ()
   "Compile vterm-module."
   (interactive)
-  (when (vterm-module--cmake-is-available)
-    (let* ((vterm-directory
-            (shell-quote-argument
-             ;; NOTE: This is a workaround to fix an issue with how the Emacs
-             ;; feature/native-comp branch changes the result of
-             ;; `(locate-library "vterm")'. See emacs-devel thread
-             ;; https://lists.gnu.org/archive/html/emacs-devel/2020-07/msg00306.html
-             ;; for a discussion.
-             (file-name-directory (locate-library "vterm.el" t))))
-           (make-commands
-            (concat
-             "cd " vterm-directory "; \
-             mkdir -p build; \
-             cd build; \
-             cmake -G 'Unix Makefiles' "
-             vterm-module-cmake-args
-             " ..; \
-             make; \
-             cd -"))
-           (buffer (get-buffer-create vterm-install-buffer-name)))
-      (pop-to-buffer buffer)
+  (unless (executable-find "cmake")
+    (error "Vterm needs CMake to be compiled.  Please, install CMake"))
+  (let* ((vterm-directory
+          (shell-quote-argument
+           ;; NOTE: This is a workaround to fix an issue with how the Emacs
+           ;; feature/native-comp branch changes the result of
+           ;; `(locate-library "vterm")'. See emacs-devel thread
+           ;; https://lists.gnu.org/archive/html/emacs-devel/2020-07/msg00306.html
+           ;; for a discussion.
+           (file-name-directory (locate-library "vterm.el" t))))
+         (default-directory (expand-file-name "build" vterm-directory))
+         (make-commands (format "cmake -G 'Unix Makefiles' %s .. && make"
+                                vterm-module-cmake-args)))
+    (make-directory default-directory t)
+    (with-current-buffer (get-buffer-create vterm-install-buffer-name)
       (compilation-mode)
       (if (zerop (let ((inhibit-read-only t))
-                   (call-process "sh" nil buffer t "-c" make-commands)))
+                   (call-process-shell-command make-commands nil t t)))
           (message "Compilation of `emacs-libvterm' module succeeded")
+        (pop-to-buffer vterm-install-buffer-name)
         (error "Compilation of `emacs-libvterm' module failed!")))))
 
 ;; If the vterm-module is not compiled yet, compile it
