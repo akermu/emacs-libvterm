@@ -270,7 +270,7 @@ For `fish` put this in your `~/.config/fish/config.fish`:
 
 ```fish
 function vterm_printf;
-    if begin; [  -n "$TMUX" ]  ; and  string match -q -r "screen|tmux" "$TERM"; end 
+    if begin; [  -n "$TMUX" ]  ; and  string match -q -r "screen|tmux" "$TERM"; end
         # tell tmux to pass the escape sequences through
         printf "\ePtmux;\e\e]%s\007\e\\" "$argv"
     else if string match -q -- "screen*" "$TERM"
@@ -520,6 +520,14 @@ In addition to that, you can disable some text properties (bold, underline,
 reverse video) setting the relative option to `t` (`vterm-disable-bold`,
 `vterm-disable-underline`, or `vterm-disable-inverse-video`).
 
+You can use another font for vterm buffer
+
+``` elisp
+(add-hook 'vterm-mode-hook
+          (lambda ()
+               (set (make-local-variable 'buffer-face-mode-face) '(:family "IosevkaTerm Nerd Font"))
+               (buffer-face-mode t))
+```
 ## Blink cursor
 
 When `vterm-ignore-blink-cursor` is `t`, vterm will ignore request from application to turn on or off cursor blink.
@@ -769,7 +777,7 @@ file `vterm-module.h`, change the variable `SB_MAX`, and set the new value for
 `vterm-max-scrollback`. The potential maximum memory consumption of vterm
 buffers increases with `vterm-max-scrollback`, so setting `SB_MAX` to extreme
 values may lead to system instabilities and crashes.
- 
+
 ### How can I automatically close vterm buffers when the process is terminated?
 
 There is an option for that: set `vterm-kill-buffer-on-exit` to `t`.
