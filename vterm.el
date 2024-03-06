@@ -178,6 +178,9 @@ the executable."
 `vterm-tramp-shells' has to be a list of pairs of the format:
 \(TRAMP-METHOD SHELL)
 
+Use t as TRAMP-METHOD to specify a default shell for all methods.
+Specific methods always take precedence over t.
+
 Set SHELL to \\='login-shell to use the connection's default login shell.
 You can specify an additional second SHELL command as a fallback
 that is used when the login-shell detection fails, e.g.,
@@ -852,6 +855,7 @@ Exceptions are defined by `vterm-keymap-exceptions'."
   (if (ignore-errors (file-remote-p default-directory))
       (with-parsed-tramp-file-name default-directory nil
         (or (vterm--tramp-get-shell method)
+            (vterm--tramp-get-shell t)
             (with-connection-local-variables shell-file-name)
             vterm-shell))
     vterm-shell))
