@@ -1535,7 +1535,7 @@ int emacs_module_init(struct emacs_runtime *ert) {
                            "Get the working directory of at line n.", NULL);
   bind_function(env, "vterm--get-pwd-raw", fun);
   fun = env->make_function(env, 1, 1, Fvterm_reset_cursor_point,
-                           "Reset cursor postion.", NULL);
+                           "Reset cursor position.", NULL);
   bind_function(env, "vterm--reset-point", fun);
 
   fun = env->make_function(env, 1, 1, Fvterm_get_icrnl,
