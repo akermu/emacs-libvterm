@@ -172,11 +172,21 @@ the executable."
   :type 'string
   :group 'vterm)
 
-(defcustom vterm-tramp-shells '(("docker" "/bin/sh"))
+(defcustom vterm-tramp-shells '((t login-shell))
   "The shell that gets run in the vterm for tramp.
 
 `vterm-tramp-shells' has to be a list of pairs of the format:
-\(TRAMP-METHOD SHELL)"
+\(TRAMP-METHOD SHELL)
+
+Use t as TRAMP-METHOD to specify a default shell for all methods.
+Specific methods always take precedence over t.
+
+Set SHELL to \\='login-shell to use the connection's default login shell.
+You can specify an additional second SHELL command as a fallback
+that is used when the login-shell detection fails, e.g.,
+\\='((\"ssh\" login-shell \"/bin/bash\") ...)
+If no second SHELL command is specified with login-shell, vterm will fall
+back to Tramp's shell."
   :type '(alist :key-type string :value-type string)
   :group 'vterm)
 
@@ -818,11 +828,34 @@ Exceptions are defined by `vterm-keymap-exceptions'."
   (setq next-error-function 'vterm-next-error-function)
   (setq-local bookmark-make-record-function 'vterm--bookmark-make-record))
 
+(defun vterm--tramp-get-shell (method)
+  "Get the shell for a remote location as specified in `vterm-tramp-shells'."
+  (let* ((specs (cdr (assoc method vterm-tramp-shells)))
+         (first (car specs))
+         (second (cadr specs)))
+    ;; Allow '(... login-shell) or '(... 'login-shell).
+    (if (or (eq first 'login-shell)
+            (and (consp first)(eq (cadr first) 'login-shell)))
+        (let* ((shell (ignore-errors
+                        (with-output-to-string
+                          (with-current-buffer standard-output
+                            ;; Use a shell command here to get $LOGNAME.
+                            ;; Using the Tramp user does not always work
+                            ;; as it can be nil, e.g., with ssh host configs
+                            (process-file-shell-command
+                             "getent passwd $LOGNAME"
+                             nil (current-buffer) nil)))))
+               (shell (when shell
+                        (nth 6 (split-string shell ":" nil "[ \t\n\r]+")))))
+          (or shell second))
+      first)))
+
 (defun vterm--get-shell ()
   "Get the shell that gets run in the vterm."
   (if (ignore-errors (file-remote-p default-directory))
       (with-parsed-tramp-file-name default-directory nil
-        (or (cadr (assoc method vterm-tramp-shells))
+        (or (vterm--tramp-get-shell method)
+            (vterm--tramp-get-shell t)
             (with-connection-local-variables shell-file-name)
             vterm-shell))
     vterm-shell))
