@@ -751,7 +751,7 @@ Exceptions are defined by `vterm-keymap-exceptions'."
         (inhibit-eol-conversion nil)
         (coding-system-for-read 'binary)
         (process-adaptive-read-buffering nil)
-        (width (max (- (window-body-width) (vterm--get-margin-width))
+        (width (max (- (window-max-chars-per-line) (vterm--get-margin-width))
                     vterm-min-window-width)))
     (setq vterm--term (vterm--new (window-body-height)
                                   width vterm-max-scrollback
