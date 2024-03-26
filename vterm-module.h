@@ -85,6 +85,7 @@ typedef struct Term {
 
   int invalid_start, invalid_end; // invalid rows in libvterm screen
   bool is_invalidated;
+  bool queued_bell;
 
   Cursor cursor;
   char *title;
