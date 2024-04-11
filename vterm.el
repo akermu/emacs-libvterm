@@ -1166,12 +1166,9 @@ Argument ARG is passed to `yank'"
 But when clicking to the unused area below the last prompt,
 move the cursor to the prompt area."
   (interactive "e\np")
-  (let ((pt (mouse-set-point event promote-to-region)))
-    (if (= (count-words pt (point-max)) 0)
-        (vterm-reset-cursor-point)
-      pt))
-  ;; Otherwise it selects text for every other click
-  (keyboard-quit))
+  (if (> (count-words (posn-point (event-end event)) (point-max)) 0)
+      (mouse-set-point event promote-to-region)
+    (vterm-reset-cursor-point)))
 
 (defun vterm-send-string (string &optional paste-p)
   "Send the string STRING to vterm.
