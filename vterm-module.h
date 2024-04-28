@@ -23,7 +23,9 @@
 
 VTERM_EXPORT int plugin_is_GPL_compatible;
 
+#ifndef SB_MAX
 #define SB_MAX 100000 // Maximum 'scrollback' value.
+#endif
 
 #ifndef MIN
 #define MIN(X, Y) ((X) < (Y) ? (X) : (Y))
