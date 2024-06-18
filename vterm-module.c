@@ -316,6 +316,7 @@ static void refresh_lines(Term *term, emacs_env *env, int start_row,
 
   for (i = start_row; i < end_row; i++) {
 
+    int consecutive_empty_cells = 0;
     int newline = 0;
     int isprompt = 0;
     for (j = 0; j < end_col; j++) {
@@ -340,14 +341,25 @@ static void refresh_lines(Term *term, emacs_env *env, int start_row,
 
       lastCell = cell;
       if (cell.chars[0] == 0) {
+        ++consecutive_empty_cells;
+
         if (is_eol(term, end_col, i, j)) {
           /* This cell is EOL if this and every cell to the right is black */
           PUSH_BUFFER('\n');
           newline = 1;
           break;
         }
+
         PUSH_BUFFER(' ');
+
+        if ((j + 1) % 8 == 0 && length >= consecutive_empty_cells) {
+          length -= consecutive_empty_cells;
+          PUSH_BUFFER('\t');
+          consecutive_empty_cells = 0;
+        }
       } else {
+        consecutive_empty_cells = 0;
+
         for (int k = 0; k < VTERM_MAX_CHARS_PER_CELL && cell.chars[k]; ++k) {
           unsigned char bytes[4];
           size_t count = codepoint_to_utf8(cell.chars[k], bytes);
