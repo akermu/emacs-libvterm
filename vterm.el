@@ -178,6 +178,9 @@ the executable."
 `vterm-tramp-shells' has to be a list of pairs of the format:
 \(TRAMP-METHOD SHELL)
 
+Use t as TRAMP-METHOD to specify a default shell for all methods.
+Specific methods always take precedence over t.
+
 Set SHELL to \\='login-shell to use the user's login shell on the host.
 The login-shell detection currently works for POSIX-compliant remote
 hosts that have the getent command (regular GNU/Linux distros, *BSDs,
@@ -889,6 +892,7 @@ for, or t to get the default shell for all methods."
   (if (ignore-errors (file-remote-p default-directory))
       (with-parsed-tramp-file-name default-directory nil
         (or (vterm--tramp-get-shell method)
+            (vterm--tramp-get-shell t)
             (with-connection-local-variables shell-file-name)
             vterm-shell))
     vterm-shell))
