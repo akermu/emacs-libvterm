@@ -1345,12 +1345,14 @@ emacs_value Fvterm_write_input(emacs_env *env, ptrdiff_t nargs,
                                emacs_value args[], void *data) {
   Term *term = env->get_user_ptr(env, args[0]);
   ptrdiff_t len = string_bytes(env, args[1]);
-  char bytes[len];
 
-  env->copy_string_contents(env, args[1], bytes, &len);
+  if (len > 0) {
+    char bytes[len];
+    env->copy_string_contents(env, args[1], bytes, &len);
 
-  vterm_input_write(term->vt, bytes, len);
-  vterm_screen_flush_damage(term->vts);
+    vterm_input_write(term->vt, bytes, len);
+    vterm_screen_flush_damage(term->vts);
+  }
 
   return env->make_integer(env, 0);
 }

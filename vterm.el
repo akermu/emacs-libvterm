@@ -1522,7 +1522,7 @@ Then triggers a redraw from the module."
                                                       (- count 1 partial)))
                                   'eight-bit))
                     (cl-incf partial))
-                  (when (> count partial 0)
+                  (when (> (1+ count) partial 0)
                     (setq vterm--undecoded-bytes
                           (substring decoded-substring (- partial)))
                     (setq decoded-substring
