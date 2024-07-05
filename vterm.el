@@ -765,6 +765,7 @@ Exceptions are defined by `vterm-keymap-exceptions'."
     (setq-local scroll-margin 0)
     (setq-local hscroll-margin 0)
     (setq-local hscroll-step 1)
+    (setq-local tab-width 8)
     (setq-local truncate-lines t)
 
 
