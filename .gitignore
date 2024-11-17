@@ -1,2 +1,3 @@
 /build
 /vterm-module.so
+*.elc
