@@ -45,7 +45,7 @@ For the long answer, let us discuss the differences between `eshell`, `shell`,
   `vterm` outperforms `term` and has a nearly universal compatibility with
   terminal applications.
 
-Vterm is not for you if you are using Windows, or if you cannot set up Emacs
+Vterm is not for you [if you are using Windows](https://github.com/akermu/emacs-libvterm/issues/12), or if you cannot set up Emacs
 with support for modules. Otherwise, you should try vterm, as it provides a
 superior terminal experience in Emacs.
 
