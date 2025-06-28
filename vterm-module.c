@@ -209,8 +209,11 @@ static void fetch_cell(Term *term, int row, int col, VTermScreenCell *cell) {
 static char *get_row_directory(Term *term, int row) {
   if (row < 0) {
     ScrollbackLine *sbrow = term->sb_buffer[-row - 1];
-    return sbrow->info->directory;
-    /* return term->dirs[0]; */
+    if ( sbrow && sbrow->info && sbrow->info->directory ) {
+      return sbrow->info->directory;
+    } else {
+      return NULL;
+    }
   } else {
     LineInfo *line = term->lines[row];
     return line ? line->directory : NULL;
