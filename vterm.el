@@ -195,6 +195,11 @@ fall back to tramp's shell."
   :type '(alist :key-type string :value-type string)
   :group 'vterm)
 
+(defcustom vterm-start-shell "/bin/sh"
+  "The shell that starts the vterm shell."
+  :type 'string
+  :group 'vterm)
+
 (defcustom vterm-buffer-name "*vterm*"
   "The basename used for vterm buffers.
 This is the default name used when running `vterm' or
@@ -794,7 +799,7 @@ Exceptions are defined by `vterm-keymap-exceptions'."
            :name "vterm"
            :buffer (current-buffer)
            :command
-           `("/bin/sh" "-c"
+           `(vterm-start-shell "-c"
              ,(format
                "stty -nl sane %s erase ^? rows %d columns %d >/dev/null && exec %s"
                ;; Some stty implementations (i.e. that of *BSD) do not
