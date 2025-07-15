@@ -574,7 +574,7 @@ Only background is used."
   "Shell process of current term.")
 
 (defvar-local vterm--redraw-timer nil)
-(defvar-local vterm--redraw-immididately nil)
+(defvar-local vterm--redraw-immediately nil)
 (defvar-local vterm--linenum-remapping nil)
 (defvar-local vterm--prompt-tracking-enabled-p nil)
 (defvar-local vterm--insert-function (symbol-function #'insert))
@@ -583,6 +583,7 @@ Only background is used."
 (defvar-local vterm--undecoded-bytes nil)
 (defvar-local vterm--copy-mode-fake-newlines nil)
 
+(define-obsolete-variable-alias 'vterm--redraw-immididately 'vterm--redraw-immediately "2025-07-15")
 
 (defvar vterm-timer-delay 0.1
   "Delay for refreshing the buffer after receiving updates from libvterm.
@@ -1055,7 +1056,7 @@ will invert `vterm-copy-exclude-prompt' for that call."
     (let ((inhibit-redisplay t)
           (inhibit-read-only t))
       (vterm--update vterm--term key shift meta ctrl)
-      (setq vterm--redraw-immididately t)
+      (setq vterm--redraw-immediately t)
       (when accept-proc-output
         (accept-process-output vterm--process vterm-timer-delay nil t)))))
 
@@ -1256,7 +1257,7 @@ Optional argument PASTE-P paste-p."
       (vterm--update vterm--term (char-to-string char)))
     (when paste-p
       (vterm--update vterm--term "<end_paste>")))
-  (setq vterm--redraw-immididately t)
+  (setq vterm--redraw-immediately t)
   (accept-process-output vterm--process vterm-timer-delay nil t))
 
 (defun vterm-insert (&rest contents)
@@ -1271,7 +1272,7 @@ Provide similar behavior as `insert' for vterm."
         (dolist (char (string-to-list c))
           (vterm--update vterm--term (char-to-string char)))))
     (vterm--update vterm--term "<end_paste>")
-    (setq vterm--redraw-immididately t)
+    (setq vterm--redraw-immediately t)
     (accept-process-output vterm--process vterm-timer-delay nil t)))
 
 (defun vterm-delete-region (start end)
@@ -1398,14 +1399,14 @@ looks like: ((\"m\" :shift ))"
 
 (defun vterm--invalidate ()
   "The terminal buffer is invalidated, the buffer needs redrawing."
-  (if (and (not vterm--redraw-immididately)
+  (if (and (not vterm--redraw-immediately)
            vterm-timer-delay)
       (unless vterm--redraw-timer
         (setq vterm--redraw-timer
               (run-with-timer vterm-timer-delay nil
                               #'vterm--delayed-redraw (current-buffer))))
     (vterm--delayed-redraw (current-buffer))
-    (setq vterm--redraw-immididately nil)))
+    (setq vterm--redraw-immediately nil)))
 
 (defun vterm-check-proc (&optional buffer)
   "Check if there is a running process associated to the vterm buffer BUFFER.
