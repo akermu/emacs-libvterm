@@ -100,7 +100,7 @@ if(WIN32)
   else()
     ExternalProject_add(conpty-proxy
       GIT_REPOSITORY https://github.com/xhcoding/conpty-proxy.git
-      GIT_TAG v1.0.0
+      GIT_TAG v1.0.1
       INSTALL_DIR ${CMAKE_CURRENT_SOURCE_DIR}
       INSTALL_COMMAND
       COMMAND ${CMAKE_COMMAND} -E copy
