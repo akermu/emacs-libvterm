@@ -397,6 +397,11 @@ you can use `M-x blink-cursor-mode` to toggle."
   :type 'boolean
   :group 'vterm)
 
+(defcustom vterm-ignore-cursor-change nil
+  "When t, vterm will ignore request from application to modify cursor shape or visibility."
+  :type 'boolean
+  :group 'vterm)
+
 (defcustom vterm-copy-exclude-prompt t
   "When not-nil, the prompt is not included by `vterm-copy-mode-done'."
   :type 'boolean
@@ -775,7 +780,8 @@ Exceptions are defined by `vterm-keymap-exceptions'."
                                   vterm-disable-underline
                                   vterm-disable-inverse-video
                                   vterm-ignore-blink-cursor
-                                  vterm-set-bold-hightbright))
+                                  vterm-set-bold-hightbright
+                                  vterm-ignore-cursor-change))
     (setq buffer-read-only t)
     (setq-local scroll-conservatively 101)
     (setq-local scroll-margin 0)
