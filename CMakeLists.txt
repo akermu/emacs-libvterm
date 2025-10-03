@@ -92,23 +92,15 @@ endif()
 
 # Build conpty-proxy
 if(WIN32)
-
-  find_program(CONPTY_PROXY_PATH conpty_proxy.exe)
-
-  if (CONPTY_PROXY_PATH)
-    message(STATUS "Use system conpty: ${CONPTY_PROXY_PATH}")
-  else()
-    ExternalProject_add(conpty-proxy
-      GIT_REPOSITORY https://github.com/xhcoding/conpty-proxy.git
-      GIT_TAG v1.0.1
-      INSTALL_DIR ${CMAKE_CURRENT_SOURCE_DIR}
-      INSTALL_COMMAND
-      COMMAND ${CMAKE_COMMAND} -E copy
-      <BINARY_DIR>/conpty_proxy.exe
-      <INSTALL_DIR>/conpty_proxy.exe
-    )
-    add_dependencies(vterm-module conpty-proxy)
-  endif()
+  ExternalProject_add(conpty-proxy
+    GIT_REPOSITORY https://github.com/xhcoding/conpty-proxy.git
+    GIT_TAG v1.0.1
+    INSTALL_DIR ${CMAKE_CURRENT_SOURCE_DIR}
+    INSTALL_COMMAND
+    COMMAND ${CMAKE_COMMAND} -E copy
+    <BINARY_DIR>/conpty_proxy.exe
+    <INSTALL_DIR>/conpty_proxy.exe
+  )
 
 endif()
 

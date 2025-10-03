@@ -443,6 +443,18 @@ copy-mode and set to nil on leaving."
   :type 'symbol
   :group 'vterm)
 
+(defcustom vterm-conpty-proxy-path nil
+  "Path to conpty_proxy.exe.
+
+If set to nil, search for the executable in the following order:
+1. In the system PATH environment variable
+2. In the vterm package installation directory
+
+Set this to the full path if you have conpty_proxy.exe in a custom location."
+  :type '(choice (const :tag "Auto-detect" nil)
+                 (file :tag "Custom path"))
+  :group 'vterm)
+
 ;;; Faces
 
 (defface vterm-color-black
@@ -1463,8 +1475,14 @@ Search Manipulate Selection Data in
 
 ;;; conpty-proxy
 (defun vterm--conpty-proxy-path ()
-  "Path of conpty_proxy.exe."
-  (expand-file-name "conpty_proxy.exe" (file-name-directory (locate-library "vterm.el" t))))
+  "Path of conpty_proxy.exe.
+If `vterm--conpty-proxy-path' is set, use that value.
+Otherwise, search in PATH for 'conpty_proxy.exe'.
+If not found in PATH, look in the vterm.el directory."
+  (or vterm--conpty-proxy-path
+      (executable-find "conpty_proxy.exe")
+      (expand-file-name "conpty_proxy.exe"
+                        (file-name-directory (locate-library "vterm" t)))))
 
 (defun vterm--conpty-proxy-make-process (width height)
   "Make conpty proxy process."
