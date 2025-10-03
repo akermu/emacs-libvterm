@@ -1476,10 +1476,10 @@ Search Manipulate Selection Data in
 ;;; conpty-proxy
 (defun vterm--conpty-proxy-path ()
   "Path of conpty_proxy.exe.
-If `vterm--conpty-proxy-path' is set, use that value.
+If `vterm-conpty-proxy-path' is set, use that value.
 Otherwise, search in PATH for 'conpty_proxy.exe'.
 If not found in PATH, look in the vterm.el directory."
-  (or vterm--conpty-proxy-path
+  (or vterm-conpty-proxy-path
       (executable-find "conpty_proxy.exe")
       (expand-file-name "conpty_proxy.exe"
                         (file-name-directory (locate-library "vterm" t)))))
