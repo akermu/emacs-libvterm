@@ -1482,7 +1482,7 @@ If not found in PATH, look in the vterm.el directory."
   (or vterm-conpty-proxy-path
       (executable-find "conpty_proxy.exe")
       (expand-file-name "conpty_proxy.exe"
-                        (file-name-directory (locate-library "vterm" t)))))
+                        (file-name-directory (locate-library "vterm.el" t)))))
 
 (defun vterm--conpty-proxy-make-process (width height)
   "Make conpty proxy process."
