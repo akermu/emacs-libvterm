@@ -424,7 +424,7 @@ static int term_resize(int rows, int cols, void *user_data) {
   /* if rows=term->lines_len, that means term_sb_pop already resize term->lines
    */
   /* if rows<term->lines_len, term_sb_push would resize term->lines there */
-  /* we noly need to take care of rows>term->height */
+  /* we only need to take care of rows>term->height */
 
   if (rows > term->height) {
     if (rows > term->lines_len) {
@@ -488,8 +488,8 @@ static void refresh_scrollback(Term *term, emacs_env *env) {
 
     term->linenum += term->sb_pending;
     del_cnt = term->linenum - max_line_count; /* extra lines at the bottom */
-    /* buf_index is negative,so we move to end of buffer,then backward
-       -buf_index lines. goto lines backward is effectively when
+    /* buf_index is negative, so we move to end of buffer, then backward
+       -buf_index lines. goto lines backward is effective when
        vterm-max-scrollback is a large number.
      */
     int buf_index = -(term->height + del_cnt);
@@ -503,7 +503,7 @@ static void refresh_scrollback(Term *term, emacs_env *env) {
   del_cnt = term->linenum - max_line_count;
   if (del_cnt > 0) {
     term->linenum -= del_cnt;
-    /* -del_cnt is negative,so we delete_lines from end of buffer.
+    /* -del_cnt is negative, so we delete_lines from end of buffer.
        this line means: delete del_cnt count of lines at end of buffer.
      */
     delete_lines(env, -del_cnt, del_cnt, true);
@@ -518,7 +518,7 @@ static void adjust_topline(Term *term, emacs_env *env) {
   VTermPos pos;
   vterm_state_get_cursorpos(state, &pos);
 
-  /* pos.row-term->height is negative,so we backward term->height-pos.row
+  /* pos.row-term->height is negative, so we backward term->height-pos.row
    * lines from end of buffer
    */
 
