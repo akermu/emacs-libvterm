@@ -3,7 +3,7 @@
 # Introduction
 
 Emacs-libvterm (_vterm_) is fully-fledged terminal emulator inside GNU Emacs
-based on [libvterm](https://github.com/neovim/libvterm), a C library. As a
+based on [`libvterm`](https://github.com/neovim/libvterm), a C library. As a
 result of using compiled code (instead of elisp), emacs-libvterm is fully
 capable, fast, and it can seamlessly handle large outputs.
 
@@ -45,9 +45,10 @@ For the long answer, let us discuss the differences between `eshell`, `shell`,
   `vterm` outperforms `term` and has a nearly universal compatibility with
   terminal applications.
 
-Vterm is not for you [if you are using Windows](https://github.com/akermu/emacs-libvterm/issues/12), or if you cannot set up Emacs
-with support for modules. Otherwise, you should try vterm, as it provides a
-superior terminal experience in Emacs.
+Vterm is not for you [if you are using
+Windows](https://github.com/akermu/emacs-libvterm/issues/12), or if you cannot
+set up Emacs with support for modules. Otherwise, you should try vterm, as it
+provides a superior terminal experience in Emacs.
 
 Using `vterm` is like using Gnome Terminal inside Emacs: Vterm is fully-featured
 and fast, but is not as well integrated in Emacs as `eshell` (yet), so some of
@@ -85,7 +86,7 @@ a normal package. If the requirements are satisfied (mainly, Emacs was built
 with support for modules), `vterm` will compile the module the first time it is
 run. This is the recommended way to install `vterm`.
 
-`vterm` can be install from MELPA with `use-package` by adding the following
+`vterm` can be installed from MELPA with `use-package` by adding the following
 lines to your `init.el`:
 
 ```elisp
@@ -105,8 +106,8 @@ Clone the repository:
 git clone https://github.com/akermu/emacs-libvterm.git
 ```
 
-By default, vterm will try to find if libvterm is installed. If it is not found,
-emacs-libvterm will download the latest version available of libvterm (from
+By default, vterm will try to find if `libvterm` is installed. If it is not found,
+emacs-libvterm will download the latest version available of `libvterm` (from
 [here](https://github.com/neovim/libvterm)), compile it, and use it. If you
 always want to use the vendored version as opposed to the one on you system, set
 `USE_SYSTEM_LIBVTERM` to `no`. To do this, change `cmake ..` with `cmake
@@ -139,18 +140,20 @@ Or, with `use-package`:
 ## vterm and Ubuntu
 ### 20.04
 Using `vterm` on Ubuntu requires additional steps. The latest LTS version
-(20.04) ships without CMake installed and Emacs27 is not yet available from Ubuntu's package repository.
+(20.04) ships without CMake installed and Emacs27 is not yet available from
+Ubuntu's package repository.
 
 The basic steps for getting vterm to work on Ubuntu 20.04 are:
 * Ensure Emacs27 is installed
-* Install cmake, libtool, and libtool-bin
+* Install `cmake`, `libtool`, and `libtool-bin`
 
 There are a few options for installing Emacs27 on Ubuntu 20.04:
 * Compile Emacs27 from source
 * Install Emacs27 from Snap
 * Install Emacs27 from Kevin Kelley's PPA
 
-In any case, if you have an older Emacs version you will need to purge it before proceeding:
+In any case, if you have an older Emacs version you will need to purge it before
+proceeding:
 
 #### Purge Emacs
 
@@ -198,9 +201,9 @@ sudo apt install libtool-bin
 
 ### 18.04
 
-Using `vterm` on Ubuntu 18.04 requires additional steps.
-18.04 ships with a version of CMake that is too old for `vterm` and GNU
-Emacs is not compiled with support for dynamical module loading.
+Using `vterm` on Ubuntu 18.04 requires additional steps. 18.04 ships with a
+version of CMake that is too old for `vterm` and GNU Emacs is not compiled with
+support for dynamical module loading.
 
 It is possible to install GNU Emacs with module support from Kevin Kelley's PPA.
 The binary in Ubuntu Emacs Lisp PPA is currently broken and leads to segmentation faults
@@ -228,7 +231,7 @@ to work (see,
 Pull requests to improve support for Ubuntu are welcome (e.g., simplifying the
 installation).
 
-Some releases of Ubuntu (e.g., 18.04) ship with a old version of libvterm that
+Some releases of Ubuntu (e.g., 18.04) ship with a old version of `libvterm` that
 can lead to compilation errors. If you have this problem, see the
 [FAQ](#frequently-asked-questions-and-problems) for a solution.
 
@@ -369,9 +372,9 @@ Shell to run in a new vterm. It defaults to `$SHELL`.
 
 ## `vterm-environment`
 
-to add more environment variables there is the custom vterm-environment which has
-a similar format than the internal Emacs variable process-environment.
-You can check the documentation with C-h v process-environment for more details.
+To add more environment variables there is the custom `vterm-environment` which
+has a similar format to the internal Emacs variable `process-environment`. You
+can check the documentation with `C-h v process-environment` for more details.
 
 ## `vterm-term-environment-variable`
 
@@ -390,8 +393,8 @@ need to copy or manipulate the content.
 
 Compilation flags and arguments to be given to CMake when compiling the module.
 This string is directly passed to CMake, so it uses the same syntax. At the
-moment, it main use is for compiling vterm using the system libvterm instead of
-the one downloaded from GitHub. You can find all the arguments and flags
+moment, its main use is for compiling vterm using the system `libvterm` instead
+of the one downloaded from GitHub. You can find all the arguments and flags
 available with `cmake -LA` in the build directory.
 
 ## `vterm-copy-exclude-prompt`
@@ -412,21 +415,24 @@ the vterm prompt tracking, if false it use the regexp in
 
 Vterm support copy text to Emacs kill ring and system clipboard by using OSC 52.
 See https://invisible-island.net/xterm/ctlseqs/ctlseqs.html for more info about OSC 52.
-For example: send 'blabla' to kill ring: printf "\033]52;c;$(printf "%s" "blabla" | base64)\a"
+For example: send `"blabla"` to kill ring: `printf "\033]52;c;$(printf "%s" "blabla" | base64)\a"`
 
-tmux can share its copy buffer to terminals by supporting osc52(like iterm2 xterm),
-you can enable this feature for tmux by :
+tmux can share its copy buffer to terminals by supporting OSC 52 (like iterm2
+and xterm), you can enable this feature for tmux by:
+
+```
 set -g set-clipboard on         #osc 52 copy paste share with iterm
 set -ga terminal-overrides ',xterm*:XT:Ms=\E]52;%p1%s;%p2%s\007'
 set -ga terminal-overrides ',screen*:XT:Ms=\E]52;%p1%s;%p2%s\007'
+```
 
 The clipboard querying/clearing functionality offered by OSC 52 is not implemented here,
-And for security reason, this feature is disabled by default."
+And for security reason, this feature is disabled by default.
 
-This feature need the new way of handling strings with a struct `VTermStringFragment`
-in libvterm. You'd better compile emacs-libvterm with `cmake -DUSE_SYSTEM_LIBVTERM=no ..`.
-If you don't do that, when  the content you want to copied is too long, it would be truncated
-by bug of libvterm.
+This feature needs the new way of handling strings with a struct
+`VTermStringFragment` in `libvterm`. You'd better compile `emacs-libvterm` with
+`cmake -DUSE_SYSTEM_LIBVTERM=no ..`. If you don't do that, when the content you
+want to copy is too long, it would be truncated by a bug in `libvterm`.
 
 ## `vterm-buffer-name-string`
 
@@ -437,7 +443,7 @@ below). A possible value for `vterm-buffer-name-string` is `vterm %s`, according
 to which all the vterm buffers will be named "vterm TITLE".
 
 This requires some shell-side configuration to print the title. For example to
-set the name "HOSTNAME:PWD", use can you the following:
+set the name "HOSTNAME:PWD", you can use the following:
 
 For `zsh`,
 
@@ -477,10 +483,10 @@ avoid this question and always compile the module, set
 When not-nil fake newlines are removed on entering copy mode.
 vterm inserts fake-newlines purely for rendering. When using
 `vterm-copy-mode` these are in conflict with many emacs functions
-like isearch-forward. if this varialbe is not-nil the
+like `isearch-forward`. if this variable is not-nil the
 fake-newlines are removed on entering copy-mode and re-inserted
-on leaving copy mode. Also truncate-lines is set to t on entering
-copy-mode and set to nil on leaving.
+on leaving copy mode. Also `truncate-lines` is set to `t` on entering
+copy-mode and set to `nil` on leaving.
 
 ## `vterm-tramp-shells`
 
@@ -490,10 +496,10 @@ This has to be a list of pairs of the format:
 `(TRAMP-METHOD SHELL)`
 
 The `TRAMP-METHOD` is a method string as used by tramp (e.g., `"ssh"`).
-Use t as `TRAMP-METHOD` to specify a default shell for all methods.
+Use `t` as `TRAMP-METHOD` to specify a default shell for all methods.
 Specific methods always take precedence over `t`.
 
-Set SHELL to `'login-shell` to use the user's login shell on the remote host.
+Set `SHELL` to `'login-shell` to use the user's login shell on the remote host.
 The login-shell detection currently works for POSIX-compliant remote hosts that
 have the `getent` command (regular GNU/Linux distros, *BSDs, but not MacOS X
 unfortunately).
@@ -504,7 +510,7 @@ If no second `SHELL` command is specified with `'login-shell`, vterm will
 fall back to tramp's shell.
 
 Examples:
-- Usee the default login shell for all methods, except for docker.
+- Use the default login shell for all methods, except for docker.
   `'((t login-shell) ("docker" "/bin/sh"))`
 - Use the default login shell for ssh and scp, fall back to "/bin/bash".
   Use tramp's default shell for all other methods.
@@ -552,7 +558,7 @@ reverse video) setting the relative option to `t` (`vterm-disable-bold`,
 
 You can use another font for vterm buffer
 
-``` elisp
+```elisp
 (add-hook 'vterm-mode-hook
           (lambda ()
                (set (make-local-variable 'buffer-face-mode-face) '(:family "IosevkaTerm Nerd Font"))
@@ -560,7 +566,8 @@ You can use another font for vterm buffer
 ```
 ## Blink cursor
 
-When `vterm-ignore-blink-cursor` is `t`, vterm will ignore request from application to turn on or off cursor blink.
+When `vterm-ignore-blink-cursor` is `t`, vterm will ignore request from
+application to turn on or off cursor blink.
 
 If `nil`, cursor in any window may begin to blink or not blink because `blink-cursor-mode`
 is a global minor mode in Emacs, you can use `M-x blink-cursor-mode` to toggle.
@@ -596,9 +603,9 @@ result, interactive functions that ask for a path or a file (e.g., `dired` or
 `find-file`) will do so starting from the current location.
 
 And `vterm` supports _prompt tracking_. If this feature is enabled, Emacs knows
-where the prompt ends, you needn't  customize `term-prompt-regexp` any more.
-Then you can use `vterm-next-prompt` and `vterm-previous-prompt`
-moving to end of next/previous prompt. The default keybinding is `C-c C-n` and `C-c C-p`.
+where the prompt ends, you needn't customize `term-prompt-regexp` any more. Then
+you can use `vterm-next-prompt` and `vterm-previous-prompt` moving to end of
+next/previous prompt. The default keybinding is `C-c C-n` and `C-c C-p`.
 
 And `vterm-beginning-of-line` would move the point to the first character after the
 shell prompt on this line. If the point is already there, move to the beginning of the line.
@@ -816,8 +823,8 @@ There is an option for that: set `vterm-kill-buffer-on-exit` to `t`.
 
 The version of `libvterm` installed on your system is too old. You should let
 `emacs-libvterm` download `libvterm` for you. You can either uninstall your
-libvterm, or instruct Emacs to ignore the system libvterm. If you are compiling
-from Emacs, you can do this by setting:
+`libvterm`, or instruct Emacs to ignore the system `libvterm`. If you are
+compiling from Emacs, you can do this by setting:
 
 ```elisp
 (setq vterm-module-cmake-args "-DUSE_SYSTEM_LIBVTERM=no")
