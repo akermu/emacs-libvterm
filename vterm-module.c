@@ -1233,7 +1233,7 @@ emacs_value Fvterm_new(emacs_env *env, ptrdiff_t nargs, emacs_value args[],
   int disable_underline = env->is_not_nil(env, args[4]);
   int disable_inverse_video = env->is_not_nil(env, args[5]);
   int ignore_blink_cursor = env->is_not_nil(env, args[6]);
-  int set_bold_hightbright = env->is_not_nil(env, args[7]);
+  int set_bold_highbright = env->is_not_nil(env, args[7]);
 
   term->vt = vterm_new(rows, cols);
   vterm_set_utf8(term->vt, 1);
@@ -1247,7 +1247,7 @@ emacs_value Fvterm_new(emacs_env *env, ptrdiff_t nargs, emacs_value args[],
   vterm_state_set_selection_callbacks(state, &selection_callbacks, term,
                                       term->selection_buf, SELECTION_BUF_LEN);
 #endif
-  vterm_state_set_bold_highbright(state, set_bold_hightbright);
+  vterm_state_set_bold_highbright(state, set_bold_highbright);
 
   vterm_screen_reset(term->vts, 1);
   vterm_screen_set_callbacks(term->vts, &vterm_screen_callbacks, term);
