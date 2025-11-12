@@ -439,6 +439,25 @@ copy-mode and set to nil on leaving."
   :type 'boolean
   :group 'vterm)
 
+(defcustom vterm-decode-coding-system (if (eq system-type 'windows-nt)
+                                          'utf-8
+                                        locale-coding-system)
+  "The coding system used for decoding."
+  :type 'symbol
+  :group 'vterm)
+
+(defcustom vterm-conpty-proxy-path nil
+  "Path to conpty_proxy.exe.
+
+If set to nil, search for the executable in the following order:
+1. In the system PATH environment variable
+2. In the vterm package installation directory
+
+Set this to the full path if you have conpty_proxy.exe in a custom location."
+  :type '(choice (const :tag "Auto-detect" nil)
+                 (file :tag "Custom path"))
+  :group 'vterm)
+
 ;;; Faces
 
 (defface vterm-color-black
@@ -794,33 +813,35 @@ Exceptions are defined by `vterm-keymap-exceptions'."
                   (local 'filter-buffer-substring-function)
                   #'vterm--filter-buffer-substring)
     (setq vterm--process
-          (make-process
-           :name "vterm"
-           :buffer (current-buffer)
-           :command
-           `("/bin/sh" "-c"
-             ,(format
-               "stty -nl sane %s erase ^? rows %d columns %d >/dev/null && exec %s"
-               ;; Some stty implementations (i.e. that of *BSD) do not
-               ;; support the iutf8 option.  to handle that, we run some
-               ;; heuristics to work out if the system supports that
-               ;; option and set the arg string accordingly. This is a
-               ;; gross hack but FreeBSD doesn't seem to want to fix it.
-               ;;
-               ;; See: https://bugs.freebsd.org/bugzilla/show_bug.cgi?id=220009
-               (if (eq system-type 'berkeley-unix) "" "iutf8")
-               (window-body-height)
-               width (vterm--get-shell)))
-           ;; :coding 'no-conversion
-           :connection-type 'pty
-           :file-handler t
-           :filter #'vterm--filter
-           ;; The sentinel is needed if there are exit functions or if
-           ;; vterm-kill-buffer-on-exit is set to t.  In this latter case,
-           ;; vterm--sentinel will kill the buffer
-           :sentinel (when (or vterm-exit-functions
-                               vterm-kill-buffer-on-exit)
-                       #'vterm--sentinel))))
+          (if (eq system-type 'windows-nt)
+              (vterm--conpty-proxy-make-process width (window-body-height))
+            (make-process
+             :name "vterm"
+             :buffer (current-buffer)
+             :command
+             `("/bin/sh" "-c"
+               ,(format
+                 "stty -nl sane %s erase ^? rows %d columns %d >/dev/null && exec %s"
+                 ;; Some stty implementations (i.e. that of *BSD) do not
+                 ;; support the iutf8 option.  to handle that, we run some
+                 ;; heuristics to work out if the system supports that
+                 ;; option and set the arg string accordingly. This is a
+                 ;; gross hack but FreeBSD doesn't seem to want to fix it.
+                 ;;
+                 ;; See: https://bugs.freebsd.org/bugzilla/show_bug.cgi?id=220009
+                 (if (eq system-type 'berkeley-unix) "" "iutf8")
+                 (window-body-height)
+                 width (vterm--get-shell)))
+             ;; :coding 'no-conversion
+             :connection-type 'pty
+             :file-handler t
+             :filter #'vterm--filter
+             ;; The sentinel is needed if there are exit functions or if
+             ;; vterm-kill-buffer-on-exit is set to t.  In this latter case,
+             ;; vterm--sentinel will kill the buffer
+             :sentinel (when (or vterm-exit-functions
+                                 vterm-kill-buffer-on-exit)
+                         #'vterm--sentinel)))))
 
   ;; Change major-mode is not allowed
   ;; Vterm interfaces with an underlying process. Changing the major
@@ -1456,6 +1477,45 @@ Search Manipulate Selection Data in
       (message "kill-ring is updated by vterm OSC 52(Manipulate Selection Data)"))
     ))
 
+;;; conpty-proxy
+(defun vterm--conpty-proxy-path ()
+  "Path of conpty_proxy.exe.
+If `vterm-conpty-proxy-path' is set, use that value.
+Otherwise, search in PATH for 'conpty_proxy.exe'.
+If not found in PATH, look in the vterm.el directory."
+  (or vterm-conpty-proxy-path
+      (executable-find "conpty_proxy.exe")
+      (expand-file-name "conpty_proxy.exe"
+                        (file-name-directory (locate-library "vterm.el" t)))))
+
+(defun vterm--conpty-proxy-make-process (width height)
+  "Make conpty proxy process."
+  (let* ((conpty-id (format "econpty_%s_%s" (format-time-string "%s") (emacs-pid)))
+         conpty-process)
+    (setq conpty-process
+          (make-process
+           :name "vterm"
+           :buffer (current-buffer)
+           :command `(,(vterm--conpty-proxy-path) "new"
+                      ,conpty-id ,(int-to-string width) ,(int-to-string height) ,(vterm--get-shell))
+           :coding 'no-conversion
+           :file-handler t
+           :filter #'vterm--filter
+           ;; The sentinel is needed if there are exit functions or if
+           ;; vterm-kill-buffer-on-exit is set to t.  In this latter case,
+           ;; vterm--sentinel will kill the buffer
+           :sentinel (when (or vterm-exit-functions
+                               vterm-kill-buffer-on-exit)
+                       #'vterm--sentinel)))
+
+    (process-put conpty-process 'conpty-id conpty-id)
+    conpty-process))
+
+(defun vterm--conpty-proxy-resize(width height)
+  "Call conpty proxy resize command."
+  (let ((conpty-id (process-get vterm--process 'conpty-id)))
+    (shell-command-to-string (format "%s resize %s %s %s" (vterm--conpty-proxy-path) conpty-id width height))))
+
 ;;; Entry Points
 
 ;;;###autoload
@@ -1587,7 +1647,7 @@ Then triggers a redraw from the module."
               (setq decoded-substring
                     (decode-coding-string
                      (substring input i funny)
-                     locale-coding-system t))
+                     vterm-decode-coding-system t))
               ;; Check for multibyte characters that ends
               ;; before end of string, and save it for
               ;; next time.
@@ -1660,6 +1720,8 @@ Argument EVENT process event."
                  (> width 0)
                  (> height 0))
         (vterm--set-size vterm--term height width)
+        (when (eq system-type 'windows-nt)
+          (vterm--conpty-proxy-resize width height))
         (cons width height)))))
 
 (defun vterm--get-margin-width ()
