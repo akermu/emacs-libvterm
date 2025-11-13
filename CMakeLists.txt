@@ -97,8 +97,23 @@ target_include_directories(vterm INTERFACE ${LIBVTERM_INCLUDE_DIR})
 # Link with libvterm
 target_link_libraries(vterm-module PUBLIC vterm)
 
-# Custom run command for testing
+# Common Emacs command setup for testing
+set(EMACS_LOAD_PATH -L ${CMAKE_SOURCE_DIR} -L ${CMAKE_BINARY_DIR})
+
+# Custom run command for interactive testing
 add_custom_target(run
-  COMMAND emacs -Q -L ${CMAKE_SOURCE_DIR} -L ${CMAKE_BINARY_DIR} --eval "\\(require \\'vterm\\)" --eval "\\(vterm\\)"
+  COMMAND emacs -Q ${EMACS_LOAD_PATH} --eval "(require 'vterm)" --eval "(vterm)"
   DEPENDS vterm-module
+  VERBATIM
+  )
+
+# Enable CMake's built-in testing framework
+enable_testing()
+
+# Test that vterm module loads successfully
+add_test(
+  NAME vterm-load
+  COMMAND emacs --batch -Q ${EMACS_LOAD_PATH}
+    --eval "(require 'vterm)"
+    --eval "(message \"Successfully loaded vterm\")"
   )
