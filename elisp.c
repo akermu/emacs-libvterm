@@ -79,7 +79,7 @@ emacs_value symbol_value(emacs_env *env, emacs_value symbol) {
   return env->funcall(env, Fsymbol_value, 1, (emacs_value[]){symbol});
 }
 
-int string_bytes(emacs_env *env, emacs_value string) {
+ptrdiff_t string_bytes(emacs_env *env, emacs_value string) {
   ptrdiff_t size = 0;
   env->copy_string_contents(env, string, NULL, &size);
   return size;
