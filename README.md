@@ -289,8 +289,14 @@ end
 
 # Debugging and testing
 
-If you have successfully built the module, you can test it by executing the
-following command in the `build` directory:
+If you have successfully built the module, you can test it loads by executing
+the following command in the `build` directory:
+
+```sh
+make test
+```
+
+Test the new module in a clean Emacs with this command in the `build` directory:
 
 ```sh
 make run
