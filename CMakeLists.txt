@@ -90,6 +90,20 @@ else()
   file(MAKE_DIRECTORY ${LIBVTERM_INCLUDE_DIR})
 endif()
 
+# Build conpty-proxy
+if(WIN32)
+  ExternalProject_add(conpty-proxy
+    GIT_REPOSITORY https://github.com/xhcoding/conpty-proxy.git
+    GIT_TAG v1.0.1
+    INSTALL_DIR ${CMAKE_CURRENT_SOURCE_DIR}
+    INSTALL_COMMAND
+    COMMAND ${CMAKE_COMMAND} -E copy
+    <BINARY_DIR>/conpty_proxy.exe
+    <INSTALL_DIR>/conpty_proxy.exe
+  )
+
+endif()
+
 add_library(vterm STATIC IMPORTED)
 set_target_properties(vterm PROPERTIES IMPORTED_LOCATION ${LIBVTERM_LIBRARY})
 target_include_directories(vterm INTERFACE ${LIBVTERM_INCLUDE_DIR})

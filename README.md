@@ -287,6 +287,57 @@ function vterm_printf;
 end
 ```
 
+
+## vterm and Windows
+
+VTerm on Windows relies on ConPTY (Windows Console Pseudo-Terminal), which requires:
+
+- Windows 10 Insider Preview build 17733 or later, OR
+
+- Windows 10 version 1903 (May 2019 Update) or later
+
+### Compile vterm
+
+Building VTerm requires the MSYS2 environment with appropriate toolchains.
+
+#### Installing MSYS2
+
+Download and install from https://www.msys2.org/ or use a package manager:
+
+Using the official installer:
+
+- Download the executable from the MSYS2 website
+
+- Follow the installation wizard
+
+Using Scoop (alternative method):
+
+```sh
+scoop install msys2
+```
+
+#### Installing Required Tools and Libraries
+
+Open the UCRT64 shell in MSYS2 and install the necessary packages:
+
+```sh
+pacman -S --noconfirm \
+    mingw-w64-ucrt-x86_64-toolchain \
+    mingw-w64-ucrt-x86_64-cmake \
+    mingw-w64-ucrt-x86_64-libvterm
+```
+
+Alternative shells: You can also use MINGW64 shell, but UCRT64 is recommended for better compatibility with modern Windows versions.
+
+#### Build vterm
+
+Open the UCRT64 shell in MSYS2: 
+
+```sh
+cmake -S . -Bbuild
+cmake --build build
+```
+
 # Debugging and testing
 
 If you have successfully built the module, you can test it by executing the
@@ -515,6 +566,27 @@ Examples:
 - Use the default login shell for ssh and scp, fall back to "/bin/bash".
   Use tramp's default shell for all other methods.
   `'(("ssh" login-shell "/bin/bash") ("scp" login-shell "/bin/bash"))`
+
+## `vterm-decode-coding-system`
+
+Controls the character encoding for decoding vterm output.
+
+Default Value: `locale-coding-system`
+
+**Important Note for Windows Users**:
+If your Windows system's default encoding is not UTF-8, you must set this variable to utf-8 to ensure proper display of international characters and symbols in vterm.
+
+## `vterm-conpty-proxy-path`
+
+Specifies the file path to conpty_proxy.exe on Windows systems.
+
+When set to nil, vterm automatically searches for the executable in:
+
+1.  System PATH environment variable
+
+2 Vterm package installation directory
+
+When set to a custom path, use the full absolute path to the executable
 
 ## Keybindings
 

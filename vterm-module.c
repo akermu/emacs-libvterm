@@ -6,7 +6,11 @@
 #include <limits.h>
 #include <stdio.h>
 #include <string.h>
+
+#ifndef _WIN32
 #include <termios.h>
+#endif
+
 #include <unistd.h>
 #include <vterm.h>
 
@@ -904,9 +908,13 @@ static void term_process_key(Term *term, emacs_env *env, unsigned char *key,
   if (is_key(key, len, "<clear_scrollback>")) {
     term_clear_scrollback(term, env);
   } else if (is_key(key, len, "<start>")) {
+#ifndef _WIN32
     tcflow(term->pty_fd, TCOON);
+#endif
   } else if (is_key(key, len, "<stop>")) {
+#ifndef _WIN32
     tcflow(term->pty_fd, TCOOFF);
+#endif
   } else if (is_key(key, len, "<start_paste>")) {
     vterm_keyboard_start_paste(term->vt);
   } else if (is_key(key, len, "<end_paste>")) {
@@ -1385,7 +1393,8 @@ emacs_value Fvterm_set_size(emacs_env *env, ptrdiff_t nargs, emacs_value args[],
 
 emacs_value Fvterm_set_pty_name(emacs_env *env, ptrdiff_t nargs,
                                 emacs_value args[], void *data) {
-  Term *term = env->get_user_ptr(env, args[0]);
+#ifndef _WIN32
+    Term *term = env->get_user_ptr(env, args[0]);
 
   if (nargs > 1) {
     ptrdiff_t len = string_bytes(env, args[1]);
@@ -1395,6 +1404,7 @@ emacs_value Fvterm_set_pty_name(emacs_env *env, ptrdiff_t nargs,
 
     term->pty_fd = open(filename, O_RDONLY);
   }
+#endif
   return Qnil;
 }
 emacs_value Fvterm_get_pwd(emacs_env *env, ptrdiff_t nargs, emacs_value args[],
@@ -1409,6 +1419,7 @@ emacs_value Fvterm_get_pwd(emacs_env *env, ptrdiff_t nargs, emacs_value args[],
 
 emacs_value Fvterm_get_icrnl(emacs_env *env, ptrdiff_t nargs,
                              emacs_value args[], void *data) {
+#ifndef _WIN32
   Term *term = env->get_user_ptr(env, args[0]);
 
   if (term->pty_fd > 0) {
@@ -1420,6 +1431,7 @@ emacs_value Fvterm_get_icrnl(emacs_env *env, ptrdiff_t nargs,
     else
       return Qnil;
   }
+#endif
   return Qnil;
 }
 
