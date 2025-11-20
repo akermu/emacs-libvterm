@@ -172,8 +172,9 @@ the executable."
   :type 'string
   :group 'vterm)
 
-(defcustom vterm-tramp-shells
-  '(("ssh" login-shell) ("scp" login-shell) ("docker" "/bin/sh"))
+(defcustom vterm-tramp-shells '(("ssh" . login-shell)
+                                ("scp" . login-shell)
+                                ("docker" . "/bin/sh"))
   "The shell that gets run in the vterm for tramp.
 
 `vterm-tramp-shells' has to be a list of pairs of the format:
