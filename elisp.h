@@ -37,6 +37,7 @@ extern emacs_value Flist;
 extern emacs_value Fnth;
 extern emacs_value Ferase_buffer;
 extern emacs_value Finsert;
+extern emacs_value Fding;
 extern emacs_value Fgoto_char;
 extern emacs_value Fforward_char;
 extern emacs_value Fforward_line;
@@ -75,6 +76,7 @@ void add_text_properties(emacs_env *env, emacs_value string,
                          emacs_value property);
 void erase_buffer(emacs_env *env);
 void insert(emacs_env *env, emacs_value string);
+void ding(emacs_env *env, emacs_value flag);
 void goto_char(emacs_env *env, int pos);
 void forward_line(emacs_env *env, int n);
 void goto_line(emacs_env *env, int n);
