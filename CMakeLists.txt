@@ -90,6 +90,25 @@ else()
   file(MAKE_DIRECTORY ${LIBVTERM_INCLUDE_DIR})
 endif()
 
+# Prefer system emacs-modules.h, usually from an Emacs installation.
+option(USE_SYSTEM_EMACS_MODULE_HEADER
+  "Use system emacs-module.h instead of the vendored version." ON)
+
+if (USE_SYSTEM_EMACS_MODULE_HEADER)
+  find_path(EMACS_MODULE_HEADER_DIR
+    NAMES emacs-module.h
+  )
+
+  # emacs-module.h found.
+  if (EMACS_MODULE_HEADER_DIR)
+    message(STATUS "System emacs-module.h detected")
+    target_include_directories(vterm-module PRIVATE ${EMACS_MODULE_HEADER_DIR})
+  else()
+    message(STATUS "System emacs-module.h not detected.  Using vendored version.")
+    target_include_directories(vterm-module PRIVATE "${CMAKE_SOURCE_DIR}/vendor")
+  endif()
+endif()
+
 add_library(vterm STATIC IMPORTED)
 set_target_properties(vterm PROPERTIES IMPORTED_LOCATION ${LIBVTERM_LIBRARY})
 target_include_directories(vterm INTERFACE ${LIBVTERM_INCLUDE_DIR})
