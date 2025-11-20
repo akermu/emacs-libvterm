@@ -69,7 +69,9 @@ static int term_sb_push(int cols, const VTermScreenCell *cells, void *data) {
   sbrow->info = term->lines[0];
   memmove(term->lines, term->lines + 1,
           sizeof(term->lines[0]) * (term->lines_len - 1));
-  if (term->resizing) {
+  if (term->resizing &&
+      term->height_resize < 0 &&
+      term->lines_len + term->height_resize > term->height) {
     /* pushed by window height decr */
     if (term->lines[term->lines_len - 1] != NULL) {
       /* do not need free here ,it is reused ,we just need set null */
@@ -1253,6 +1255,9 @@ emacs_value Fvterm_new(emacs_env *env, ptrdiff_t nargs, emacs_value args[],
   vterm_screen_set_callbacks(term->vts, &vterm_screen_callbacks, term);
   vterm_screen_set_damage_merge(term->vts, VTERM_DAMAGE_SCROLL);
   vterm_screen_enable_altscreen(term->vts, true);
+#ifndef VTermEnableReflowNotExists
+  vterm_screen_enable_reflow(term->vts, true);
+#endif
   term->sb_size = MIN(SB_MAX, sb_size);
   term->sb_current = 0;
   term->sb_pending = 0;
