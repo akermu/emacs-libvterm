@@ -65,7 +65,7 @@ extern emacs_value Fvterm_set_selection;
 void bind_function(emacs_env *env, const char *name, emacs_value Sfun);
 void provide(emacs_env *env, const char *feature);
 emacs_value symbol_value(emacs_env *env, emacs_value symbol);
-int string_bytes(emacs_env *env, emacs_value string);
+ptrdiff_t string_bytes(emacs_env *env, emacs_value string);
 emacs_value length(emacs_env *env, emacs_value string);
 emacs_value list(emacs_env *env, emacs_value elements[], ptrdiff_t len);
 emacs_value nth(emacs_env *env, int idx, emacs_value list);

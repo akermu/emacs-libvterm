@@ -209,8 +209,11 @@ static void fetch_cell(Term *term, int row, int col, VTermScreenCell *cell) {
 static char *get_row_directory(Term *term, int row) {
   if (row < 0) {
     ScrollbackLine *sbrow = term->sb_buffer[-row - 1];
-    return sbrow->info->directory;
-    /* return term->dirs[0]; */
+    if ( sbrow && sbrow->info && sbrow->info->directory ) {
+      return sbrow->info->directory;
+    } else {
+      return NULL;
+    }
   } else {
     LineInfo *line = term->lines[row];
     return line ? line->directory : NULL;
@@ -421,7 +424,7 @@ static int term_resize(int rows, int cols, void *user_data) {
   /* if rows=term->lines_len, that means term_sb_pop already resize term->lines
    */
   /* if rows<term->lines_len, term_sb_push would resize term->lines there */
-  /* we noly need to take care of rows>term->height */
+  /* we only need to take care of rows>term->height */
 
   if (rows > term->height) {
     if (rows > term->lines_len) {
@@ -485,8 +488,8 @@ static void refresh_scrollback(Term *term, emacs_env *env) {
 
     term->linenum += term->sb_pending;
     del_cnt = term->linenum - max_line_count; /* extra lines at the bottom */
-    /* buf_index is negative,so we move to end of buffer,then backward
-       -buf_index lines. goto lines backward is effectively when
+    /* buf_index is negative, so we move to end of buffer, then backward
+       -buf_index lines. goto lines backward is effective when
        vterm-max-scrollback is a large number.
      */
     int buf_index = -(term->height + del_cnt);
@@ -500,7 +503,7 @@ static void refresh_scrollback(Term *term, emacs_env *env) {
   del_cnt = term->linenum - max_line_count;
   if (del_cnt > 0) {
     term->linenum -= del_cnt;
-    /* -del_cnt is negative,so we delete_lines from end of buffer.
+    /* -del_cnt is negative, so we delete_lines from end of buffer.
        this line means: delete del_cnt count of lines at end of buffer.
      */
     delete_lines(env, -del_cnt, del_cnt, true);
@@ -515,7 +518,7 @@ static void adjust_topline(Term *term, emacs_env *env) {
   VTermPos pos;
   vterm_state_get_cursorpos(state, &pos);
 
-  /* pos.row-term->height is negative,so we backward term->height-pos.row
+  /* pos.row-term->height is negative, so we backward term->height-pos.row
    * lines from end of buffer
    */
 
@@ -1230,7 +1233,7 @@ emacs_value Fvterm_new(emacs_env *env, ptrdiff_t nargs, emacs_value args[],
   int disable_underline = env->is_not_nil(env, args[4]);
   int disable_inverse_video = env->is_not_nil(env, args[5]);
   int ignore_blink_cursor = env->is_not_nil(env, args[6]);
-  int set_bold_hightbright = env->is_not_nil(env, args[7]);
+  int set_bold_highbright = env->is_not_nil(env, args[7]);
 
   term->vt = vterm_new(rows, cols);
   vterm_set_utf8(term->vt, 1);
@@ -1244,7 +1247,7 @@ emacs_value Fvterm_new(emacs_env *env, ptrdiff_t nargs, emacs_value args[],
   vterm_state_set_selection_callbacks(state, &selection_callbacks, term,
                                       term->selection_buf, SELECTION_BUF_LEN);
 #endif
-  vterm_state_set_bold_highbright(state, set_bold_hightbright);
+  vterm_state_set_bold_highbright(state, set_bold_highbright);
 
   vterm_screen_reset(term->vts, 1);
   vterm_screen_set_callbacks(term->vts, &vterm_screen_callbacks, term);
