@@ -148,6 +148,7 @@ the executable."
 (declare-function vterm--new "vterm-module")
 (declare-function vterm--update "vterm-module")
 (declare-function vterm--redraw "vterm-module")
+(declare-function vterm--invalidate-all "vterm-module")
 (declare-function vterm--write-input "vterm-module")
 (declare-function vterm--set-size "vterm-module")
 (declare-function vterm--set-pty-name "vterm-module")

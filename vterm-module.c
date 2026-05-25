@@ -1361,6 +1361,14 @@ emacs_value Fvterm_redraw(emacs_env *env, ptrdiff_t nargs, emacs_value args[],
   return env->make_integer(env, 0);
 }
 
+emacs_value Fvterm_invalidate_all(emacs_env *env, ptrdiff_t nargs,
+                                  emacs_value args[], void *data) {
+  Term *term = env->get_user_ptr(env, args[0]);
+  invalidate_terminal(term, 0, term->height);
+  term_redraw(term, env);
+  return env->make_integer(env, 0);
+}
+
 emacs_value Fvterm_write_input(emacs_env *env, ptrdiff_t nargs,
                                emacs_value args[], void *data) {
   Term *term = env->get_user_ptr(env, args[0]);
@@ -1540,6 +1548,10 @@ int emacs_module_init(struct emacs_runtime *ert) {
   fun =
       env->make_function(env, 1, 1, Fvterm_redraw, "Redraw the screen.", NULL);
   bind_function(env, "vterm--redraw", fun);
+
+  fun = env->make_function(env, 1, 1, Fvterm_invalidate_all,
+                           "Invalidate and redraw the whole screen.", NULL);
+  bind_function(env, "vterm--invalidate-all", fun);
 
   fun = env->make_function(env, 2, 2, Fvterm_write_input,
                            "Write input to vterm.", NULL);
