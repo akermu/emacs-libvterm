@@ -843,7 +843,10 @@ Exceptions are defined by `vterm-keymap-exceptions'."
   ;; Support to compilation-shell-minor-mode
   ;; Is this necessary? See vterm--compilation-setup
   (setq next-error-function 'vterm-next-error-function)
-  (setq-local bookmark-make-record-function 'vterm--bookmark-make-record))
+  (setq-local bookmark-make-record-function 'vterm--bookmark-make-record)
+
+  ;; Support to display directory in buffer listings.
+  (setq list-buffers-directory (expand-file-name default-directory)))
 
 (defun vterm--tramp-get-shell (method)
   "Get the shell for a remote location as specified in `vterm-tramp-shells'.
@@ -1699,7 +1702,9 @@ If N is negative backward-line from end of buffer."
 (defun vterm--set-directory (path)
   "Set `default-directory' to PATH."
   (let ((dir (vterm--get-directory path)))
-    (when dir (setq default-directory dir))))
+    (when dir
+      (setq default-directory dir)
+      (setq list-buffers-directory dir))))
 
 (defun vterm--get-directory (path)
   "Get normalized directory to PATH."
