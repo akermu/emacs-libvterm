@@ -33,6 +33,7 @@ emacs_value Flist;
 emacs_value Fnth;
 emacs_value Ferase_buffer;
 emacs_value Finsert;
+emacs_value Fding;
 emacs_value Fgoto_char;
 emacs_value Fforward_char;
 emacs_value Fforward_line;
@@ -119,6 +120,10 @@ void erase_buffer(emacs_env *env) { env->funcall(env, Ferase_buffer, 0, NULL); }
 
 void insert(emacs_env *env, emacs_value string) {
   env->funcall(env, Finsert, 1, (emacs_value[]){string});
+}
+
+void ding(emacs_env *env, emacs_value flag) {
+  env->funcall(env, Fding, 1, (emacs_value[]){flag});
 }
 
 void goto_char(emacs_env *env, int pos) {
