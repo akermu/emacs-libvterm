@@ -1,0 +1,172 @@
+diff --git a/include/vterm.h b/include/vterm.h
+index c6124a1..747a517 100644
+--- a/include/vterm.h
++++ b/include/vterm.h
+@@ -244,6 +244,7 @@ typedef enum {
+   VTERM_ATTR_BACKGROUND, // color:  40-49 100-107
+   VTERM_ATTR_SMALL,      // bool:   73, 74, 75
+   VTERM_ATTR_BASELINE,   // number: 73, 74, 75
++  VTERM_ATTR_URI,        // number: OSC 8 hyperlink id, 0 = no link
+ 
+   VTERM_N_ATTRS
+ } VTermAttr;
+@@ -463,6 +464,9 @@ void vterm_state_set_default_colors(VTermState *state, const VTermColor *default
+ void vterm_state_set_palette_color(VTermState *state, int index, const VTermColor *col);
+ void vterm_state_set_bold_highbright(VTermState *state, int bold_is_highbright);
+ int  vterm_state_get_penattr(const VTermState *state, VTermAttr attr, VTermValue *val);
++/* Externally set a pen attribute, as if by SGR. Used by embedders that parse
++ * escapes libvterm itself does not (e.g. OSC 8 hyperlinks -> VTERM_ATTR_URI). */
++int  vterm_state_set_penattr(VTermState *state, VTermAttr attr, VTermValueType type, VTermValue *val);
+ int  vterm_state_set_termprop(VTermState *state, VTermProp prop, VTermValue *val);
+ void vterm_state_focus_in(VTermState *state);
+ void vterm_state_focus_out(VTermState *state);
+@@ -522,6 +526,7 @@ typedef struct {
+   char     width;
+   VTermScreenCellAttrs attrs;
+   VTermColor fg, bg;
++  int uri; /* opaque id set via VTERM_ATTR_URI; 0 = no link */
+ } VTermScreenCell;
+ 
+ typedef struct {
+@@ -582,8 +587,9 @@ typedef enum {
+   VTERM_ATTR_CONCEAL_MASK    = 1 << 9,
+   VTERM_ATTR_SMALL_MASK      = 1 << 10,
+   VTERM_ATTR_BASELINE_MASK   = 1 << 11,
++  VTERM_ATTR_URI_MASK        = 1 << 12,
+ 
+-  VTERM_ALL_ATTRS_MASK = (1 << 12) - 1
++  VTERM_ALL_ATTRS_MASK = (1 << 13) - 1
+ } VTermAttrMask;
+ 
+ int vterm_screen_get_attrs_extent(const VTermScreen *screen, VTermRect *extent, VTermPos pos, VTermAttrMask attrs);
+diff --git a/src/pen.c b/src/pen.c
+index 704e9d8..53c9397 100644
+--- a/src/pen.c
++++ b/src/pen.c
+@@ -182,6 +182,8 @@ INTERNAL void vterm_state_resetpen(VTermState *state)
+ 
+   state->pen.fg = state->default_fg;  setpenattr_col(state, VTERM_ATTR_FOREGROUND, state->default_fg);
+   state->pen.bg = state->default_bg;  setpenattr_col(state, VTERM_ATTR_BACKGROUND, state->default_bg);
++
++  state->pen.uri = 0;       setpenattr_int (state, VTERM_ATTR_URI, 0);
+ }
+ 
+ INTERNAL void vterm_state_savepen(VTermState *state, int save)
+@@ -205,9 +207,31 @@ INTERNAL void vterm_state_savepen(VTermState *state, int save)
+ 
+     setpenattr_col( state, VTERM_ATTR_FOREGROUND, state->pen.fg);
+     setpenattr_col( state, VTERM_ATTR_BACKGROUND, state->pen.bg);
++
++    setpenattr_int (state, VTERM_ATTR_URI,       state->pen.uri);
+   }
+ }
+ 
++int vterm_state_set_penattr(VTermState *state, VTermAttr attr, VTermValueType type, VTermValue *val)
++{
++  if(type != vterm_get_attr_type(attr))
++    return 0;
++
++  switch(attr) {
++  case VTERM_ATTR_URI:
++    state->pen.uri = val->number;
++    break;
++  default:
++    /* Only attributes without an SGR representation may be set externally */
++    return 0;
++  }
++
++  if(state->callbacks && state->callbacks->setpenattr)
++    (*state->callbacks->setpenattr)(attr, val, state->cbdata);
++
++  return 1;
++}
++
+ int vterm_color_is_equal(const VTermColor *a, const VTermColor *b)
+ {
+   /* First make sure that the two colours are of the same type (RGB/Indexed) */
+@@ -597,6 +621,10 @@ int vterm_state_get_penattr(const VTermState *state, VTermAttr attr, VTermValue
+     val->number = state->pen.baseline;
+     return 1;
+ 
++  case VTERM_ATTR_URI:
++    val->number = state->pen.uri;
++    return 1;
++
+   case VTERM_N_ATTRS:
+     return 0;
+   }
+diff --git a/src/screen.c b/src/screen.c
+index 77c0af8..a8932c6 100644
+--- a/src/screen.c
++++ b/src/screen.c
+@@ -32,6 +32,8 @@ typedef struct
+   unsigned int protected_cell : 1;
+   unsigned int dwl            : 1; /* on a DECDWL or DECDHL line */
+   unsigned int dhl            : 2; /* on a DECDHL line (1=top 2=bottom) */
++
++  int uri; /* opaque OSC 8 hyperlink id; 0 = no link */
+ } ScreenPen;
+ 
+ /* Internal representation of a screen cell */
+@@ -441,6 +443,10 @@ static int setpenattr(VTermAttr attr, VTermValue *val, void *user)
+     screen->pen.baseline = val->number;
+     return 1;
+ 
++  case VTERM_ATTR_URI:
++    screen->pen.uri = val->number;
++    return 1;
++
+   case VTERM_N_ATTRS:
+     return 0;
+   }
+@@ -693,6 +699,8 @@ static void resize_buffer(VTermScreen *screen, int bufidx, int new_rows, int new
+         dst->pen.fg = src->fg;
+         dst->pen.bg = src->bg;
+ 
++        dst->pen.uri = src->uri;
++
+         if(src->width == 2 && pos.col < (new_cols-1))
+           (dst + 1)->chars[0] = (uint32_t) -1;
+       }
+@@ -985,6 +993,8 @@ int vterm_screen_get_cell(const VTermScreen *screen, VTermPos pos, VTermScreenCe
+   cell->fg = intcell->pen.fg;
+   cell->bg = intcell->pen.bg;
+ 
++  cell->uri = intcell->pen.uri;
++
+   if(pos.col < (screen->cols - 1) &&
+      getcell(screen, pos.row, pos.col + 1)->chars[0] == (uint32_t)-1)
+     cell->width = 2;
+@@ -1108,6 +1118,8 @@ static int attrs_differ(VTermAttrMask attrs, ScreenCell *a, ScreenCell *b)
+     return 1;
+   if((attrs & VTERM_ATTR_BASELINE_MASK)    && (a->pen.baseline != b->pen.baseline))
+     return 1;
++  if((attrs & VTERM_ATTR_URI_MASK)         && (a->pen.uri != b->pen.uri))
++    return 1;
+ 
+   return 0;
+ }
+diff --git a/src/vterm.c b/src/vterm.c
+index b2f61d2..5baa1e9 100644
+--- a/src/vterm.c
++++ b/src/vterm.c
+@@ -276,6 +276,7 @@ VTermValueType vterm_get_attr_type(VTermAttr attr)
+     case VTERM_ATTR_BACKGROUND: return VTERM_VALUETYPE_COLOR;
+     case VTERM_ATTR_SMALL:      return VTERM_VALUETYPE_BOOL;
+     case VTERM_ATTR_BASELINE:   return VTERM_VALUETYPE_INT;
++    case VTERM_ATTR_URI:        return VTERM_VALUETYPE_INT;
+ 
+     case VTERM_N_ATTRS: return 0;
+   }
+diff --git a/src/vterm_internal.h b/src/vterm_internal.h
+index 6aa9007..b270c9d 100644
+--- a/src/vterm_internal.h
++++ b/src/vterm_internal.h
+@@ -50,6 +50,7 @@ struct VTermPen
+   unsigned int font:4; /* To store 0-9 */
+   unsigned int small:1;
+   unsigned int baseline:2;
++  int uri; /* opaque OSC 8 hyperlink id; 0 = no link */
+ };
+ 
+ struct VTermState

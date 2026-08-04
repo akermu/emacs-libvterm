@@ -1706,6 +1706,23 @@ If N is negative backward-line from end of buffer."
   (when vterm-buffer-name-string
     (rename-buffer (format vterm-buffer-name-string title) t)))
 
+(defun vterm--osc8-buttonize (text uri)
+  "Make TEXT, a span labeled by an OSC 8 hyperlink, a clickable link to URI.
+Called from the display module for each rendered chunk that carries a
+hyperlink.  Reuses the `ansi-osc-hyperlink' button type so links inside
+vterm look and behave like OSC 8 links in comint and compilation
+buffers: mouse-2 (or mouse-1 via `mouse-1-click-follows-link') and
+\\`C-c RET' open URI with `browse-url'.  Plain \\`RET' is deliberately
+not bound -- it must keep going to the terminal process.  On Emacs
+versions without ansi-osc (< 29.1) TEXT is returned unchanged.
+Returns the string to render: `make-text-button' buttonizes a COPY of a
+string argument, so the caller must use the return value, not TEXT."
+  (if (require 'ansi-osc nil t)
+      (make-text-button text nil
+                        'type 'ansi-osc-hyperlink
+                        'browse-url-data uri)
+    text))
+
 (defun vterm--set-directory (path)
   "Set `default-directory' to PATH."
   (let ((dir (vterm--get-directory path)))

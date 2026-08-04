@@ -55,6 +55,10 @@ if (USE_SYSTEM_LIBVTERM)
     if (${VTermScreenEnableReflowExists} EQUAL "0")
       add_definitions(-DVTermScreenEnableReflowNotExists)
     endif()
+    execute_process(COMMAND  grep -c "VTERM_ATTR_URI" "${LIBVTERM_INCLUDE_DIR}/vterm.h" OUTPUT_VARIABLE VTermAttrUriExists)
+    if (${VTermAttrUriExists} EQUAL "0")
+      add_definitions(-DVTermAttrUriNotExists)
+    endif()
   else()
     message(STATUS "System libvterm not found: libvterm will be downloaded and compiled as part of the build process")
   endif()
@@ -75,9 +79,18 @@ else()
     message(FATAL_ERROR "libtool not found. Please install libtool")
   endif()
 
+  # Resolve through symlinks (straight.el symlinks this file into its build
+  # directory but does not symlink the patch, which lives next to the real
+  # CMakeLists.txt in the repository).
+  get_filename_component(VTERM_CMAKELISTS_REALPATH ${CMAKE_CURRENT_LIST_FILE} REALPATH)
+  get_filename_component(VTERM_REAL_SOURCE_DIR ${VTERM_CMAKELISTS_REALPATH} DIRECTORY)
+
   ExternalProject_add(libvterm
     GIT_REPOSITORY https://github.com/Sbozzolo/libvterm-mirror.git
     GIT_TAG 64f1775952dbe001e989f2ab679563b54f2fca55
+    # OSC 8 hyperlink support (VTERM_ATTR_URI), not yet in upstream libvterm.
+    # `git checkout -- .` first so re-running the patch step stays idempotent.
+    PATCH_COMMAND git checkout -- . COMMAND git apply ${VTERM_REAL_SOURCE_DIR}/libvterm-osc8-uri.patch
     CONFIGURE_COMMAND ""
     BUILD_COMMAND ${LIBVTERM_BUILD_COMMAND} "CFLAGS='-fPIC'" "LDFLAGS='-static'"
     BUILD_IN_SOURCE ON

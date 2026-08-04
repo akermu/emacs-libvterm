@@ -146,6 +146,11 @@ static int term_sb_pop(int cols, VTermScreenCell *cells, void *data) {
   for (col = cols_to_copy; col < (size_t)cols; col++) {
     cells[col].chars[0] = 0;
     cells[col].width = 1;
+#ifndef VTermAttrUriNotExists
+    /* cells may hold stale data from an earlier row; a stale link id would
+       otherwise resurface on blank padding cells */
+    cells[col].uri = 0;
+#endif
   }
 
   if (popped_by_height_incr) {
@@ -694,6 +699,10 @@ static bool compare_cells(VTermScreenCell *a, VTermScreenCell *b) {
   equal = equal && (a->attrs.italic == b->attrs.italic);
   equal = equal && (a->attrs.reverse == b->attrs.reverse);
   equal = equal && (a->attrs.strike == b->attrs.strike);
+#ifndef VTermAttrUriNotExists
+  /* runs must split at hyperlink boundaries so each gets its own link */
+  equal = equal && (a->uri == b->uri);
+#endif
   return equal;
 }
 
@@ -829,6 +838,17 @@ static emacs_value render_text(emacs_env *env, Term *term, char *buffer,
 
   if (props_len)
     put_text_property(env, text, Qface, properties);
+
+#ifndef VTermAttrUriNotExists
+  if (cell->uri > 0 && (size_t)cell->uri <= term->uri_table.len) {
+    const char *uri = term->uri_table.uris[cell->uri - 1];
+    emacs_value uri_string = env->make_string(env, uri, strlen(uri));
+    /* Apply clickable-link properties; the property set lives in lisp so
+       users can advise/customize it.  The helper returns the string to use
+       (make-text-button copies string args). */
+    text = vterm_osc8_buttonize(env, text, uri_string);
+  }
+#endif
 
   return text;
 }
@@ -1064,6 +1084,15 @@ void term_finalize(void *object) {
     free(term->selection_data);
     term->selection_data = NULL;
   }
+#ifndef VTermAttrUriNotExists
+  for (size_t i = 0; i < term->uri_table.len; i++) {
+    free(term->uri_table.uris[i]);
+  }
+  free(term->uri_table.uris);
+  term->uri_table.uris = NULL;
+  term->uri_table.len = 0;
+  term->uri_table.cap = 0;
+#endif
 
   for (int i = 0; i < term->lines_len; i++) {
     if (term->lines[i] != NULL) {
@@ -1127,6 +1156,58 @@ static int handle_osc_cmd_51(Term *term, char subCmd, char *buffer) {
   return 0;
 }
 
+#ifndef VTermAttrUriNotExists
+/* Hyperlink URIs longer than this are treated as "no link" rather than
+   truncated — a truncated URI would silently point somewhere else. */
+#define OSC8_MAX_URI_LEN 2048
+
+static int uri_table_intern(Term *term, const char *uri) {
+  UriTable *tbl = &term->uri_table;
+  for (size_t i = 0; i < tbl->len; i++) {
+    if (strcmp(tbl->uris[i], uri) == 0) {
+      return (int)(i + 1);
+    }
+  }
+  if (tbl->len == tbl->cap) {
+    size_t cap = tbl->cap ? tbl->cap * 2 : 16;
+    char **uris = realloc(tbl->uris, cap * sizeof(char *));
+    if (uris == NULL) {
+      return 0;
+    }
+    tbl->uris = uris;
+    tbl->cap = cap;
+  }
+  char *copy = malloc(strlen(uri) + 1);
+  if (copy == NULL) {
+    return 0;
+  }
+  strcpy(copy, uri);
+  tbl->uris[tbl->len] = copy;
+  tbl->len++;
+  return (int)tbl->len;
+}
+
+static int handle_osc_cmd_8(Term *term, char *buffer) {
+  /* OSC 8 ; params ; URI  (hyperlink, BEL- or ST-terminated).
+     buffer holds "params;URI". params (e.g. "id=...") are ignored: interning
+     dedups identical URIs, which is what the id exists for. An empty URI
+     turns the link off. */
+  char *sep = strchr(buffer, ';');
+  if (sep == NULL) {
+    return 0;
+  }
+  const char *uri = sep + 1;
+  int id = 0;
+  if (uri[0] != '\0' && strlen(uri) <= OSC8_MAX_URI_LEN) {
+    id = uri_table_intern(term, uri);
+  }
+  VTermState *state = vterm_obtain_state(term->vt);
+  VTermValue val = {.number = id};
+  vterm_state_set_penattr(state, VTERM_ATTR_URI, VTERM_VALUETYPE_INT, &val);
+  return 1;
+}
+#endif /* VTermAttrUriNotExists */
+
 static int handle_osc_cmd(Term *term, int cmd, char *buffer) {
   if (cmd == 51) {
     char subCmd = '0';
@@ -1137,6 +1218,11 @@ static int handle_osc_cmd(Term *term, int cmd, char *buffer) {
     /* ++ skip the subcmd char */
     return handle_osc_cmd_51(term, subCmd, ++buffer);
   }
+#ifndef VTermAttrUriNotExists
+  if (cmd == 8) {
+    return handle_osc_cmd_8(term, buffer);
+  }
+#endif
   return 0;
 }
 /* maybe we should drop support of libvterm < v0.2 */
@@ -1314,6 +1400,12 @@ emacs_value Fvterm_new(emacs_env *env, ptrdiff_t nargs, emacs_value args[],
   term->selection_mask = 0;
 
   term->cmd_buffer = NULL;
+
+#ifndef VTermAttrUriNotExists
+  term->uri_table.uris = NULL;
+  term->uri_table.len = 0;
+  term->uri_table.cap = 0;
+#endif
 
   term->lines = malloc(sizeof(LineInfo *) * rows);
   term->lines_len = rows;
@@ -1526,6 +1618,8 @@ int emacs_module_init(struct emacs_runtime *ert) {
   Fvterm_eval = env->make_global_ref(env, env->intern(env, "vterm--eval"));
   Fvterm_set_selection =
       env->make_global_ref(env, env->intern(env, "vterm--set-selection"));
+  Fvterm_osc8_buttonize =
+      env->make_global_ref(env, env->intern(env, "vterm--osc8-buttonize"));
 
   // Exported functions
   emacs_value fun;
