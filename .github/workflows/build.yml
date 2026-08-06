@@ -1,0 +1,48 @@
+name: Build
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        emacs-version:
+          - '27.2'
+          - '28.2'
+          - '29.4'
+          - '30.1'
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Install Emacs ${{ matrix.emacs-version }}
+      uses: purcell/setup-emacs@master
+      with:
+        version: ${{ matrix.emacs-version }}
+
+    - name: Install build dependencies via Nix
+      run: |
+        # Pin to nixos-24.05 stable release for reproducibility
+        # Note: libvterm is not included - CMake downloads and builds it
+        nix profile install \
+          github:NixOS/nixpkgs/nixos-24.05#cmake \
+          github:NixOS/nixpkgs/nixos-24.05#libtool \
+          github:NixOS/nixpkgs/nixos-24.05#glib
+
+    - name: Build vterm module
+      run: |
+        mkdir build
+        cd build
+        cmake ..
+        make
+
+    - name: Test vterm module
+      run: |
+        cd build
+        make test
