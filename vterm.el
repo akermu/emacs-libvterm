@@ -101,6 +101,25 @@ the executable."
     (error "Vterm needs CMake to be compiled.  Please, install CMake"))
   t)
 
+(defun vterm-module--cmake-module-suffix-arg ()
+  "Return the CMake argument that sets the vterm module suffix."
+  (if module-file-suffix
+      (concat "-DVTERM_MODULE_SUFFIX="
+              (shell-quote-argument module-file-suffix)
+              " ")
+    ""))
+
+(defun vterm-module--load ()
+  "Load `vterm-module' and return non-nil when successful."
+  (or (require 'vterm-module nil t)
+      (let ((module-path (and module-file-suffix
+                              (locate-file "vterm-module"
+                                           load-path
+                                           (list module-file-suffix)))))
+        (when (and module-path (file-exists-p module-path))
+          (load module-path nil t)))
+      (featurep 'vterm-module)))
+
 ;;;###autoload
 (defun vterm-module-compile ()
   "Compile vterm-module."
@@ -120,6 +139,7 @@ the executable."
              mkdir -p build; \
              cd build; \
              cmake -G 'Unix Makefiles' "
+             (vterm-module--cmake-module-suffix-arg)
              vterm-module-cmake-args
              " ..; \
              make; \
@@ -133,12 +153,13 @@ the executable."
         (error "Compilation of `emacs-libvterm' module failed!")))))
 
 ;; If the vterm-module is not compiled yet, compile it
-(unless (require 'vterm-module nil t)
+(unless (vterm-module--load)
   (if (or vterm-always-compile-module
           (y-or-n-p "Vterm needs `vterm-module' to work.  Compile it now? "))
       (progn
         (vterm-module-compile)
-        (require 'vterm-module))
+        (unless (vterm-module--load)
+          (error "Vterm compiled `vterm-module' but could not load it")))
     (error "Vterm will not work until `vterm-module' is compiled!")))
 
 ;;; Dependencies
@@ -344,7 +365,7 @@ by default."
   "Whitelisted Emacs functions that can be executed from vterm.
 
 You can execute Emacs functions directly from vterm buffers.  To do this,
-you have to escape the name of the function and its arguments with \e]51;E.
+you have to escape the name of the function and its arguments with \\e]51;E.
 
 See Message passing in README.
 
@@ -383,13 +404,13 @@ This means that vterm will render bold with the default face weight."
   :type  'boolean
   :group 'vterm)
 
+(define-obsolete-variable-alias 'vterm-set-bold-hightbright
+  'vterm-set-bold-highbright "0.0.2")
+
 (defcustom vterm-set-bold-highbright nil
   "When not-nil, using highbright colors for bolded text, see #549."
   :type  'boolean
   :group 'vterm)
-
-(define-obsolete-variable-alias 'vterm-set-bold-hightbright
-  'vterm-set-bold-highbright "0.0.2")
 
 (defcustom vterm-ignore-blink-cursor t
   "When t, vterm will ignore request from application to turn on/off cursor blink.
@@ -577,6 +598,7 @@ Only background is used."
   "Shell process of current term.")
 
 (defvar-local vterm--redraw-timer nil)
+(define-obsolete-variable-alias 'vterm--redraw-immididately 'vterm--redraw-immediately "2025-07-15")
 (defvar-local vterm--redraw-immediately nil)
 (defvar-local vterm--linenum-remapping nil)
 (defvar-local vterm--prompt-tracking-enabled-p nil)
@@ -585,8 +607,6 @@ Only background is used."
 (defvar-local vterm--delete-region-function (symbol-function #'delete-region))
 (defvar-local vterm--undecoded-bytes nil)
 (defvar-local vterm--copy-mode-fake-newlines nil)
-
-(define-obsolete-variable-alias 'vterm--redraw-immididately 'vterm--redraw-immediately "2025-07-15")
 
 (defvar vterm-timer-delay 0.1
   "Delay for refreshing the buffer after receiving updates from libvterm.
@@ -793,8 +813,8 @@ Exceptions are defined by `vterm-keymap-exceptions'."
     (setq-local font-lock-defaults '(nil t))
 
     (add-function :filter-return
-                  (local 'filter-buffer-substring-function)
-                  #'vterm--filter-buffer-substring)
+      (local 'filter-buffer-substring-function)
+      #'vterm--filter-buffer-substring)
     (setq vterm--process
           (make-process
            :name "vterm"
@@ -1919,7 +1939,7 @@ Effectively toggle between the two positions."
   "Reinsert fake newline from `vterm--copy-mode-fake-newlines'."
   (let ((inhibit-read-only t)
         (inhibit-redisplay t)
-        (fake-newline-text "\n")
+        (fake-newline-text (copy-sequence "\n"))
         fake-newline-pos)
     (add-text-properties 0 1 '(vterm-line-wrap t rear-nonsticky t)
                          fake-newline-text)

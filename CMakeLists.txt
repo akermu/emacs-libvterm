@@ -18,6 +18,19 @@ set_target_properties(vterm-module PROPERTIES
   LIBRARY_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}
   )
 
+set(VTERM_MODULE_SUFFIX "" CACHE STRING
+  "Suffix for the built Emacs module, e.g. .so or .dylib.")
+
+# Prefer the suffix reported by the Emacs runtime that invoked the build.
+# Fall back to platform defaults for manual CMake builds.
+if(VTERM_MODULE_SUFFIX)
+  set_target_properties(vterm-module PROPERTIES SUFFIX "${VTERM_MODULE_SUFFIX}")
+elseif(APPLE)
+  set_target_properties(vterm-module PROPERTIES SUFFIX ".dylib")
+else()
+  set_target_properties(vterm-module PROPERTIES SUFFIX ".so")
+endif()
+
 # Set RelWithDebInfo as default build type
 if (NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
   message(STATUS "No build type selected, defaulting to RelWithDebInfo")
