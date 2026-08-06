@@ -148,6 +148,8 @@ emacs_value Fvterm_update(emacs_env *env, ptrdiff_t nargs, emacs_value args[],
                           void *data);
 emacs_value Fvterm_redraw(emacs_env *env, ptrdiff_t nargs, emacs_value args[],
                           void *data);
+emacs_value Fvterm_invalidate_all(emacs_env *env, ptrdiff_t nargs,
+                                  emacs_value args[], void *data);
 emacs_value Fvterm_write_input(emacs_env *env, ptrdiff_t nargs,
                                emacs_value args[], void *data);
 emacs_value Fvterm_set_size(emacs_env *env, ptrdiff_t nargs, emacs_value args[],
