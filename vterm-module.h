@@ -41,6 +41,17 @@ typedef struct LineInfo {
                    * prompt */
 } LineInfo;
 
+#ifndef VTermAttrUriNotExists
+/* Interned OSC 8 URIs. Ids handed to libvterm are 1-based indexes into uris;
+ * 0 means "no link". Append-only: ids embedded in scrollback cells must stay
+ * valid for the whole lifetime of the Term. */
+typedef struct UriTable {
+  char **uris;
+  size_t len;
+  size_t cap;
+} UriTable;
+#endif
+
 typedef struct ScrollbackLine {
   size_t cols;
   LineInfo *info;
@@ -119,6 +130,10 @@ typedef struct Term {
   bool ignore_blink_cursor;
 
   char *cmd_buffer;
+
+#ifndef VTermAttrUriNotExists
+  UriTable uri_table;
+#endif
 
   int pty_fd;
 } Term;
