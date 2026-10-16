@@ -860,6 +860,34 @@ the correct function to yank in vterm buffers.
 (advice-add 'counsel-yank-pop-action :around #'vterm-counsel-yank-pop-action)
 ```
 
+Alternatively, use this code for proper replacement of just-yanked stretch of killed text.
+```emacs-lisp
+(defun vterm-counsel-yank-pop (orig-fun &rest args)
+  (if (equal major-mode 'vterm-mode)
+      (let ((counsel-yank-pop-action-fun (symbol-function
+                                          'counsel-yank-pop-action))
+            (last-command-yank-p (eq last-command 'yank)))
+        (cl-letf (((symbol-function 'counsel-yank-pop-action)
+                   (lambda (str)
+                     (let ((inhibit-read-only t)
+                           (last-command (if (memq last-command
+                                                   '(counsel-yank-pop
+                                                     ivy-previous-line
+                                                     ivy-next-line))
+                                             'yank
+                                           last-command))
+                           (yank-undo-function (when last-command-yank-p
+                                                 (lambda (_start _end)
+                                                   (vterm-undo)))))
+                       (cl-letf (((symbol-function 'insert-for-yank)
+                                  'vterm-insert))
+                         (funcall counsel-yank-pop-action-fun str))))))
+          (apply orig-fun args)))
+    (apply orig-fun args)))
+
+(advice-add 'counsel-yank-pop :around #'vterm-counsel-yank-pop)
+```
+
 ### How can I get the local directory without shell-side configuration?
 
 We recommend that you set up shell-side configuration for reliable directory
