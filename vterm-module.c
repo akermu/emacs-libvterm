@@ -1076,6 +1076,7 @@ void term_finalize(void *object) {
     close(term->pty_fd);
   }
 
+  free(term->input_carry);
   free(term->sb_buffer);
   free(term->lines);
   vterm_free(term->vt);
@@ -1295,6 +1296,8 @@ emacs_value Fvterm_new(emacs_env *env, ptrdiff_t nargs, emacs_value args[],
   term->linenum_added = 0;
 
   term->pty_fd = -1;
+  term->input_carry = NULL;
+  term->input_carry_len = 0;
 
   term->title = NULL;
   term->title_changed = false;
@@ -1361,18 +1364,65 @@ emacs_value Fvterm_redraw(emacs_env *env, ptrdiff_t nargs, emacs_value args[],
   return env->make_integer(env, 0);
 }
 
+/* Length of the tail of BYTES that starts at an ESC and holds nothing
+   but ESC, C0 controls and DEL, or 0.
+
+   libvterm must never see such a tail at the end of a write.  Inside a
+   string sequence (OSC, DCS, ...) a C0 control or DEL after an ESC leaves
+   the parser waiting to finish the ESC, and the fragment it emits at the
+   end of the write then has length -1 (vterm_input_write in parser.c):
+   printf '\e]2;x\e\177' crashes Emacs. */
+static size_t esc_control_tail(const char *bytes, size_t len) {
+  size_t tail = 0;
+  for (size_t i = len; i > 0; i--) {
+    unsigned char c = bytes[i - 1];
+    if (c == 0x1b)
+      tail = len - (i - 1);
+    else if (c >= 0x20 && c != 0x7f)
+      break;
+  }
+  return tail;
+}
+
 emacs_value Fvterm_write_input(emacs_env *env, ptrdiff_t nargs,
                                emacs_value args[], void *data) {
   Term *term = env->get_user_ptr(env, args[0]);
-  ptrdiff_t len = string_bytes(env, args[1]);
+  ptrdiff_t size = string_bytes(env, args[1]);
+  size_t carry = term->input_carry_len;
+  char *bytes = malloc(carry + size);
+
+  memcpy(bytes, term->input_carry, carry);
+  if (!env->copy_string_contents(env, args[1], bytes + carry, &size)) {
+    free(bytes);
+    return Qnil;
+  }
+  /* size counts the terminating NUL, which is not terminal input. */
+  size_t len = carry + size - 1;
+
+  /* Held back until the next write, which completes the ESC.
+
+     A NUL or DEL is kept only right after an ESC.  Anywhere else in the
+     run it does nothing: libvterm ignores both bytes except to end a string
+     fragment, and the control before it has already ended one.  Dropping
+     them keeps a binary file's zero padding after a stray ESC from piling
+     up here, where every write would copy it again. */
+  size_t keep = esc_control_tail(bytes, len);
+  len -= keep;
+  free(term->input_carry);
+  term->input_carry = keep ? malloc(keep) : NULL;
+  term->input_carry_len = 0;
+  for (size_t i = len; i < len + keep; i++) {
+    unsigned char c = bytes[i];
+    if ((c == 0x00 || c == 0x7f) && bytes[i - 1] != 0x1b)
+      continue;
+    term->input_carry[term->input_carry_len++] = c;
+  }
 
   if (len > 0) {
-    char bytes[len];
-    env->copy_string_contents(env, args[1], bytes, &len);
-
     vterm_input_write(term->vt, bytes, len);
     vterm_screen_flush_damage(term->vts);
   }
+  free(bytes);
 
   return env->make_integer(env, 0);
 }

@@ -121,6 +121,11 @@ typedef struct Term {
   char *cmd_buffer;
 
   int pty_fd;
+
+  /* Input held back from the last vterm--write-input, prepended to the
+     next one. */
+  char *input_carry;
+  size_t input_carry_len;
 } Term;
 
 static bool compare_cells(VTermScreenCell *a, VTermScreenCell *b);
